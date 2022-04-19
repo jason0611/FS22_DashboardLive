@@ -42,6 +42,24 @@ function DashboardLive:onLoad(savegame)
 	spec.timer = 0
 end
 
+function DashboardLive:onRegisterActionEvents(isActiveForInput)
+	dbgprint("onRegisterActionEvents", 4)
+	if self.isClient then
+		local spec = self.spec_DashboardLive
+		DashboardLive.actionEvents = {} 
+		if self:getIsActiveForInput(true) and spec ~= nil then 
+			local prio = GS_PRIO_LOW
+			local actionEventId
+			
+			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOMIN', self, DashboardLive.ZOOM, false, true, false, true, nil)
+			g_inputBinding:setActionEventTextPriority(actionEventId, prio)
+			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOMOUT', self, DashboardLive.ZOOM, false, true, false, true, nil)
+			g_inputBinding:setActionEventTextPriority(actionEventId, prio)
+			
+		end		
+	end
+end
+
 function DashboardLive:onReadStream(streamId, connection)
 	local spec = self.spec_DashboardLive
 	spec.motorTemperature = streamReadFloat32(streamId)

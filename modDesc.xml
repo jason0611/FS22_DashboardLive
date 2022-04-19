@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="62">
 	<author>Jason06 / Glowins Modschmiede</author>
-	<version>0.0.0.1</version>
+	<version>0.0.0.2</version>
 	<title>
 		<en>Dashboard Live</en>
     </title>
@@ -17,4 +17,9 @@
 	<extraSourceFiles>
     	<sourceFile filename="RegisterDashboardLive.lua" />
     </extraSourceFiles>
+<!-- 
+	<specializations>
+        <specialization name="DashboardLive" className="DashboardLive" filename="DashboardLive.lua" />
+    </specializations>
+ -->
 </modDesc>

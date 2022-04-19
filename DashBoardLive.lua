@@ -4,35 +4,34 @@
 -- Jason06 / Glowins Modschmiede
 -- Version 0.1.0.1
 --
-EngineDataFixMP = {}
+DashboardLive = {}
 
---[[
-if EngineDataFixMP.MOD_NAME == nil then
-	EngineDataFixMP.MOD_NAME = g_currentModName
+if DashboardLive.MOD_NAME == nil then
+	DashboardLive.MOD_NAME = g_currentModName
 end
 
 source(g_currentModDirectory.."tools/gmsDebug.lua")
-GMSDebug:init(EngineDataFixMP.MOD_NAME)
-GMSDebug:enableConsoleCommands("emdDebug")
---]]
+GMSDebug:init(DashboardLive.MOD_NAME, true, 3)
+GMSDebug:enableConsoleCommands("dblDebug")
 
 -- Standards / Basics
 
-function EngineDataFixMP.prerequisitesPresent(specializations)
+function DashboardLive.prerequisitesPresent(specializations)
   return true
 end
 
-function EngineDataFixMP.registerEventListeners(vehicleType)
-	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", EngineDataFixMP)
-	SpecializationUtil.registerEventListener(vehicleType, "onLoad", EngineDataFixMP)
- 	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", EngineDataFixMP)
-	SpecializationUtil.registerEventListener(vehicleType, "onWriteStream", EngineDataFixMP)
-	SpecializationUtil.registerEventListener(vehicleType, "onReadUpdateStream", EngineDataFixMP)
-	SpecializationUtil.registerEventListener(vehicleType, "onWriteUpdateStream", EngineDataFixMP)
+function DashboardLive.registerEventListeners(vehicleType)
+	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onLoad", DashboardLive)
+ 	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onWriteStream", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onReadUpdateStream", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onWriteUpdateStream", DashboardLive)
 end
 
-function EngineDataFixMP:onLoad(savegame)
-	local spec = self.spec_EngineDataFixMP
+function DashboardLive:onLoad(savegame)
+	--self.spec_DashboardLive = {}
+	local spec = self.spec_DashboardLive
 	spec.motorTemperature = 20
 	spec.fanEnabled = false
 	spec.fanEnabledLast = false
@@ -43,8 +42,8 @@ function EngineDataFixMP:onLoad(savegame)
 	spec.timer = 0
 end
 
-function EngineDataFixMP:onReadStream(streamId, connection)
-	local spec = self.spec_EngineDataFixMP
+function DashboardLive:onReadStream(streamId, connection)
+	local spec = self.spec_DashboardLive
 	spec.motorTemperature = streamReadFloat32(streamId)
 	spec.fanEnabled = streamReadBool(streamId)
 	spec.lastFuelUsage = streamReadFloat32(streamId)
@@ -52,8 +51,8 @@ function EngineDataFixMP:onReadStream(streamId, connection)
 	spec.lastAirUsage = streamReadFloat32(streamId)
 end
 
-function EngineDataFixMP:onWriteStream(streamId, connection)
-	local spec = self.spec_EngineDataFixMP
+function DashboardLive:onWriteStream(streamId, connection)
+	local spec = self.spec_DashboardLive
 	streamWriteFloat32(streamId, spec.motorTemperature)
 	streamWriteBool(streamId, spec.fanEnabled)
 	streamWriteFloat32(streamId, spec.lastFuelUsage)
@@ -61,9 +60,9 @@ function EngineDataFixMP:onWriteStream(streamId, connection)
 	streamWriteFloat32(streamId, spec.lastAirUsage)
 end
 	
-function EngineDataFixMP:onReadUpdateStream(streamId, timestamp, connection)
+function DashboardLive:onReadUpdateStream(streamId, timestamp, connection)
 	if connection:getIsServer() then
-		local spec = self.spec_EngineDataFixMP
+		local spec = self.spec_DashboardLive
 		if streamReadBool(streamId) then
 			spec.motorTemperature = streamReadFloat32(streamId)
 			spec.fanEnabled = streamReadBool(streamId)
@@ -74,9 +73,9 @@ function EngineDataFixMP:onReadUpdateStream(streamId, timestamp, connection)
 	end
 end
 
-function EngineDataFixMP:onWriteUpdateStream(streamId, connection, dirtyMask)
+function DashboardLive:onWriteUpdateStream(streamId, connection, dirtyMask)
 	if not connection:getIsServer() then
-		local spec = self.spec_EngineDataFixMP
+		local spec = self.spec_DashboardLive
 		if streamWriteBool(streamId, bitAND(dirtyMask, spec.dirtyFlag) ~= 0) then
 			streamWriteFloat32(streamId, spec.motorTemperature)
 			streamWriteBool(streamId, spec.fanEnabled)
@@ -90,8 +89,8 @@ end
 
 -- Main part
 
-function EngineDataFixMP:onUpdate(dt)
-	local spec = self.spec_EngineDataFixMP
+function DashboardLive:onUpdate(dt)
+	local spec = self.spec_DashboardLive
 	local mspec = self.spec_motorized
 	
 	if self.isServer and self.getIsMotorStarted ~= nil and self:getIsMotorStarted() then

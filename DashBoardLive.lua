@@ -40,6 +40,8 @@ function DashboardLive:onLoad(savegame)
 	spec.lastAirUsage = 0
 	spec.dirtyFlag = self:getNextDirtyFlag()
 	spec.timer = 0
+	
+	spec.zoomFOV = 
 end
 
 function DashboardLive:onRegisterActionEvents(isActiveForInput)
@@ -103,6 +105,13 @@ function DashboardLive:onWriteUpdateStream(streamId, connection, dirtyMask)
 			self.spec_motorized.motorTemperature.valueSend = spec.motorTemperature
 		end
 	end
+end
+
+-- Tools part
+function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
+	
+
+
 end
 
 -- Main part

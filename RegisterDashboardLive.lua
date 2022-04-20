@@ -7,7 +7,6 @@
 
 if g_specializationManager:getSpecializationByName("DashboardLive") == nil then
   	g_specializationManager:addSpecialization("DashboardLive", "DashboardLive", g_currentModDirectory.."DashboardLive.lua", nil)
-  	--g_specializationManager:addSpecialization(g_currentModDirectory.."DashboardLive.lua", true, nil)
 end
 
 for typeName, typeEntry in pairs(g_vehicleTypeManager:types) do

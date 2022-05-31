@@ -51,6 +51,8 @@ function DashboardLive:onLoad(savegame)
 	spec.dashboard.temp = 0
 	spec.dashboard.fuel = 0
 	spec.dashboard.warnTemp = false
+	spec.dashboard.warnTest1 = false
+	spec.dashboard.warnTest2 = false
 end
 
 function DashboardLive:onRegisterActionEvents(isActiveForInput)
@@ -62,9 +64,9 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 			local prio = GS_PRIO_LOW
 			local actionEventId
 			
-			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOMIN', self, DashboardLive.ZOOM, false, true, false, true, nil)
+			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_TEST1', self, DashboardLive.TEST, false, true, false, true, nil)
 			g_inputBinding:setActionEventTextPriority(actionEventId, prio)
-			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOMOUT', self, DashboardLive.ZOOM, false, true, false, true, nil)
+			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_TEST2', self, DashboardLive.TEST, false, true, false, true, nil)
 			g_inputBinding:setActionEventTextPriority(actionEventId, prio)
 			
 		end		
@@ -117,8 +119,10 @@ function DashboardLive:onWriteUpdateStream(streamId, connection, dirtyMask)
 end
 
 -- Tools part
-function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
--- dummy
+function DashboardLive:TEST(actionName, keyStatus, arg3, arg4, arg5)
+	local spec = self.spec_DashboardLive
+	if actionNAme == "DBL_TEST1" then spec.dashboard.warnTest1 = not spec.dashboard.warnTest1 end
+	if actionNAme == "DBL_TEST2" then spec.dashboard.warnTest2 = not spec.dashboard.warnTest2 end
 end
 
 -- Main part
@@ -186,5 +190,7 @@ function DashboardLive:onDraw(dt)
 		dbgrender(string.format("%.2f", tostring(spec.dashboard.temp)), 2, 3)
 		dbgrender(string.format("%.2f", tostring(spec.dashboard.fuel)), 3, 3)
 		dbgrender("Temp Warning: "..tostring(spec.dashboard.warnTemp), 4, 3)
+		dbgrender(spec.dashboard.warnTest1, 6, 3)
+		dbgrender(spec.dashboard.warnTest2, 7, 3)
 	end
 end

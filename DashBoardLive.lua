@@ -11,7 +11,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(g_currentModDirectory.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 3)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 4)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 -- Standards / Basics
@@ -22,6 +22,7 @@ end
 
 function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onDraw", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onLoad", DashboardLive)
  	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteStream", DashboardLive)
@@ -30,18 +31,26 @@ function DashboardLive.registerEventListeners(vehicleType)
 end
 
 function DashboardLive:onLoad(savegame)
-	--self.spec_DashboardLive = {}
+	self.spec_DashboardLive = self["spec_"..DashboardLive.MOD_NAME..".DashboardLive"]
 	local spec = self.spec_DashboardLive
+	
+	-- engine data
 	spec.motorTemperature = 20
 	spec.fanEnabled = false
 	spec.fanEnabledLast = false
 	spec.lastFuelUsage = 0
 	spec.lastDefUsage = 0
 	spec.lastAirUsage = 0
-	spec.dirtyFlag = self:getNextDirtyFlag()
-	spec.timer = 0
 	
-	spec.zoomFOV = 
+	-- management data
+	spec.dirtyFlag = self:getNextDirtyFlag()
+	spec.updateTimer = 0
+	
+	-- dashboard data
+	spec.dashboard = {}
+	spec.dashboard.temp = 0
+	spec.dashboard.fuel = 0
+	spec.dashboard.warnTemp = false
 end
 
 function DashboardLive:onRegisterActionEvents(isActiveForInput)
@@ -109,16 +118,31 @@ end
 
 -- Tools part
 function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
-	
-
-
+-- dummy
 end
 
 -- Main part
 
+local function updateDashboardSlow(v, dt)
+	local mspec = v.spec_motorized
+	local spec = v.spec_DashboardLive
+	
+	spec.dashboard.temp = mspec.motorTemperature.value
+	spec.dashboard.warnTemp = (spec.dashboard.temp > 80)
+end
+
+local function updateDashboardFast(v, dt)
+	local mspec = v.spec_motorized
+	local spec = v.spec_DashboardLive
+	
+	spec.dashboard.fuel = mspec.lastFuelUsage
+end
+
 function DashboardLive:onUpdate(dt)
 	local spec = self.spec_DashboardLive
 	local mspec = self.spec_motorized
+	
+	spec.updateTimer = spec.updateTimer + dt
 	
 	if self.isServer and self.getIsMotorStarted ~= nil and self:getIsMotorStarted() then
 		spec.motorTemperature = mspec.motorTemperature.value
@@ -127,11 +151,8 @@ function DashboardLive:onUpdate(dt)
 		spec.lastDefUsage = mspec.lastDefUsage
 		spec.lastAirUsage = mspec.lastAirUsage
 		
-		spec.timer = spec.timer + dt
-		
-		if spec.timer >= 1000 and spec.motorTemperature ~= self.spec_motorized.motorTemperature.valueSend then
+		if spec.updateTimer >= 1000 and spec.motorTemperature ~= self.spec_motorized.motorTemperature.valueSend then
 			self:raiseDirtyFlags(spec.dirtyFlag)
-			spec.timer = 0
 		end
 		
 		if spec.fanEnabled ~= spec.fanEnabledLast then
@@ -146,5 +167,24 @@ function DashboardLive:onUpdate(dt)
 		mspec.lastFuelUsage = spec.lastFuelUsage
 		mspec.lastDefUsage = spec.lastDefUsage
 		mspec.lastAirUsage = spec.lastAirUsage
+	end
+	
+	updateDashboardFast(self, dt)
+	
+	if spec.updateTimer >= 1000 then
+		updateDashboardSlow(self, dt)
+		spec.lastUpdateTimer = dt
+		dbgprint("updateDashboardSlow", 4)
+	end
+	if spec.updateTimer > 1000 then spec.updateTimer = 0 end
+end
+
+function DashboardLive:onDraw(dt)
+	local spec = self.spec_DashboardLive
+	if self.isActive then
+		dbgrender(self.isActive, 1, 3)
+		dbgrender(string.format("%.2f", tostring(spec.dashboard.temp)), 2, 3)
+		dbgrender(string.format("%.2f", tostring(spec.dashboard.fuel)), 3, 3)
+		dbgrender("Temp Warning: "..tostring(spec.dashboard.warnTemp), 4, 3)
 	end
 end

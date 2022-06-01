@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="62">
 	<author>Jason06 / Glowins Modschmiede</author>
-	<version>0.0.0.2</version>
+	<version>0.0.0.3</version>
 	<title>
 		<en>Dashboard Live</en>
     </title>
@@ -22,4 +22,14 @@
         <specialization name="DashboardLive" className="DashboardLive" filename="DashboardLive.lua" />
     </specializations>
  -->
+ 	<actions>
+		<action name="DBL_TEST1" category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_TEST2" category="VEHICLE" ignoreComboMask="false" />
+	</actions>
+	<inputBinding>	
+		<actionBinding action="DBL_TEST1">
+		</actionBinding>
+		<actionBinding action="DBL_TEST2">
+		</actionBinding>
+	</inputBinding>
 </modDesc>

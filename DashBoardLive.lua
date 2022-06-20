@@ -121,7 +121,16 @@ end
 -- Tools part
 function DashboardLive:TEST(actionName, keyStatus, arg3, arg4, arg5)
 	local spec = self.spec_DashboardLive
-	if actionNAme == "DBL_TEST1" then spec.dashboard.warnTest1 = not spec.dashboard.warnTest1 end
+	local gsm = VehicleMotor.gearShiftMode
+	gsm = gsm + 1
+	if gsm > 3 then gsm = 1 end
+	if actionNAme == "DBL_TEST1" then 
+		local gsm = VehicleMotor.gearShiftMode
+		gsm = gsm + 1
+		if gsm > 3 then gsm = 1 end
+		VehicleMotor:setGearShiftMode(gsm)
+	end
+	--if actionNAme == "DBL_TEST1" then spec.dashboard.warnTest1 = not spec.dashboard.warnTest1 end
 	if actionNAme == "DBL_TEST2" then spec.dashboard.warnTest2 = not spec.dashboard.warnTest2 end
 end
 
@@ -190,7 +199,8 @@ function DashboardLive:onDraw(dt)
 		dbgrender(string.format("%.2f", tostring(spec.dashboard.temp)), 2, 3)
 		dbgrender(string.format("%.2f", tostring(spec.dashboard.fuel)), 3, 3)
 		dbgrender("Temp Warning: "..tostring(spec.dashboard.warnTemp), 4, 3)
-		dbgrender(spec.dashboard.warnTest1, 6, 3)
+		dbgrender("Gear Mode: "..tostring(VehicleMotor.gearShiftMode), 6 ,3)
+		--dbgrender(spec.dashboard.warnTest1, 6, 3)
 		dbgrender(spec.dashboard.warnTest2, 7, 3)
 	end
 end

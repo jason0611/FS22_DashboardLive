@@ -11,7 +11,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(g_currentModDirectory.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 4)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 3)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 -- Standards / Basics
@@ -24,6 +24,7 @@ function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onDraw", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onLoad", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onRegisterActionEvents", DashboardLive)
  	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onReadUpdateStream", DashboardLive)
@@ -69,6 +70,7 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_TEST2', self, DashboardLive.TEST, false, true, false, true, nil)
 			g_inputBinding:setActionEventTextPriority(actionEventId, prio)
 			
+			dbgprint("actionEvents set", 2)
 		end		
 	end
 end
@@ -121,17 +123,17 @@ end
 -- Tools part
 function DashboardLive:TEST(actionName, keyStatus, arg3, arg4, arg5)
 	local spec = self.spec_DashboardLive
-	local gsm = VehicleMotor.gearShiftMode
-	gsm = gsm + 1
-	if gsm > 3 then gsm = 1 end
-	if actionNAme == "DBL_TEST1" then 
-		local gsm = VehicleMotor.gearShiftMode
+	local motor = self.spec_motorized.motor
+	dbgprint("actionName: "..actionName)
+	if actionName == "DBL_TEST1" then 
+		local gsm = motor.gearShiftMode
 		gsm = gsm + 1
 		if gsm > 3 then gsm = 1 end
-		VehicleMotor:setGearShiftMode(gsm)
+		motor:setGearShiftMode(gsm)
+		dbgprint("TEST: gearShiftMode set to "..tostring(gsm), 1)
 	end
-	--if actionNAme == "DBL_TEST1" then spec.dashboard.warnTest1 = not spec.dashboard.warnTest1 end
-	if actionNAme == "DBL_TEST2" then spec.dashboard.warnTest2 = not spec.dashboard.warnTest2 end
+	--if actionName == "DBL_TEST1" then spec.dashboard.warnTest1 = not spec.dashboard.warnTest1 end
+	if actionName == "DBL_TEST2" then spec.dashboard.warnTest2 = not spec.dashboard.warnTest2 end
 end
 
 -- Main part
@@ -194,12 +196,14 @@ end
 
 function DashboardLive:onDraw(dt)
 	local spec = self.spec_DashboardLive
+	local mspec = self.spec_motorized
 	if self.isActive then
 		dbgrender(self.isActive, 1, 3)
 		dbgrender(string.format("%.2f", tostring(spec.dashboard.temp)), 2, 3)
 		dbgrender(string.format("%.2f", tostring(spec.dashboard.fuel)), 3, 3)
 		dbgrender("Temp Warning: "..tostring(spec.dashboard.warnTemp), 4, 3)
-		dbgrender("Gear Mode: "..tostring(VehicleMotor.gearShiftMode), 6 ,3)
+		local motor = mspec.motor
+		dbgrender("Gear Mode: "..tostring(motor.gearShiftMode), 6 ,3)
 		--dbgrender(spec.dashboard.warnTest1, 6, 3)
 		dbgrender(spec.dashboard.warnTest2, 7, 3)
 	end

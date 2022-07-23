@@ -20,40 +20,100 @@ function DashboardLive.prerequisitesPresent(specializations)
   return true
 end
 
+function DashboardLive.initSpecialization()
+    local schema = Vehicle.xmlSchema
+    Dashboard.registerDashboardXMLPaths(schema, "vehicle.dashboard.default")
+    schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl", "DashboardLive command")
+end
+
+
 function DashboardLive.registerEventListeners(vehicleType)
-	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", DashboardLive)
+	--SpecializationUtil.registerEventListener(vehicleType, "onUpdate", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onDraw", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "initSpecialization", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onLoad", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onRegisterActionEvents", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "registerOverwrittenFunctions", DashboardLive)
  	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onReadUpdateStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteUpdateStream", DashboardLive)
 end
 
+function DashboardLive.registerOverwrittenFunctions(vehicleType)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsDashboardGroupActive", DashboardLive.getIsDashboardGroupActive)
+end
+
 function DashboardLive:onLoad(savegame)
 	self.spec_DashboardLive = self["spec_"..DashboardLive.MOD_NAME..".DashboardLive"]
 	local spec = self.spec_DashboardLive
-	
-	-- engine data
-	spec.motorTemperature = 20
-	spec.fanEnabled = false
-	spec.fanEnabledLast = false
-	spec.lastFuelUsage = 0
-	spec.lastDefUsage = 0
-	spec.lastAirUsage = 0
 	
 	-- management data
 	spec.dirtyFlag = self:getNextDirtyFlag()
 	spec.updateTimer = 0
 	
-	-- dashboard data
-	spec.dashboard = {}
-	spec.dashboard.temp = 0
-	spec.dashboard.fuel = 0
-	spec.dashboard.warnTemp = false
-	spec.dashboard.warnTest1 = false
-	spec.dashboard.warnTest2 = false
+	-- Check if Mod GuidanceSteering exists
+	spec.modGuidanceSteeringFound = self.spec_globalPositioningSystem ~= nil
+	
+	-- Check if Mod VCA exists
+	spec.modVCAFound = self.vcaGetState ~= nil
+	
+	-- Check if Mod EV exists
+	spec.modEVFound = FS22_EnhancedVehicle ~= nil and FS22_EnhancedVehicle.FS22_EnhancedVehicle ~= nil and FS22_EnhancedVehicle.FS22_EnhancedVehicle.onActionCall ~= nil
+	
+	-- Check if Mod SpeedControl exists
+	spec.modSpeedControlFound = FS22_SpeedControl ~= nil and FS22_SpeedControl.SpeedControl ~= nil
+	
+	--Check if Mod HeadlandManagement exists
+	spec.modHLMFound = self.spec_Headlandmanagement ~= nil
+end
+
+function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
+	if not superFunc(self, xmlFile, key, group) then
+        return false
+    end
+    
+    local dblEntry = xmlFile:getValue(key .. "#dbl")
+    group.dblCommand = dblEntry
+    return true
+end
+
+function DashboardLive:getIsDashboardGroupActive(superFunc, group)
+    local spec = self.spec_DashboardLive
+    
+--[[
+    group.baseFrontLifted	= dblEntry == "base_front_lifted"
+    group.baseBackLifted 	= dblEntry == "base_back_lifted"
+    group.baseFrontPto 		= dblEntry == "base_front_pto"
+    group.baseBackPto 		= dblEntry == "base_back_pto"
+    
+    group.vcaPark 			= dblEntry == "vca_park"
+    group.vcaDiffFront 		= dblEntry == "vca_diff_front"
+	group.vcaDiffBack 		= dblEntry == "vca_diff_back"
+    group.vcaDiffAwd 		= dblEntry == "vca_diff_awd"
+--]]
+	if group.dblCommand == nil then return superFunc(self, group)
+	elseif group.dblCommand == "base_front_lifted" or group.dblCommand == "base_back_lifted" then
+		return false
+	elseif group.dblCommand == "base_front_pto" or group.dblCommand == "base_back_pto" then
+		return false
+	elseif group.dblCommand == "vca_park" then
+		dbgprint("VCA_PARK: "..tostring(spec.modVCAFound and self:vcaGetState("handbrake")), 2)
+		--return spec.modVCAFound and self:vcaGetState("handbrake")
+		return self:vcaGetState("handbrake")
+	elseif group.dblCommand == "vca_diff_front" then
+		return false
+	elseif group.dblCommand == "vca_diff_back" then
+		return false
+	elseif group.dblCommand == "vca_diff_awd" then
+		return false
+	elseif group.dblCommand == "hlm_active_field" then
+		return spec.modHLMFound and spec_HeadlandManagement.isOn and not spec.HeadlandManagement.isActive
+	elseif group.dblCommand == "hlm_active_headland" then
+		return spec.modHLMFound and spec_HeadlandManagement.isOn and spec.HeadlandManagement.isActive
+	end
+    return superFunc(self, group)
 end
 
 function DashboardLive:onRegisterActionEvents(isActiveForInput)
@@ -77,31 +137,37 @@ end
 
 function DashboardLive:onReadStream(streamId, connection)
 	local spec = self.spec_DashboardLive
+	--[[
 	spec.motorTemperature = streamReadFloat32(streamId)
 	spec.fanEnabled = streamReadBool(streamId)
 	spec.lastFuelUsage = streamReadFloat32(streamId)
 	spec.lastDefUsage = streamReadFloat32(streamId)
 	spec.lastAirUsage = streamReadFloat32(streamId)
+	--]]
 end
 
 function DashboardLive:onWriteStream(streamId, connection)
 	local spec = self.spec_DashboardLive
+	--[[
 	streamWriteFloat32(streamId, spec.motorTemperature)
 	streamWriteBool(streamId, spec.fanEnabled)
 	streamWriteFloat32(streamId, spec.lastFuelUsage)
 	streamWriteFloat32(streamId, spec.lastDefUsage)
 	streamWriteFloat32(streamId, spec.lastAirUsage)
+	--]]
 end
 	
 function DashboardLive:onReadUpdateStream(streamId, timestamp, connection)
 	if connection:getIsServer() then
 		local spec = self.spec_DashboardLive
 		if streamReadBool(streamId) then
+			--[[
 			spec.motorTemperature = streamReadFloat32(streamId)
 			spec.fanEnabled = streamReadBool(streamId)
 			spec.lastFuelUsage = streamReadFloat32(streamId)
 			spec.lastDefUsage = streamReadFloat32(streamId)
 			spec.lastAirUsage = streamReadFloat32(streamId)
+			--]]
 		end
 	end
 end
@@ -110,12 +176,14 @@ function DashboardLive:onWriteUpdateStream(streamId, connection, dirtyMask)
 	if not connection:getIsServer() then
 		local spec = self.spec_DashboardLive
 		if streamWriteBool(streamId, bitAND(dirtyMask, spec.dirtyFlag) ~= 0) then
+			--[[
 			streamWriteFloat32(streamId, spec.motorTemperature)
 			streamWriteBool(streamId, spec.fanEnabled)
 			streamWriteFloat32(streamId, spec.lastFuelUsage)
 			streamWriteFloat32(streamId, spec.lastDefUsage)
 			streamWriteFloat32(streamId, spec.lastAirUsage)
 			self.spec_motorized.motorTemperature.valueSend = spec.motorTemperature
+			--]]
 		end
 	end
 end
@@ -198,13 +266,6 @@ function DashboardLive:onDraw(dt)
 	local spec = self.spec_DashboardLive
 	local mspec = self.spec_motorized
 	if self.isActive then
-		dbgrender(self.isActive, 1, 3)
-		dbgrender(string.format("%.2f", tostring(spec.dashboard.temp)), 2, 3)
-		dbgrender(string.format("%.2f", tostring(spec.dashboard.fuel)), 3, 3)
-		dbgrender("Temp Warning: "..tostring(spec.dashboard.warnTemp), 4, 3)
-		local motor = mspec.motor
-		dbgrender("Gear Mode: "..tostring(motor.gearShiftMode), 6 ,3)
-		--dbgrender(spec.dashboard.warnTest1, 6, 3)
-		dbgrender(spec.dashboard.warnTest2, 7, 3)
+		dbgrenderTable(self.spec_DashboardLive, 1, 3)
 	end
 end

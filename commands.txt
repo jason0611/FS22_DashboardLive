@@ -1,0 +1,39 @@
+base_front_lifted
+base_back_lifted
+base_back_pto
+base_front_pto
+vca_park
+vca_diff_front
+vca_diff_back
+vca_diff_awd
+hlm_active_field
+hlm_active_headland
+
+---
+
+Werkzeug vorne/hinten ausgehoben/abgesenkt			--> base_front_lifted / base_back_lifted
+Werkzeug vorne/hinten angeschaltet/abgeschaltet		--> base_front_pto / base_back_pto
+
+Füllstand Hänger 1
+Füllstand Hänger 2
+
+VCA/EHV:
+Parkbremse aktiv									--> vca_park
+Differential vorne/hinten 							--> vca_diff_front / vca_diff_back
+Allradantrieb										--> vca_diff_awd
+
+HLM:
+Aktiv+Feldmodus/Aktiv+Vorgewendemodus				--> hlm_active_field / hlm_active_headland
+
+Ifkos Mods:
+Lenkachse gesperrt
+Ballenzähler-Informationen
+
+SpeedControl:
+Tempomat 1
+Tempomat 2
+Tempomat 3
+
+GS:
+GS aktiv
+GS Spurführung aktiv

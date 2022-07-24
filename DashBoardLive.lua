@@ -2,7 +2,7 @@
 -- Multiplayer motor data fix for LS 22
 --
 -- Jason06 / Glowins Modschmiede
--- Version 0.1.0.1
+-- Version 0.0.0.5
 --
 DashboardLive = {}
 
@@ -32,6 +32,7 @@ function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onDraw", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "initSpecialization", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onLoad", DashboardLive)
+        SpecializationUtil.registerEventListener(vehicleType, "onPostLoad", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onRegisterActionEvents", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "registerOverwrittenFunctions", DashboardLive)
  	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", DashboardLive)
@@ -52,7 +53,11 @@ function DashboardLive:onLoad(savegame)
 	-- management data
 	spec.dirtyFlag = self:getNextDirtyFlag()
 	spec.updateTimer = 0
-	
+end
+
+function DashboardLive:onPostLoad(savegame)
+        local spec = self.spec_DashboardLive
+
 	-- Check if Mod GuidanceSteering exists
 	spec.modGuidanceSteeringFound = self.spec_globalPositioningSystem ~= nil
 	

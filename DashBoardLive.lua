@@ -105,8 +105,8 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		return false
 	elseif group.dblCommand == "vca_park" then
 		dbgprint("VCA_PARK: "..tostring(spec.modVCAFound and self:vcaGetState("handbrake")), 2)
-		--return spec.modVCAFound and self:vcaGetState("handbrake")
-		return self:vcaGetState("handbrake")
+		return spec.modVCAFound and self:vcaGetState("handbrake")
+		--return self:vcaGetState("handbrake")
 	elseif group.dblCommand == "vca_diff_front" then
 		return false
 	elseif group.dblCommand == "vca_diff_back" then

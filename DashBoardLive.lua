@@ -71,7 +71,7 @@ function DashboardLive:onPostLoad(savegame)
 	spec.modSpeedControlFound = FS22_SpeedControl ~= nil and FS22_SpeedControl.SpeedControl ~= nil
 	
 	--Check if Mod HeadlandManagement exists
-	spec.modHLMFound = self.spec_Headlandmanagement ~= nil
+	spec.modHLMFound = self.spec_HeadlandManagement ~= nil
 end
 
 function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
@@ -104,7 +104,6 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "base_front_pto" or group.dblCommand == "base_back_pto" then
 		return false
 	elseif group.dblCommand == "vca_park" then
-		dbgprint("VCA_PARK: "..tostring(spec.modVCAFound and self:vcaGetState("handbrake")), 2)
 		return spec.modVCAFound and self:vcaGetState("handbrake")
 		--return self:vcaGetState("handbrake")
 	elseif group.dblCommand == "vca_diff_front" then
@@ -114,9 +113,12 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "vca_diff_awd" then
 		return false
 	elseif group.dblCommand == "hlm_active_field" then
-		return spec.modHLMFound and spec_HeadlandManagement.isOn and not spec.HeadlandManagement.isActive
+		dbgprint("HLM found: "..tostring(spec.modHLMFound),2)
+		dbgprint("HLM on: "..tostring(self.spec_HeadlandManagement.isOn), 2)
+		dbgprint("HLM active: "..tostring(self.spec_HeadlandManagement.isActive), 2)
+		return spec.modHLMFound and self.spec_HeadlandManagement.isOn and not self.spec_HeadlandManagement.isActive
 	elseif group.dblCommand == "hlm_active_headland" then
-		return spec.modHLMFound and spec_HeadlandManagement.isOn and spec.HeadlandManagement.isActive
+		return spec.modHLMFound and self.spec_HeadlandManagement.isOn and self.spec_HeadlandManagement.isActive
 	end
     return superFunc(self, group)
 end

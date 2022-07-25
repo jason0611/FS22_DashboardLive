@@ -1,3 +1,44 @@
+Base game:
+
+displayTypes: (parameter)
+isAttached = true/false (and) - attachable
+attacherJointIndices = "# # #" (or) - attacherJoints
+states = "# # #" (or) - crabSteering
+isMotorStarting = true/false (and) - motorized
+isMotorRunning = true/false (and) - motorized
+isReverseDriving = true/false (and) - reverseDriving
+
+ValueTypes:
+driveable:
+cruiseControl - NUMBER
+directionForward
+directionBackward
+--movingDirection - ROT/ANIMATION
+cruiseControlActive - EMITTER
+--accelerationAxis - ROT
+--decelerationAxis - ROT
+ac_decelerationAxis
+ac_decelerationAxis
+
+motorized:
+rpm - NUMBER
+load - NUMBER
+speed - NUMBER
+fuelUsage - NUMBER
+motorTemperature - NUMBER
+motorTemperatureWarning - EMITTER
+clutchPedal - ANIMATION
+gear - NUMBER
+gearGroup - NUMBER
+movingDirection - ANIMATION
+directionForward - EMITTER
+directionBackward - EMITTER
+ignitionState - MULTI-STATE
+battery - NUMBER
+
+DashboardLive:
+
+dbl:
 base_front_lifted
 base_back_lifted
 base_back_pto
@@ -11,8 +52,9 @@ hlm_active_headland
 
 ---
 
-Werkzeug vorne/hinten ausgehoben/abgesenkt			--> base_front_lifted / base_back_lifted
-Werkzeug vorne/hinten angeschaltet/abgeschaltet		--> base_front_pto / base_back_pto
+Werkzeug ausgehoben/abgesenkt			--> base_lifted
+Werkzeug angeschaltet/abgeschaltet		--> base_pto
+Werkzeug ausgeklappt/eingeklappt		--> base_folded
 
 Füllstand Hänger 1
 Füllstand Hänger 2
@@ -23,7 +65,7 @@ Differential vorne/hinten 							--> vca_diff_front / vca_diff_back
 Allradantrieb										--> vca_diff_awd
 
 HLM:
-Aktiv+Feldmodus/Aktiv+Vorgewendemodus				--> hlm_active_field / hlm_active_headland
+Aktiv+Feldmodus/Aktiv+Vorgewendemodus				--> hlm_on / hlm_active_field / hlm_active_headland
 
 Ifkos Mods:
 Lenkachse gesperrt

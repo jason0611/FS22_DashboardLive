@@ -24,6 +24,8 @@ function DashboardLive.initSpecialization()
     local schema = Vehicle.xmlSchema
     Dashboard.registerDashboardXMLPaths(schema, "vehicle.dashboard.default")
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl", "DashboardLive command")
+    schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#op", "DashboardLive operator")
+	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl_opt", "DashboardLive operator")
 end
 
 
@@ -79,15 +81,9 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
         return false
     end
     
-    local dblEntry = xmlFile:getValue(key .. "#dbl")
-    --[[
-    local dblOption
-    if dblEntry == "base_lifted" or dblEntry == "base_pto" or dblEntry == "base_folded" then
-    	dblOption = xmlFile:getValue(key .. "#attacherJointIndices")
-    end
-    group.dblOption = dblOption
-    --]]
-    group.dblCommand = dblEntry
+    group.dblCommand = xmlFile:getValue(key .. "#dbl")
+    group.dblOperator = xmlFile:getValue(key .. "#op", "or")
+	group.dplOption = xmlFile:getValue(key .. "#dbl_opt")
     return true
 end
 
@@ -105,13 +101,10 @@ local function getAttachedStatus(vehicle, group, mode)
             hasAttachment = true
             if mode == "raised" then
             	result = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered()
-            	dbgprint("getAttachedStatus: attacher "..tostring(jointIndex).." raised result:"..tostring(result), 2)
             elseif mode == "pto" then
             	result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive()
-            	dbgprint("getAttachedStatus: attacher "..tostring(jointIndex).." pto result:"..tostring(result), 2)
             elseif mode == "folded" then
             	result = implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded()
-            	dbgprint("getAttachedStatus: attacher "..tostring(jointIndex).." folded result:"..tostring(result), 2)
             end
         end
     end
@@ -146,7 +139,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	
 	elseif group.dblCommand == "base_folded" then
 		returnValue = getAttachedStatus(self, group, "folded")	
-	
+		
 	elseif group.dblCommand == "vca_park" then
 		returnValue = spec.modVCAFound and self:vcaGetState("handbrake")
 	
@@ -170,10 +163,21 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	
 	elseif group.dblCommand == "hlm_on" then
 		returnValue = spec.modHLMFound and self.spec_HeadlandManagement.isOn
-	
+		
+	elseif group.dblCommand == "gps_on" then
+		local gsSpec = self.spec_globalPositioningSystem
+		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceIsActive
+		
+	elseif group.dblCommand == "gps_active" then
+		local gsSpec = self.spec_globalPositioningSystem
+		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceSteeringIsActive
 	end
     
-    return superFunc(self, group) and returnValue
+    if group.dblOperator == "and" then 
+    	return superFunc(self, group) and returnValue
+    else
+    	return superFunc(self, group) or returnValue
+    end
 end
 
 function DashboardLive:onRegisterActionEvents(isActiveForInput)

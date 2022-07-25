@@ -80,8 +80,43 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
     end
     
     local dblEntry = xmlFile:getValue(key .. "#dbl")
+    --[[
+    local dblOption
+    if dblEntry == "base_lifted" or dblEntry == "base_pto" or dblEntry == "base_folded" then
+    	dblOption = xmlFile:getValue(key .. "#attacherJointIndices")
+    end
+    group.dblOption = dblOption
+    --]]
     group.dblCommand = dblEntry
     return true
+end
+
+local function getAttachedStatus(vehicle, group, mode)
+	if group.attacherJointIndices == "" or group.attacherJointIndices == nil then
+		Logging.xmlWarning(vehicle.xmlFile, "No attacherJointIndex given for DashboardLive attacher command")
+		return false
+	end
+	
+	local result = false
+	
+    for _, jointIndex in ipairs(group.attacherJointIndices) do
+    	local implement = vehicle:getImplementFromAttacherJointIndex(jointIndex) 
+    	if implement ~= nil then
+            hasAttachment = true
+            if mode == "raised" then
+            	result = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered()
+            	dbgprint("getAttachedStatus: attacher "..tostring(jointIndex).." raised result:"..tostring(result), 2)
+            elseif mode == "pto" then
+            	result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive()
+            	dbgprint("getAttachedStatus: attacher "..tostring(jointIndex).." pto result:"..tostring(result), 2)
+            elseif mode == "folded" then
+            	result = implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded()
+            	dbgprint("getAttachedStatus: attacher "..tostring(jointIndex).." folded result:"..tostring(result), 2)
+            end
+        end
+    end
+
+    return result
 end
 
 function DashboardLive:getIsDashboardGroupActive(superFunc, group)
@@ -98,29 +133,47 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	group.vcaDiffBack 		= dblEntry == "vca_diff_back"
     group.vcaDiffAwd 		= dblEntry == "vca_diff_awd"
 --]]
-	if group.dblCommand == nil then return superFunc(self, group)
-	elseif group.dblCommand == "base_front_lifted" or group.dblCommand == "base_back_lifted" then
-		return false
-	elseif group.dblCommand == "base_front_pto" or group.dblCommand == "base_back_pto" then
-		return false
+	local returnValue
+	
+	if group.dblCommand == nil then 
+		return superFunc(self, group)
+	
+	elseif group.dblCommand == "base_lifted" then
+		returnValue = getAttachedStatus(self, group, "raised")
+	
+	elseif group.dblCommand == "base_pto" then
+		returnValue = getAttachedStatus(self, group, "pto")
+	
+	elseif group.dblCommand == "base_folded" then
+		returnValue = getAttachedStatus(self, group, "folded")	
+	
 	elseif group.dblCommand == "vca_park" then
-		return spec.modVCAFound and self:vcaGetState("handbrake")
-		--return self:vcaGetState("handbrake")
+		returnValue = spec.modVCAFound and self:vcaGetState("handbrake")
+	
 	elseif group.dblCommand == "vca_diff_front" then
-		return false
+		returnValue = spec.modVCAFound and self:vcaGetState("diffLockFront")
+	
 	elseif group.dblCommand == "vca_diff_back" then
-		return false
+		returnValue = spec.modVCAFound and self:vcaGetState("diffLockBack")
+	
 	elseif group.dblCommand == "vca_diff_awd" then
-		return false
+		returnValue = spec.modVCAFound and self:vcaGetState("diffLockAWD")
+		
+	elseif group.dblCommand == "vca_diff_awdF" then
+		returnValue = spec.modVCAFound and self:vcaGetState("diffFrontAdv")
+	
 	elseif group.dblCommand == "hlm_active_field" then
-		dbgprint("HLM found: "..tostring(spec.modHLMFound),2)
-		dbgprint("HLM on: "..tostring(self.spec_HeadlandManagement.isOn), 2)
-		dbgprint("HLM active: "..tostring(self.spec_HeadlandManagement.isActive), 2)
-		return spec.modHLMFound and self.spec_HeadlandManagement.isOn and not self.spec_HeadlandManagement.isActive
+		returnValue = spec.modHLMFound and self.spec_HeadlandManagement.isOn and not self.spec_HeadlandManagement.isActive
+	
 	elseif group.dblCommand == "hlm_active_headland" then
-		return spec.modHLMFound and self.spec_HeadlandManagement.isOn and self.spec_HeadlandManagement.isActive
+		returnValue = spec.modHLMFound and self.spec_HeadlandManagement.isOn and self.spec_HeadlandManagement.isActive
+	
+	elseif group.dblCommand == "hlm_on" then
+		returnValue = spec.modHLMFound and self.spec_HeadlandManagement.isOn
+	
 	end
-    return superFunc(self, group)
+    
+    return superFunc(self, group) and returnValue
 end
 
 function DashboardLive:onRegisterActionEvents(isActiveForInput)
@@ -273,6 +326,6 @@ function DashboardLive:onDraw(dt)
 	local spec = self.spec_DashboardLive
 	local mspec = self.spec_motorized
 	if self.isActive then
-		dbgrenderTable(self.spec_DashboardLive, 1, 3)
+		--dbgrenderTable(self.spec_DashboardLive, 1, 3)
 	end
 end

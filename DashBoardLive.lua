@@ -1,8 +1,8 @@
 --
--- Multiplayer motor data fix for LS 22
+-- Dashboard Extension for FS22
 --
 -- Jason06 / Glowins Modschmiede
--- Version 0.0.0.5
+-- Version 0.0.1.0
 --
 DashboardLive = {}
 
@@ -11,7 +11,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(g_currentModDirectory.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 3)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 4)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 -- Standards / Basics
@@ -22,30 +22,38 @@ end
 
 function DashboardLive.initSpecialization()
     local schema = Vehicle.xmlSchema
-    Dashboard.registerDashboardXMLPaths(schema, "vehicle.dashboard.default")
+    DashboardLive.registerDashboardXMLPaths(schema, "vehicle.dashboard.default")
+    for _, spec in pairs({"enterable", "drivable", "motorized"}) do
+    	DashboardLive.registerDashboardXMLPaths(schema, string.format("vehicle.%s.dashboards", spec))
+    end
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl", "DashboardLive command")
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#op", "DashboardLive operator")
-	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl_opt", "DashboardLive operator")
+	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl_opt", "DashboardLive option")
+	dbgprint("initSpecialization : registered", 2)
 end
 
+function DashboardLive.registerDashboardXMLPaths(schema, basePath, availableValueTypes)
+	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#dbl", "DashboardLive command")
+	dbgprint("registerDashboardXMLPaths : registered for path "..basePath, 2)
+end
 
 function DashboardLive.registerEventListeners(vehicleType)
-	--SpecializationUtil.registerEventListener(vehicleType, "onUpdate", DashboardLive)
-	SpecializationUtil.registerEventListener(vehicleType, "onDraw", DashboardLive)
-	SpecializationUtil.registerEventListener(vehicleType, "initSpecialization", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onLoad", DashboardLive)
-        SpecializationUtil.registerEventListener(vehicleType, "onPostLoad", DashboardLive)
-	SpecializationUtil.registerEventListener(vehicleType, "onRegisterActionEvents", DashboardLive)
-	SpecializationUtil.registerEventListener(vehicleType, "registerOverwrittenFunctions", DashboardLive)
+    SpecializationUtil.registerEventListener(vehicleType, "onPostLoad", DashboardLive)
  	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onReadUpdateStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteUpdateStream", DashboardLive)
 end
 
+function DashboardLive.registerFunctions(vehicleType)
+end
+
 function DashboardLive.registerOverwrittenFunctions(vehicleType)
-    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
+	SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsDashboardGroupActive", DashboardLive.getIsDashboardGroupActive)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadNumberDashboardFromXML", DashboardLive.loadNumberDashboardFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "updateDashboards", DashboardLive.updateDashboards)
 end
 
 function DashboardLive:onLoad(savegame)
@@ -76,11 +84,37 @@ function DashboardLive:onPostLoad(savegame)
 	spec.modHLMFound = self.spec_HeadlandManagement ~= nil
 end
 
+function DashboardLive:onReadStream(streamId, connection)
+	local spec = self.spec_DashboardLive
+end
+
+function DashboardLive:onWriteStream(streamId, connection)
+	local spec = self.spec_DashboardLive
+end
+	
+function DashboardLive:onReadUpdateStream(streamId, timestamp, connection)
+	if connection:getIsServer() then
+		local spec = self.spec_DashboardLive
+		if streamReadBool(streamId) then
+	
+		end
+	end
+end
+
+function DashboardLive:onWriteUpdateStream(streamId, connection, dirtyMask)
+	if not connection:getIsServer() then
+		local spec = self.spec_DashboardLive
+		if streamWriteBool(streamId, bitAND(dirtyMask, spec.dirtyFlag) ~= 0) then
+			
+		end
+	end
+end
+
+-- Main part
 function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	if not superFunc(self, xmlFile, key, group) then
         return false
     end
-    
     group.dblCommand = xmlFile:getValue(key .. "#dbl")
     group.dblOperator = xmlFile:getValue(key .. "#op", "or")
 	group.dplOption = xmlFile:getValue(key .. "#dbl_opt")
@@ -149,6 +183,9 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "vca_diff_back" then
 		returnValue = spec.modVCAFound and self:vcaGetState("diffLockBack")
 	
+	elseif group.dblCommand == "vca_diff" then
+		returnValue = spec.modVCAFound and (self:vcaGetState("diffLockFront") or self:vcaGetState("diffLockBack"))
+	
 	elseif group.dblCommand == "vca_diff_awd" then
 		returnValue = spec.modVCAFound and self:vcaGetState("diffLockAWD")
 		
@@ -171,8 +208,20 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "gps_active" then
 		local gsSpec = self.spec_globalPositioningSystem
 		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceSteeringIsActive
+	
+	elseif group.dblCommand == "gps_lane+" then
+		local spec = self.spec_DashboardLive
+		local gsSpec = self.spec_globalPositioningSystem
+		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceIsActive
+		returnValue = returnValue and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.currentLane ~= nil and gsSpec.guidanceData.currentLane >= 0	
+
+	elseif group.dblCommand == "gps_lane-" then
+		local spec = self.spec_DashboardLive
+		local gsSpec = self.spec_globalPositioningSystem
+		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceIsActive
+		returnValue = returnValue and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.currentLane ~= nil and gsSpec.guidanceData.currentLane < 0	
 	end
-    
+	    
     if group.dblOperator == "and" then 
     	return superFunc(self, group) and returnValue
     else
@@ -180,156 +229,113 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
     end
 end
 
-function DashboardLive:onRegisterActionEvents(isActiveForInput)
-	dbgprint("onRegisterActionEvents", 4)
-	if self.isClient then
-		local spec = self.spec_DashboardLive
-		DashboardLive.actionEvents = {} 
-		if self:getIsActiveForInput(true) and spec ~= nil then 
-			local prio = GS_PRIO_LOW
-			local actionEventId
-			
-			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_TEST1', self, DashboardLive.TEST, false, true, false, true, nil)
-			g_inputBinding:setActionEventTextPriority(actionEventId, prio)
-			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_TEST2', self, DashboardLive.TEST, false, true, false, true, nil)
-			g_inputBinding:setActionEventTextPriority(actionEventId, prio)
-			
-			dbgprint("actionEvents set", 2)
-		end		
-	end
+function DashboardLive:loadNumberDashboardFromXML(superFunc, xmlFile, key, dashboard)
+	dashboard.dblCommand = xmlFile:getValue(key.."#dbl")
+	dashboard.stateFunc = DashboardLive.dblNumberFunc
+	return superFunc(self, xmlFile, key, dashboard)
 end
 
-function DashboardLive:onReadStream(streamId, connection)
-	local spec = self.spec_DashboardLive
-	--[[
-	spec.motorTemperature = streamReadFloat32(streamId)
-	spec.fanEnabled = streamReadBool(streamId)
-	spec.lastFuelUsage = streamReadFloat32(streamId)
-	spec.lastDefUsage = streamReadFloat32(streamId)
-	spec.lastAirUsage = streamReadFloat32(streamId)
-	--]]
-end
-
-function DashboardLive:onWriteStream(streamId, connection)
-	local spec = self.spec_DashboardLive
-	--[[
-	streamWriteFloat32(streamId, spec.motorTemperature)
-	streamWriteBool(streamId, spec.fanEnabled)
-	streamWriteFloat32(streamId, spec.lastFuelUsage)
-	streamWriteFloat32(streamId, spec.lastDefUsage)
-	streamWriteFloat32(streamId, spec.lastAirUsage)
-	--]]
-end
-	
-function DashboardLive:onReadUpdateStream(streamId, timestamp, connection)
-	if connection:getIsServer() then
-		local spec = self.spec_DashboardLive
-		if streamReadBool(streamId) then
-			--[[
-			spec.motorTemperature = streamReadFloat32(streamId)
-			spec.fanEnabled = streamReadBool(streamId)
-			spec.lastFuelUsage = streamReadFloat32(streamId)
-			spec.lastDefUsage = streamReadFloat32(streamId)
-			spec.lastAirUsage = streamReadFloat32(streamId)
-			--]]
+function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
+-- Giants's stuff ----------------------------------------
+    for i=1, #dashboards do
+        local dashboard = dashboards[i]
+        local isActive = true
+        for j=1, #dashboard.groups do
+            if not dashboard.groups[j].isActive then
+                isActive = false
+                break
+            end
+        end
+        
+-- Own stuff ---------------------------------------------
+		if dashboard.dblCommand ~= nil then
+			local spec = self.spec_DashboardLive
+			local c = dashboard.dblCommand
+			if c == "gpsLane" and spec.modGuidanceSteeringFound then
+				local gsSpec = self.spec_globalPositioningSystem
+				if gsSpec ~= nil and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.currentLane ~= nil then
+					local newValue, minValue, maxValue, newSign
+					minValue = 0 
+					maxValue = 999
+					newValue = math.abs(gsSpec.guidanceData.currentLane) / 10
+					dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
+				end
+			end
 		end
-	end
-end
-
-function DashboardLive:onWriteUpdateStream(streamId, connection, dirtyMask)
-	if not connection:getIsServer() then
-		local spec = self.spec_DashboardLive
-		if streamWriteBool(streamId, bitAND(dirtyMask, spec.dirtyFlag) ~= 0) then
-			--[[
-			streamWriteFloat32(streamId, spec.motorTemperature)
-			streamWriteBool(streamId, spec.fanEnabled)
-			streamWriteFloat32(streamId, spec.lastFuelUsage)
-			streamWriteFloat32(streamId, spec.lastDefUsage)
-			streamWriteFloat32(streamId, spec.lastAirUsage)
-			self.spec_motorized.motorTemperature.valueSend = spec.motorTemperature
-			--]]
-		end
-	end
-end
-
--- Tools part
-function DashboardLive:TEST(actionName, keyStatus, arg3, arg4, arg5)
-	local spec = self.spec_DashboardLive
-	local motor = self.spec_motorized.motor
-	dbgprint("actionName: "..actionName)
-	if actionName == "DBL_TEST1" then 
-		local gsm = motor.gearShiftMode
-		gsm = gsm + 1
-		if gsm > 3 then gsm = 1 end
-		motor:setGearShiftMode(gsm)
-		dbgprint("TEST: gearShiftMode set to "..tostring(gsm), 1)
-	end
-	--if actionName == "DBL_TEST1" then spec.dashboard.warnTest1 = not spec.dashboard.warnTest1 end
-	if actionName == "DBL_TEST2" then spec.dashboard.warnTest2 = not spec.dashboard.warnTest2 end
-end
-
--- Main part
-
-local function updateDashboardSlow(v, dt)
-	local mspec = v.spec_motorized
-	local spec = v.spec_DashboardLive
+-- Own stuff end -----------------------------------------
 	
-	spec.dashboard.temp = mspec.motorTemperature.value
-	spec.dashboard.warnTemp = (spec.dashboard.temp > 80)
-end
+-- Giant's stuff -----------------------------------------
+        if dashboard.valueObject ~= nil and dashboard.valueFunc ~= nil then
+            local value = self:getDashboardValue(dashboard.valueObject, dashboard.valueFunc, dashboard)
 
-local function updateDashboardFast(v, dt)
-	local mspec = v.spec_motorized
-	local spec = v.spec_DashboardLive
-	
-	spec.dashboard.fuel = mspec.lastFuelUsage
-end
+            if dashboard.valueFactor ~= nil and type(value) == "number" then
+                value = value * dashboard.valueFactor
+            end
 
-function DashboardLive:onUpdate(dt)
-	local spec = self.spec_DashboardLive
-	local mspec = self.spec_motorized
-	
-	spec.updateTimer = spec.updateTimer + dt
-	
-	if self.isServer and self.getIsMotorStarted ~= nil and self:getIsMotorStarted() then
-		spec.motorTemperature = mspec.motorTemperature.value
-		spec.fanEnabled = mspec.motorFan.enabled
-		spec.lastFuelUsage = mspec.lastFuelUsage
-		spec.lastDefUsage = mspec.lastDefUsage
-		spec.lastAirUsage = mspec.lastAirUsage
-		
-		if spec.updateTimer >= 1000 and spec.motorTemperature ~= self.spec_motorized.motorTemperature.valueSend then
-			self:raiseDirtyFlags(spec.dirtyFlag)
-		end
-		
-		if spec.fanEnabled ~= spec.fanEnabledLast then
-			self:raiseDirtyFlags(spec.dirtyFlag)
-			spec.fanEnabledLast = spec.fanEnabled
-		end
-		
-	end
-	if self.isClient and not self.isServer and self.getIsMotorStarted ~= nil and self:getIsMotorStarted() then
-		mspec.motorTemperature.value = spec.motorTemperature
-		mspec.motorFan.enabled = spec.fanEnabled
-		mspec.lastFuelUsage = spec.lastFuelUsage
-		mspec.lastDefUsage = spec.lastDefUsage
-		mspec.lastAirUsage = spec.lastAirUsage
-	end
-	
-	updateDashboardFast(self, dt)
-	
-	if spec.updateTimer >= 1000 then
-		updateDashboardSlow(self, dt)
-		spec.lastUpdateTimer = dt
-		dbgprint("updateDashboardSlow", 4)
-	end
-	if spec.updateTimer > 1000 then spec.updateTimer = 0 end
-end
+            if not isActive then
+                value = dashboard.idleValue
+            end
 
-function DashboardLive:onDraw(dt)
-	local spec = self.spec_DashboardLive
-	local mspec = self.spec_motorized
-	if self.isActive then
-		--dbgrenderTable(self.spec_DashboardLive, 1, 3)
-	end
+            if dashboard.doInterpolation and type(value) == "number" and value ~= dashboard.lastInterpolationValue then
+                local dir = MathUtil.sign(value - dashboard.lastInterpolationValue)
+                local limitFunc = math.min
+                if dir < 0 then
+                    limitFunc = math.max
+                end
+
+                value = limitFunc(dashboard.lastInterpolationValue + dashboard.interpolationSpeed * dir * dt, value)
+                dashboard.lastInterpolationValue = value
+            end
+
+            if value ~= dashboard.lastValue or force then
+                dashboard.lastValue = value
+
+                local min, max
+                if type(value) == "number" then
+                    -- for idle values while not active we ignore the limits
+                    min = self:getDashboardValue(dashboard.valueObject, dashboard.minFunc, dashboard)
+                    if min ~= nil and isActive then
+                        value = math.max(min, value)
+                    end
+
+                    max = self:getDashboardValue(dashboard.valueObject, dashboard.maxFunc, dashboard)
+                    if max ~= nil and isActive then
+                        value = math.min(max, value)
+                    end
+
+                    local center = self:getDashboardValue(dashboard.valueObject, dashboard.centerFunc, dashboard)
+                    if center ~= nil then
+                        local maxValue = math.max(math.abs(min), math.abs(max))
+                        if value < center then
+                            value = -value / min * maxValue
+                        elseif value > center then
+                            value = value / max * maxValue
+                        end
+
+                        max = maxValue
+                        min = -maxValue
+                    end
+                end
+
+                if dashboard.valueCompare ~= nil then
+                    if type(dashboard.valueCompare) == "table" then
+                        local oldValue = value
+                        value = false
+                        for _, compareValue in ipairs(dashboard.valueCompare) do
+                            if oldValue == compareValue then
+                                value = true
+                            end
+                        end
+                    else
+                        value = value == dashboard.valueCompare
+                    end
+                end
+
+                dashboard.stateFunc(self, dashboard, value, min, max, isActive)
+            end
+        elseif force then
+            dashboard.stateFunc(self, dashboard, true, nil, nil, isActive)
+        end
+    end
+-- Giant's stuff end -------------------------------------
 end

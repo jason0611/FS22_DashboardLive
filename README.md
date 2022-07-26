@@ -3,15 +3,15 @@
 Ideensammlung:
 
 Generell:
-- Werkzeugstatus vorne/hinten (ausgehoben, abgesenkt, aktiv, inaktiv, eingeklappt, ausgeklappt)
+- Werkzeugstatus vorne/hinten (ausgehoben, abgesenkt, aktiv, inaktiv, eingeklappt, ausgeklappt) / erledigt
 - Füllstand
 
-- Warnanzeige Motortemperatur
-- Warnanzeigen Öl etc. bei Wartungsmangel?
+- Warnanzeige Motortemperatur / vorbereitet
+- Warnanzeigen Öl etc. bei Wartungsmangel? / vorbereitet
 
 - Anzeige Lenkstatus
-- Anzeige Differentialsperren
-- Anzeige Allrad
+- Anzeige Differentialsperren / erledigt
+- Anzeige Allrad / erledigt
 - Anzeige Fahrhebelmodus?
 
 Pflug: 
@@ -22,4 +22,10 @@ Ballenpressen:
 
 Mähdrescher:
 - Status Rohr
+
+GPS:
+- Status an/aus / erledigt
+- Status Spurführung aktiv / erledigt
+- Anzeige Spurnummer / erledigt
+- Anzeige Arbeitsbreite
 

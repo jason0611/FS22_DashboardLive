@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="62">
 	<author>Jason06 / Glowins Modschmiede</author>
-	<version>0.0.0.6</version>
+	<version>0.0.1.0</version>
 	<title>
 		<en>Dashboard Live</en>
     </title>
@@ -17,12 +17,7 @@
 	<extraSourceFiles>
     	<sourceFile filename="RegisterDashboardLive.lua" />
     </extraSourceFiles>
-<!-- 
-	<specializations>
-        <specialization name="DashboardLive" className="DashboardLive" filename="DashboardLive.lua" />
-    </specializations>
- -->
- 	<actions>
+ 	<!--actions>
 		<action name="DBL_TEST1" category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_TEST2" category="VEHICLE" ignoreComboMask="false" />
 	</actions>
@@ -31,5 +26,5 @@
 		</actionBinding>
 		<actionBinding action="DBL_TEST2">
 		</actionBinding>
-	</inputBinding>
+	</inputBinding-->
 </modDesc>

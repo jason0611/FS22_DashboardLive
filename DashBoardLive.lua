@@ -22,10 +22,10 @@ end
 
 function DashboardLive.initSpecialization()
     local schema = Vehicle.xmlSchema
-    DashboardLive.registerDashboardXMLPaths(schema, "vehicle.dashboard.default")
-    for _, spec in pairs({"enterable", "drivable", "motorized"}) do
-    	DashboardLive.registerDashboardXMLPaths(schema, string.format("vehicle.%s.dashboards", spec))
-    end
+    --DashboardLive.registerDashboardXMLPaths(schema, "vehicle.dashboard.default")
+    --for _, spec in pairs({"enterable", "cylindered", "drivable", "lights", "motorized"}) do
+    --	DashboardLive.registerDashboardXMLPaths(schema, string.format("vehicle.%s.dashboards", spec))
+    --end
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl", "DashboardLive command")
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#op", "DashboardLive operator")
 	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl_opt", "DashboardLive option")
@@ -52,7 +52,16 @@ end
 function DashboardLive.registerOverwrittenFunctions(vehicleType)
 	SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsDashboardGroupActive", DashboardLive.getIsDashboardGroupActive)
-    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadNumberDashboardFromXML", DashboardLive.loadNumberDashboardFromXML)
+    
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadEmitterDashboardFromXML", DashboardLive.loadDashboardFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadNumberDashboardFromXML", DashboardLive.loadDashboardFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadTextDashboardFromXML", DashboardLive.loadDashboardFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadAnimationDashboardFromXML", DashboardLive.loadDashboardFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadRotationDashboardFromXML", DashboardLive.loadDashboardFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadVisibilityDashboardFromXML", DashboardLive.loadDashboardFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadSliderDashboardFromXML", DashboardLive.loadDashboardFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadMultiStateDashboardFromXML", DashboardLive.loadDashboardFromXML)
+    
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "updateDashboards", DashboardLive.updateDashboards)
 end
 
@@ -164,7 +173,8 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	
 	if group.dblCommand == nil then 
 		return superFunc(self, group)
-	
+
+	-- vanilla game
 	elseif group.dblCommand == "base_lifted" then
 		returnValue = getAttachedStatus(self, group, "raised")
 	
@@ -174,6 +184,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "base_folded" then
 		returnValue = getAttachedStatus(self, group, "folded")	
 		
+	-- VCA
 	elseif group.dblCommand == "vca_park" then
 		returnValue = spec.modVCAFound and self:vcaGetState("handbrake")
 	
@@ -192,6 +203,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "vca_diff_awdF" then
 		returnValue = spec.modVCAFound and self:vcaGetState("diffFrontAdv")
 	
+	-- Headland Management
 	elseif group.dblCommand == "hlm_active_field" then
 		returnValue = spec.modHLMFound and self.spec_HeadlandManagement.isOn and not self.spec_HeadlandManagement.isActive
 	
@@ -201,6 +213,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "hlm_on" then
 		returnValue = spec.modHLMFound and self.spec_HeadlandManagement.isOn
 		
+	-- Guidance Steering
 	elseif group.dblCommand == "gps_on" then
 		local gsSpec = self.spec_globalPositioningSystem
 		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceIsActive
@@ -229,9 +242,8 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
     end
 end
 
-function DashboardLive:loadNumberDashboardFromXML(superFunc, xmlFile, key, dashboard)
-	dashboard.dblCommand = xmlFile:getValue(key.."#dbl")
-	dashboard.stateFunc = DashboardLive.dblNumberFunc
+function DashboardLive:loadDashboardFromXML(superFunc, xmlFile, key, dashboard)
+	dashboard.dblCommand = xmlFile:getString(key.."#dbl")
 	return superFunc(self, xmlFile, key, dashboard)
 end
 
@@ -248,18 +260,27 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
         end
         
 -- Own stuff ---------------------------------------------
+		local override = false
 		if dashboard.dblCommand ~= nil then
 			local spec = self.spec_DashboardLive
 			local c = dashboard.dblCommand
-			if c == "gpsLane" and spec.modGuidanceSteeringFound then
+			local newValue, minValue, maxValue = 0, 0, 1
+			if c == "gps_lane" and spec.modGuidanceSteeringFound then
 				local gsSpec = self.spec_globalPositioningSystem
 				if gsSpec ~= nil and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.currentLane ~= nil then
-					local newValue, minValue, maxValue, newSign
-					minValue = 0 
 					maxValue = 999
 					newValue = math.abs(gsSpec.guidanceData.currentLane) / 10
 					dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
 				end
+			end
+			if c == "vca_park" then
+				if self:vcaGetState("handbrake") then 
+					newValue = 1 
+				else 
+					newValue = 0 
+				end
+				dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
+				override = true
 			end
 		end
 -- Own stuff end -----------------------------------------
@@ -333,7 +354,8 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 
                 dashboard.stateFunc(self, dashboard, value, min, max, isActive)
             end
-        elseif force then
+-- Own addition: Skip forced update if stateFunc was already called
+        elseif force and not override then
             dashboard.stateFunc(self, dashboard, true, nil, nil, isActive)
         end
     end

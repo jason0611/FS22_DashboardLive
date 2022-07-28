@@ -22,13 +22,9 @@ end
 
 function DashboardLive.initSpecialization()
     local schema = Vehicle.xmlSchema
-    --DashboardLive.registerDashboardXMLPaths(schema, "vehicle.dashboard.default")
-    --for _, spec in pairs({"enterable", "cylindered", "drivable", "lights", "motorized"}) do
-    --	DashboardLive.registerDashboardXMLPaths(schema, string.format("vehicle.%s.dashboards", spec))
-    --end
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl", "DashboardLive command")
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#op", "DashboardLive operator")
-	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl_opt", "DashboardLive option")
+	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#page", "DashboardLive page")
 	dbgprint("initSpecialization : registered", 2)
 end
 
@@ -40,6 +36,7 @@ end
 function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onLoad", DashboardLive)
     SpecializationUtil.registerEventListener(vehicleType, "onPostLoad", DashboardLive)
+    SpecializationUtil.registerEventListener(vehicleType, "onRegisterActionEvents", DashboardLive)
  	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onReadUpdateStream", DashboardLive)
@@ -71,11 +68,15 @@ function DashboardLive:onLoad(savegame)
 	
 	-- management data
 	spec.dirtyFlag = self:getNextDirtyFlag()
-	spec.updateTimer = 0
+	spec.actPage = 1
+	spec.maxPage = 1
+	spec.groups = {}
+	spec.groups[1] = true
 end
 
 function DashboardLive:onPostLoad(savegame)
-        local spec = self.spec_DashboardLive
+    local spec = self.spec_DashboardLive
+	dbgprint("onPostLoad: "..self:getName(), 2)
 
 	-- Check if Mod GuidanceSteering exists
 	spec.modGuidanceSteeringFound = self.spec_globalPositioningSystem ~= nil
@@ -91,6 +92,17 @@ function DashboardLive:onPostLoad(savegame)
 	
 	--Check if Mod HeadlandManagement exists
 	spec.modHLMFound = self.spec_HeadlandManagement ~= nil
+	
+    local dashboard = self.spec_dashboard
+    for _, group in pairs(dashboard.groups) do
+    	if group.dblPage ~= nil then
+    		spec.maxPage = math.max(spec.maxPage, group.dblPage)
+    		spec.groups[group.dblPage] = true
+    		dbgprint("onPostLoad : maxPage set to "..tostring(spec.maxPage), 2)
+    	else
+    		dbgprint("onPostLoad : no pages found in group "..group.name, 2)
+    	end
+    end
 end
 
 function DashboardLive:onReadStream(streamId, connection)
@@ -119,14 +131,61 @@ function DashboardLive:onWriteUpdateStream(streamId, connection, dirtyMask)
 	end
 end
 
+-- inputBindings / inputActions
+	
+function DashboardLive:onRegisterActionEvents(isActiveForInput)
+	dbgprint("onRegisterActionEvents", 4)
+	if self.isClient then
+		local spec = self.spec_DashboardLive
+		DashboardLive.actionEvents = {} 
+		if self:getIsActiveForInput(true) and spec ~= nil then 
+			local actionEventId
+			local sk = spec.maxPage > 1
+			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+			g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+			g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+			g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+			g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+		end		
+	end
+end
+
+function DashboardLive:CHANGEPAGE(actionName, keyStatus, arg3, arg4, arg5)
+	dbgprint("CHANGEPAGE", 4)
+	local spec = self.spec_DashboardLive
+	if actionName == "DBL_PAGEUP" then
+		local pageNum = spec.actPage + 1
+		while not spec.groups[pageNum] do
+			pageNum = pageNum + 1
+			if pageNum > spec.maxPage then pageNum = 1 end
+		end
+		spec.actPage = pageNum
+		dbgprint("CHANGEPAGE : NewPage = "..spec.actPage, 2)
+	end
+	if actionName == "DBL_PAGEDN" then
+		local pageNum = spec.actPage - 1
+		while not spec.groups[pageNum] do
+			pageNum = pageNum - 1
+			if pageNum < 1 then pageNum = spec.maxPage end
+		end
+		spec.actPage = pageNum
+		dbgprint("CHANGEPAGE : NewPage = "..spec.actPage, 2)
+	end
+end
+
 -- Main part
 function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	if not superFunc(self, xmlFile, key, group) then
         return false
     end
     group.dblCommand = xmlFile:getValue(key .. "#dbl")
-    group.dblOperator = xmlFile:getValue(key .. "#op", "or")
-	group.dplOption = xmlFile:getValue(key .. "#dbl_opt")
+	if group.dblCommand == "page" then
+		group.dblPage = xmlFile:getValue(key .. "#page")
+	end
+	group.dblOperator = xmlFile:getValue(key .. "#op", "or")
+	dbgprint("loadDashboardGroupFromXML : group: "..tostring(group.name), 2)
+    
     return true
 end
 
@@ -171,9 +230,14 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 --]]
 	local returnValue
 	
+	-- command given?
 	if group.dblCommand == nil then 
 		return superFunc(self, group)
 
+	-- page
+	elseif group.dblCommand == "page" and group.dblPage ~= nil then 
+		returnValue = spec.actPage == group.dblPage
+	
 	-- vanilla game
 	elseif group.dblCommand == "base_lifted" then
 		returnValue = getAttachedStatus(self, group, "raised")
@@ -234,8 +298,8 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceIsActive
 		returnValue = returnValue and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.currentLane ~= nil and gsSpec.guidanceData.currentLane < 0	
 	end
-	    
-    if group.dblOperator == "and" then 
+	
+    if group.dblOperator == "and" or group.dblCommand == "page" then 
     	return superFunc(self, group) and returnValue
     else
     	return superFunc(self, group) or returnValue

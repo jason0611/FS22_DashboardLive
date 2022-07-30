@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="67">
 	<author>Jason06 / Glowins Modschmiede</author>
-	<version>0.0.3.0</version>
+	<version>0.0.4.0</version>
 	<title>
 		<en>Dashboard Live</en>
     </title>
@@ -12,7 +12,7 @@
 ]]>
 		</en>	
  	</description>	
-    <multiplayer supported="false"/>
+    <multiplayer supported="true"/>
 	<iconFilename>modIcon.dds</iconFilename>
 	<extraSourceFiles>
     	<sourceFile filename="RegisterDashboardLive.lua" />

@@ -41,6 +41,7 @@ function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onReadUpdateStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteUpdateStream", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", DashboardLive)
 end
 
 function DashboardLive.registerFunctions(vehicleType)
@@ -72,6 +73,15 @@ function DashboardLive:onLoad(savegame)
 	spec.maxPage = 1
 	spec.groups = {}
 	spec.groups[1] = true
+	spec.updateTimer = 0
+	
+	-- engine data
+	spec.motorTemperature = 20
+	spec.fanEnabled = false
+	spec.fanEnabledLast = false
+	spec.lastFuelUsage = 0
+	spec.lastDefUsage = 0
+	spec.lastAirUsage = 0
 end
 
 function DashboardLive:onPostLoad(savegame)
@@ -105,19 +115,35 @@ function DashboardLive:onPostLoad(savegame)
     end
 end
 
+-- Network stuff to synchronize engine data not synced by the game itself
+
 function DashboardLive:onReadStream(streamId, connection)
 	local spec = self.spec_DashboardLive
+	spec.motorTemperature = streamReadFloat32(streamId)
+	spec.fanEnabled = streamReadBool(streamId)
+	spec.lastFuelUsage = streamReadFloat32(streamId)
+	spec.lastDefUsage = streamReadFloat32(streamId)
+	spec.lastAirUsage = streamReadFloat32(streamId)
 end
 
 function DashboardLive:onWriteStream(streamId, connection)
 	local spec = self.spec_DashboardLive
+	streamWriteFloat32(streamId, spec.motorTemperature)
+	streamWriteBool(streamId, spec.fanEnabled)
+	streamWriteFloat32(streamId, spec.lastFuelUsage)
+	streamWriteFloat32(streamId, spec.lastDefUsage)
+	streamWriteFloat32(streamId, spec.lastAirUsage)
 end
 	
 function DashboardLive:onReadUpdateStream(streamId, timestamp, connection)
 	if connection:getIsServer() then
 		local spec = self.spec_DashboardLive
 		if streamReadBool(streamId) then
-	
+			spec.motorTemperature = streamReadFloat32(streamId)
+			spec.fanEnabled = streamReadBool(streamId)
+			spec.lastFuelUsage = streamReadFloat32(streamId)
+			spec.lastDefUsage = streamReadFloat32(streamId)
+			spec.lastAirUsage = streamReadFloat32(streamId)
 		end
 	end
 end
@@ -126,7 +152,12 @@ function DashboardLive:onWriteUpdateStream(streamId, connection, dirtyMask)
 	if not connection:getIsServer() then
 		local spec = self.spec_DashboardLive
 		if streamWriteBool(streamId, bitAND(dirtyMask, spec.dirtyFlag) ~= 0) then
-			
+			streamWriteFloat32(streamId, spec.motorTemperature)
+			streamWriteBool(streamId, spec.fanEnabled)
+			streamWriteFloat32(streamId, spec.lastFuelUsage)
+			streamWriteFloat32(streamId, spec.lastDefUsage)
+			streamWriteFloat32(streamId, spec.lastAirUsage)
+			self.spec_motorized.motorTemperature.valueSend = spec.motorTemperature
 		end
 	end
 end
@@ -424,4 +455,36 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
         end
     end
 -- Giant's stuff end -------------------------------------
+end
+
+function DashboardLive:onUpdate(dt)
+	local spec = self.spec_DashboardLive
+	local mspec = self.spec_motorized
+	
+	spec.updateTimer = spec.updateTimer + dt
+	
+	if self.isServer and self.getIsMotorStarted ~= nil and self:getIsMotorStarted() then
+		spec.motorTemperature = mspec.motorTemperature.value
+		spec.fanEnabled = mspec.motorFan.enabled
+		spec.lastFuelUsage = mspec.lastFuelUsage
+		spec.lastDefUsage = mspec.lastDefUsage
+		spec.lastAirUsage = mspec.lastAirUsage
+		
+		if spec.updateTimer >= 1000 and spec.motorTemperature ~= self.spec_motorized.motorTemperature.valueSend then
+			self:raiseDirtyFlags(spec.dirtyFlag)
+		end
+		
+		if spec.fanEnabled ~= spec.fanEnabledLast then
+			spec.fanEnabledLast = spec.fanEnabled
+			self:raiseDirtyFlags(spec.dirtyFlag)
+		end
+		
+	end
+	if self.isClient and not self.isServer and self.getIsMotorStarted ~= nil and self:getIsMotorStarted() then
+		mspec.motorTemperature.value = spec.motorTemperature
+		mspec.motorFan.enabled = spec.fanEnabled
+		mspec.lastFuelUsage = spec.lastFuelUsage
+		mspec.lastDefUsage = spec.lastDefUsage
+		mspec.lastAirUsage = spec.lastAirUsage
+	end
 end

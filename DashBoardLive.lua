@@ -339,6 +339,7 @@ end
 
 function DashboardLive:loadDashboardFromXML(superFunc, xmlFile, key, dashboard)
 	dashboard.dblCommand = xmlFile:getString(key.."#dbl")
+	dashboard.dblOption = xmlFile:getString(key.."#dblOpt")
 	return superFunc(self, xmlFile, key, dashboard)
 end
 
@@ -358,7 +359,7 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 		local override = false
 		if dashboard.dblCommand ~= nil then
 			local spec = self.spec_DashboardLive
-			local c = dashboard.dblCommand
+			local c, o = dashboard.dblCommand, dashboard.dblOption
 			local newValue, minValue, maxValue = 0, 0, 1
 			if c == "gps_lane" and spec.modGuidanceSteeringFound then
 				local gsSpec = self.spec_globalPositioningSystem
@@ -375,6 +376,10 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 					newValue = 0 
 				end
 				dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
+				override = true
+			end
+			if c == "print" and o ~= nil then
+				dashboard.stateFunc(self, dashboard, o, nil, nil, isActive)
 				override = true
 			end
 		end

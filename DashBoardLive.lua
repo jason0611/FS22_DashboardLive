@@ -272,12 +272,18 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	-- vanilla game
 	elseif group.dblCommand == "base_lifted" then
 		returnValue = getAttachedStatus(self, group, "raised")
+		
+	elseif group.dblCommand == "base_lowered" then
+		returnValue = not getAttachedStatus(self, group, "raised")
 	
 	elseif group.dblCommand == "base_pto" then
 		returnValue = getAttachedStatus(self, group, "pto")
 	
 	elseif group.dblCommand == "base_folded" then
 		returnValue = getAttachedStatus(self, group, "folded")	
+	
+	elseif group.dblCommand == "base_unfolded" then
+		returnValue = not getAttachedStatus(self, group, "folded")	
 		
 	-- VCA
 	elseif group.dblCommand == "vca_park" then

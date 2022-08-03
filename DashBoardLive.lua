@@ -247,6 +247,8 @@ end
 
 function DashboardLive:getIsDashboardGroupActive(superFunc, group)
     local spec = self.spec_DashboardLive
+    local specCS = self.spec_crabSteering
+    local specWM = self.spec_workMode
     
 --[[
     group.baseFrontLifted	= dblEntry == "base_front_lifted"
@@ -259,7 +261,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	group.vcaDiffBack 		= dblEntry == "vca_diff_back"
     group.vcaDiffAwd 		= dblEntry == "vca_diff_awd"
 --]]
-	local returnValue
+	local returnValue = false
 	
 	-- command given?
 	if group.dblCommand == nil then 
@@ -285,21 +287,42 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "base_unfolded" then
 		returnValue = not getAttachedStatus(self, group, "folded")	
 		
-	-- VCA
-	elseif group.dblCommand == "vca_park" then
-		returnValue = spec.modVCAFound and self:vcaGetState("handbrake")
+	elseif specCS ~= nil and group.dblCommand == "base_steering" then
+		local dblOpt = group.dblOption
+		if dblOpt == "" or tonumber(dblOpt) == nil then
+			Logging.xmlWarning(vehicle.xmlFile, "No steering mode number given for DashboardLive steering command")
+			return false
+		end
+		returnValue = specCS.state == tonumber(dblOpt)
+
+	elseif specWM ~= nil and group.dblCommand == "base_swath" then
+		local dblOpt = group.dblOption
+		if dblOpt == "" or tonumber(dblOpt) == nil then
+			Logging.xmlWarning(vehicle.xmlFile, "No work mode number given for DashboardLive swath command")
+			return false
+		end
+		returnValue = specWM.state == tonumber(dblOpt)
+		
+	-- VCA / EV
+	elseif group.dblCommand == "vca_park" or group.dblCommand == "ev_park" then
+		returnValue = (spec.modVCAFound and self:vcaGetState("handbrake"))
+					or(spec.modEVFound and self.vData.is[13])
 	
-	elseif group.dblCommand == "vca_diff_front" then
-		returnValue = spec.modVCAFound and self:vcaGetState("diffLockFront")
+	elseif group.dblCommand == "vca_diff_front" or group.dblCommand == "ev_diff_front" then
+		returnValue = (spec.modVCAFound and self:vcaGetState("diffLockFront"))
+					or(spec.modEVFound and self.vData.is[1])
 	
-	elseif group.dblCommand == "vca_diff_back" then
-		returnValue = spec.modVCAFound and self:vcaGetState("diffLockBack")
+	elseif group.dblCommand == "vca_diff_back" or group.dblCommand == "ev_diff_back"then
+		returnValue = (spec.modVCAFound and self:vcaGetState("diffLockBack"))
+					or(spec.modEVFound and self.vData.is[2])
 	
-	elseif group.dblCommand == "vca_diff" then
-		returnValue = spec.modVCAFound and (self:vcaGetState("diffLockFront") or self:vcaGetState("diffLockBack"))
+	elseif group.dblCommand == "vca_diff" or group.dblCommand == "ev_diff" then
+		returnValue = (spec.modVCAFound and (self:vcaGetState("diffLockFront") or self:vcaGetState("diffLockBack")))
+					or(spec.modEVFound and (self.vData.is[1] or self.vData.is[2]))
 	
-	elseif group.dblCommand == "vca_diff_awd" then
-		returnValue = spec.modVCAFound and self:vcaGetState("diffLockAWD")
+	elseif group.dblCommand == "vca_diff_awd" or group.dblCommand == "ev_diff_awd" then
+		returnValue = (spec.modVCAFound and self:vcaGetState("diffLockAWD"))
+					or(spec.modEVFound and self.vData.is[3])
 		
 	elseif group.dblCommand == "vca_diff_awdF" then
 		returnValue = spec.modVCAFound and self:vcaGetState("diffFrontAdv")
@@ -334,6 +357,16 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		local gsSpec = self.spec_globalPositioningSystem
 		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceIsActive
 		returnValue = returnValue and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.currentLane ~= nil and gsSpec.guidanceData.currentLane < 0	
+		
+	elseif group.dblCommand == "ps_mode" then
+	
+	elseif group.dblCommand == "ps_trackNum" then
+	
+	elseif group.dblCommand == "ps_trackAnz" then
+	
+	elseif group.dblCommand == "ps_half" then
+	
+	elseif group.dblCommand == "ps_marker" then
 	end
 	
     if group.dblOperator == "and" or group.dblCommand == "page" then 

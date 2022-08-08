@@ -182,6 +182,22 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 	end
 end
 
+local function getFillLevelStatus(vehicle, dashboard, o)
+	local spec = vehicle.spec_DashboardLive
+	local allVehicles = vehicle:getRootVehicle():getChildVehicles()
+	dbgprint("#allVehicles = "..tostring(#allVehicles), 2)
+	
+	dbgprint("vehicle: "..vehicle:getName(), 4)
+	
+	for index,actVehicle in pairs(allVehicles) do
+		if actVehicle ~= nil and actVehicle.spec_fillUnit ~= nil then
+			local specFU = actVehicle.spec_fillUnit
+			dbgprint("actVehicle: "..actVehicle:getName())
+			dbgprint_r(specFU, 4, 3)
+		end
+	end
+end
+
 function DashboardLive:CHANGEPAGE(actionName, keyStatus, arg3, arg4, arg5)
 	dbgprint("CHANGEPAGE", 4)
 	local spec = self.spec_DashboardLive
@@ -202,6 +218,9 @@ function DashboardLive:CHANGEPAGE(actionName, keyStatus, arg3, arg4, arg5)
 		end
 		spec.actPage = pageNum
 		dbgprint("CHANGEPAGE : NewPage = "..spec.actPage, 2)
+		
+		--debug stuff
+		getFillLevelStatus(self, dashboard, o)
 	end
 end
 
@@ -382,6 +401,8 @@ function DashboardLive:loadDashboardFromXML(superFunc, xmlFile, key, dashboard)
 	return superFunc(self, xmlFile, key, dashboard)
 end
 
+
+
 function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 -- Giants's stuff ----------------------------------------
     for i=1, #dashboards do
@@ -395,7 +416,7 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
         end
         
 -- Own stuff ---------------------------------------------
-		local override = false
+		local override = false -- override forced dashboard update if update is done here already
 		if dashboard.dblCommand ~= nil then
 			local spec = self.spec_DashboardLive
 			local c, o = dashboard.dblCommand, dashboard.dblOption
@@ -417,11 +438,19 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 				dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
 				override = true
 			end
+			if c == "base_fillLevel" and o ~= nil then
+				newValue, minValue, maxValue = getFillLevelStatus(self, dashBoard, o)
+				if newLevel ~= nil then
+					dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
+				end
+				override = true	
+			end
 			if c == "print" and o ~= nil then
 				dashboard.stateFunc(self, dashboard, o, nil, nil, isActive)
 				override = true
 			end
 		end
+		
 -- Own stuff end -----------------------------------------
 	
 -- Giant's stuff -----------------------------------------

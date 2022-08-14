@@ -11,7 +11,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(g_currentModDirectory.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 4)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 -- Standards / Basics
@@ -182,22 +182,6 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 	end
 end
 
-local function getFillLevelStatus(vehicle, dashboard, o)
-	local spec = vehicle.spec_DashboardLive
-	local allVehicles = vehicle:getRootVehicle():getChildVehicles()
-	dbgprint("#allVehicles = "..tostring(#allVehicles), 2)
-	
-	dbgprint("vehicle: "..vehicle:getName(), 4)
-	
-	for index,actVehicle in pairs(allVehicles) do
-		if actVehicle ~= nil and actVehicle.spec_fillUnit ~= nil then
-			local specFU = actVehicle.spec_fillUnit
-			dbgprint("actVehicle: "..actVehicle:getName())
-			dbgprint_r(specFU, 4, 3)
-		end
-	end
-end
-
 function DashboardLive:CHANGEPAGE(actionName, keyStatus, arg3, arg4, arg5)
 	dbgprint("CHANGEPAGE", 4)
 	local spec = self.spec_DashboardLive
@@ -218,13 +202,13 @@ function DashboardLive:CHANGEPAGE(actionName, keyStatus, arg3, arg4, arg5)
 		end
 		spec.actPage = pageNum
 		dbgprint("CHANGEPAGE : NewPage = "..spec.actPage, 2)
-		
-		--debug stuff
-		getFillLevelStatus(self, dashboard, o)
 	end
 end
 
--- Main part
+-- Main script
+
+-- Dashboard groups
+
 function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	if not superFunc(self, xmlFile, key, group) then
         return false
@@ -238,6 +222,8 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
     
     return true
 end
+
+-- Supporting functions
 
 local function getAttachedStatus(vehicle, group, mode)
 	if group.attacherJointIndices == "" or group.attacherJointIndices == nil then
@@ -263,6 +249,8 @@ local function getAttachedStatus(vehicle, group, mode)
 
     return result
 end
+
+-- Main part
 
 function DashboardLive:getIsDashboardGroupActive(superFunc, group)
     local spec = self.spec_DashboardLive
@@ -341,7 +329,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	
 	elseif group.dblCommand == "vca_diff_awd" or group.dblCommand == "ev_diff_awd" then
 		returnValue = (spec.modVCAFound and self:vcaGetState("diffLockAWD"))
-					or(spec.modEVFound and self.vData.is[3])
+					or(spec.modEVFound and self.vData.is[3]==1)
 		
 	elseif group.dblCommand == "vca_diff_awdF" then
 		returnValue = spec.modVCAFound and self:vcaGetState("diffFrontAdv")
@@ -395,13 +383,91 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
     end
 end
 
+-- Single dashboard entries
+
 function DashboardLive:loadDashboardFromXML(superFunc, xmlFile, key, dashboard)
 	dashboard.dblCommand = xmlFile:getString(key.."#dbl")
 	dashboard.dblOption = xmlFile:getString(key.."#dblOpt")
+	dashboard.dblTrailer = xmlFile:getInt(key.."#dblTrailer")
 	return superFunc(self, xmlFile, key, dashboard)
 end
 
+-- Supporting functions
 
+local function getFillLevel(device, ftType)
+	dbgprint("getFillLevel", 4)
+	local fillLevel = {abs = nil, pct = nil, max = nil}
+	if device.spec_fillUnit ~= nil then -- only if device has got a fillUnit
+		local fillUnits = device:getFillUnits()
+		for i,_ in pairs(fillUnits) do
+			local ftIndex = device:getFillUnitFillType(i)
+			local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
+			if ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] or ftType == "ALL" then
+				if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
+				fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
+				fillLevel.abs = fillLevel.abs + device:getFillUnitFillLevel(i)
+				fillLevel.max = fillLevel.max + device:getFillUnitCapacity(i)
+			end
+		end
+	end
+	return fillLevel
+end
+
+-- returns fillLevel {pct, abs, max}
+-- param vehicle - vehicle reference
+-- param ftIndex - index of fillVolume: 1 - root/first trailer/implement, 2 - first/second trailer/implement, 3 - root/first and first/second trailer or implement
+-- param ftType  - fillType
+
+local function getFillLevelStatus(vehicle, ftIndex, ftType)
+	dbgprint("getFillLevelStatus", 4)
+	local spec = vehicle.spec_DashboardLive
+	local fillLevel = {abs = nil, pct = nil, max = nil}
+	
+	if ftType == nil then ftType = "ALL" end
+	
+	if ftType ~= "ALL" and g_fillTypeManager.nameToIndex[ftType] == nil and g_fillTypeManager.nameToCategoryIndex[ftType] == nil then
+		Logging.xmlWarning(vehicle.xmlFile, "Given fillType "..tostring(ftType).." not known!")
+		return fillLevel
+	end
+	
+	-- root vehicle	
+	if ftIndex == 0 then
+		dbgprint("getFillLevelStatus : root vehicle", 4)
+		fillLevel = getFillLevel(vehicle, ftType)
+	end
+	
+	-- if no attacherJoint exists we are ready here
+	if vehicle.spec_attacherJoints == nil then return fillLevel end
+	
+	-- implements 
+	
+	-- first volume
+	local allImplements = vehicle:getAttachedImplements()
+	if ftIndex == 1 then	
+		dbgprint("getFillLevelStatus : first attached vehicle", 4)
+		for _, implement in pairs(allImplements) do
+			fillLevel = getFillLevel(implement.object, ftType)
+		end
+	end
+	
+	
+	-- second volume
+	if ftIndex == 2 then
+		dbgprint("getFillLevelStatus : second attached vehicle", 4)
+		for _, implement in pairs(allImplements) do
+			if implement.object.spec_attacherJoints ~= nil then
+				local allSubImplements = implement.object:getAttachedImplements()
+				for _, subImplement in pairs(allSubImplements) do
+					fillLevel = getFillLevel(subImplement.object, ftType)
+				end
+			end
+		end
+	end
+	dbgrenderTable(fillLevel, 1 + 5 * ftIndex, 3)
+	return fillLevel
+end
+
+-- main part
 
 function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 -- Giants's stuff ----------------------------------------
@@ -419,7 +485,7 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 		local override = false -- override forced dashboard update if update is done here already
 		if dashboard.dblCommand ~= nil then
 			local spec = self.spec_DashboardLive
-			local c, o = dashboard.dblCommand, dashboard.dblOption
+			local c, o, t = dashboard.dblCommand, dashboard.dblOption, dashboard.dblTrailer
 			local newValue, minValue, maxValue = 0, 0, 1
 			if c == "gps_lane" and spec.modGuidanceSteeringFound then
 				local gsSpec = self.spec_globalPositioningSystem
@@ -429,8 +495,16 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 					dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
 				end
 			end
-			if c == "vca_park" then
-				if self:vcaGetState("handbrake") then 
+			if c == "gps_width" and spec.modGuidanceSteeringFound then
+				local gsSpec = self.spec_globalPositioningSystem
+				if gsSpec ~= nil and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.width ~= nil then
+					maxValue = 999
+					newValue = gsSpec.guidanceData.width * 10
+					dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
+				end
+			end
+			if c == "vca_park" or c == "ev_park" then
+				if (spec.modVCAFound and self:vcaGetState("handbrake")) or (spec.modEVFound and self.vData.is[13]) then 
 					newValue = 1 
 				else 
 					newValue = 0 
@@ -438,11 +512,28 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 				dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
 				override = true
 			end
-			if c == "base_fillLevel" and o ~= nil then
-				newValue, minValue, maxValue = getFillLevelStatus(self, dashBoard, o)
-				if newLevel ~= nil then
-					dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
+			if c == "base_fillLevel" or c == "base_fillLevel_procent" and t ~= nil then
+				local pctValue, absValue
+				local ftType = o
+				local fillLevel = getFillLevelStatus(self, t, ftType)
+				dbgprint_r(fillLevel, 4, 2)
+				if fillLevel.abs == nil then 
+					maxValue, absValue, pctValue = 0, 0, 0
+				else
+					maxValue, absValue, pctValue = fillLevel.max, fillLevel.abs, fillLevel.pct
 				end
+				if c == "base_fillLevel" then
+					newValue = absValue
+				else
+					newValue = pctValue
+				end
+				
+				dbgrender("maxValue: "..tostring(maxValue), 1 + t * 4, 3)
+				dbgrender("absValue: "..tostring(absValue), 2 + t * 4, 3)
+				dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
+				
+				minValue = 0
+				dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
 				override = true	
 			end
 			if c == "print" and o ~= nil then

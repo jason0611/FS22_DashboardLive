@@ -512,7 +512,7 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 				dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
 				override = true
 			end
-			if c == "base_fillLevel" or c == "base_fillLevel_procent" and t ~= nil then
+			if c == "base_fillLevel" or c == "base_fillLevel_percent" and t ~= nil then
 				local pctValue, absValue
 				local ftType = o
 				local fillLevel = getFillLevelStatus(self, t, ftType)

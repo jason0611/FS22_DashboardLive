@@ -9,9 +9,8 @@ DashboardLive = {}
 if DashboardLive.MOD_NAME == nil then
 	DashboardLive.MOD_NAME = g_currentModName
 end
-
 source(g_currentModDirectory.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 4)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 -- Standards / Basics
@@ -35,6 +34,7 @@ end
 
 function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onLoad", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onPreLoad", DashboardLive)
     SpecializationUtil.registerEventListener(vehicleType, "onPostLoad", DashboardLive)
     SpecializationUtil.registerEventListener(vehicleType, "onRegisterActionEvents", DashboardLive)
  	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", DashboardLive)
@@ -61,6 +61,25 @@ function DashboardLive.registerOverwrittenFunctions(vehicleType)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadMultiStateDashboardFromXML", DashboardLive.loadDashboardFromXML)
     
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "updateDashboards", DashboardLive.updateDashboards)
+end
+
+function DashboardLive:onPreLoad(savegame)
+	if savegame == nil then return end
+	
+	local vehFile = savegame.xmlFile
+	local vehKey = savegame.key
+	local xmlName = vehFile:getString(vehKey.."#filename")
+	
+	-- Inject extended Dashboard Emitters into Vanilla Vehicles
+	dbgprint("onPreLoad : vehicle: "..self:getName(), 2)
+	dbgprint("onPreLoad : filename: "..xmlName, 2)
+	
+	local xmlFile = XMLFile.loadIfExists("vanillaDashboards", xmlName, "vanillaDashboards")
+	if xmlFile ~= nil then
+		local i = 0
+		while 
+	
+	
 end
 
 function DashboardLive:onLoad(savegame)
@@ -525,7 +544,7 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 				if c == "base_fillLevel" then
 					newValue = absValue
 				else
-					newValue = pctValue
+					newValue = pctValue * 100
 				end
 				
 				dbgrender("maxValue: "..tostring(maxValue), 1 + t * 4, 3)

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
-<VanillaDashboards>
+<vanillaDashboards>
 	<!--vehicleDashboard name="XUV865M" fileName="data/vehicles/johnDeere/xuv865M/xuv865M.xml"/-->
 	<vehicleDashboard name="SKE50electric" fileName="data/vehicles/rigitrac/ske50/ske50.xml">
+		<nodes>
+			<node name="dblNodeAWD" root="0>0|0" moveTo="0 0 0" rotate="0 0 0"/>
 		</nodes>
 		<groups>
 			<group name="DLB_AWD" isMotorStarting="true" op="or" dbl="vca_diff_awd"/>
@@ -9,4 +11,5 @@
 		<default>
 			<dashboard displayType="EMITTER" createNodeAt="" moveTo="0 0 0" rotate="0 0 0" baseColor="BLACK" emitColor="1 0.3 0 0" intensity="0.8" groups="DBL_AWD"/>
 		</default>
-</VanillaDashboards>
+	</vehicleDashboard>
+</vanillaDashboards>

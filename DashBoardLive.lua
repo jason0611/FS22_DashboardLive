@@ -8,10 +8,13 @@ DashboardLive = {}
 
 if DashboardLive.MOD_NAME == nil then
 	DashboardLive.MOD_NAME = g_currentModName
+	DashboardLive.MOD_PATH = g_currentModDirectory
 end
 source(g_currentModDirectory.."tools/gmsDebug.lua")
 GMSDebug:init(DashboardLive.MOD_NAME, true, 4)
 GMSDebug:enableConsoleCommands("dblDebug")
+
+source(g_currentModDirectory.."utils/DashboardUtils.lua")
 
 -- Standards / Basics
 
@@ -64,26 +67,16 @@ function DashboardLive.registerOverwrittenFunctions(vehicleType)
 end
 
 function DashboardLive:onPreLoad(savegame)
-	if savegame == nil then return end
+	self.spec_DashboardLive = self["spec_"..DashboardLive.MOD_NAME..".DashboardLive"]
+	local spec = self.spec_DashboardLive
 	
-	local vehFile = savegame.xmlFile
-	local vehKey = savegame.key
-	local xmlName = vehFile:getString(vehKey.."#filename")
+	spec.vanillaDashboardsFile = DashboardLive.MOD_PATH.."xml/vanillaDashboards.xml"
+	dbgprint("onPreLoad : Path set to "..spec.vanillaDashboardsFile, 2)
 	
-	-- Inject extended Dashboard Emitters into Vanilla Vehicles
-	dbgprint("onPreLoad : vehicle: "..self:getName(), 2)
-	dbgprint("onPreLoad : filename: "..xmlName, 2)
-	
-	local xmlFile = XMLFile.loadIfExists("vanillaDashboards", xmlName, "vanillaDashboards")
-	if xmlFile ~= nil then
-		local i = 0
-		while 
-	
-	
+	if savegame ~= nil then DashboardUtils.createVanillaNodes(self, savegame) end
 end
 
 function DashboardLive:onLoad(savegame)
-	self.spec_DashboardLive = self["spec_"..DashboardLive.MOD_NAME..".DashboardLive"]
 	local spec = self.spec_DashboardLive
 	
 	-- management data

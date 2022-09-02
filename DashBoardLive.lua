@@ -27,7 +27,27 @@ function DashboardLive.initSpecialization()
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl", "DashboardLive command")
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#op", "DashboardLive operator")
 	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#page", "DashboardLive page")
-	dbgprint("initSpecialization : registered", 2)
+	dbgprint("initSpecialization : DashboardLive registered", 2)
+	
+	local schemaVanilla = XMLSchema.new("vanillaDashboards")
+	local rootKey = "vanillaDashboards.vehicleDashboard"
+	local nodeKey = rootKey .. ".nodes.node(?)"
+	local groupKey = rootKey .. ".groups.group(?)"
+	local dashboardKey = rootKey .. ".default.dashboard(?)"
+	
+	schemaVanilla:setXMLSpecializationType("DashboardLive")
+	schemaVanilla:register(XMLValueType.STRING, rootKey .. "#name", "vehicle name")
+	schemaVanilla:register(XMLValueType.STRING, rootKey .. "#fileName", "vehicle XML filename")
+	schemaVanilla:register(XMLValueType.STRING, nodeKey .. "#name", "dashboard dode")
+	schemaVanilla:register(XMLValueType.NODE_INDEX, nodeKey .. "#root", "dashboard node's rootNode")
+	schemaVanilla:register(XMLValueType.VECTOR_TRANS, nodeKey .. "#moveTo", "translation vector")
+	schemaVanilla:register(XMLValueType.VECTOR_ROT, nodeKey .. "#rotate", "rotation vector")
+	
+	--schemaVanilla:register(XMLValueType.STRING, groupKey .. "#name", "dashboard group name")
+	--schemaVanilla:register(XMLValueType.STRING, groupKey .. "#isMotorStarting", "dashboard group name")
+	--schemaVanilla:register(XMLValueType.STRING, groupKey .. "#dbl", "DashboardLive command")
+    --schemaVanilla:register(XMLValueType.STRING, groupKey .. "#op", "DashboardLive operator")
+	dbgprint("initSpecialization : VanillaDashboards registered", 2)	
 end
 
 function DashboardLive.registerDashboardXMLPaths(schema, basePath, availableValueTypes)

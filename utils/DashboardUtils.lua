@@ -18,7 +18,7 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame)
 		while true do
 			local xmlRootPath = string.format("vanillaDashboards.vehicleDashboard(%d)", i)
 			if not xmlFile:hasProperty(xmlRootPath) then break end
-			local vanillaFile = xmlFile:getString(xmlRootPath.."#fileName")
+			local vanillaFile = xmlFile:getValue(xmlRootPath.."#fileName")
 			dbgprint("onPreLoad : vanillaFile: "..tostring(vanillaFile), 2)
 			if vanillaFile == xmlPath then
 				dbgprint("onPreload : found vehicle in vanillaDashboards", 2)
@@ -27,32 +27,34 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame)
 				while true do
 					local xmlNodePath = xmlRootPath .. string.format(".nodes.node(%d)", n)
 					if not xmlFile:hasProperty(xmlNodePath) then break end
-					local nodeName = xmlFile:getString(xmlNodePath .. "#name")
+					local nodeName = xmlFile:getValue(xmlNodePath .. "#name")
 					if nodeName == nil then
 						Logging.xmlWarning(xmlFile, "No node name given, setting to 'dashboardLive'")
 						nodeName = "dashboardLive"
 					end
-					local nodeRoot = xmlFile:getString(xmlNodePath .. "#root")
+					local nodeRoot = xmlFile:getValue(xmlNodePath .. "#root")
 					if nodeRoot == nil then
 						Logging.xmlWarning(xmlFile, "No root node given, setting to 0>0")
-						nodeRoot = "0>0"
+						nodeRoot = vehicle.rootNode
 					end
-					local nx, ny, nz
-					local moveTo = xmlFile:getVector(xmlNodePath .. "#moveTo")
-					if moveTo ~= nil then
-						nx, ny, nz = moveTo[1], moveTo[2], moveTo[3]
-					else
-						Logging.xmlWarning(xmlFile, "No node translation given, setting to 0 0 0")
-						nx, ny, nz = 0, 0, 0
-					end
-					local rx, ry, rz 
-					local rotate = xmlFile:getVector(xmlNodePath .. "#rotate")
-					if rotate ~= nil then
-						rx, ry, rz = rotate[1], rotate[2], rotate[3]
-					else
-						Logging.xmlWarning(xmlFile, "No node translation given, setting to 0 0 0")
-						rx, ry, rz = 0, 0, 0
-					end
+					local nx, ny, nz = xmlFile:getValue(xmlNodePath .. "#moveTo")
+					--local nx, ny, nz
+					--local moveTo = xmlFile:getVector(xmlNodePath .. "#moveTo")
+					--if moveTo ~= nil then
+					--	nx, ny, nz = moveTo[1], moveTo[2], moveTo[3]
+					--else
+					--	Logging.xmlWarning(xmlFile, "No node translation given, setting to 0 0 0")
+					--	nx, ny, nz = 0, 0, 0
+					--end
+					local rx, ry, rz = xmlFile:getValue(xmlNodePath .. "#rotate")
+					--local rx, ry, rz 
+					--local rotate = xmlFile:getVector(xmlNodePath .. "#rotate")
+					--if rotate ~= nil then
+					--	rx, ry, rz = rotate[1], rotate[2], rotate[3]
+					--else
+					--	Logging.xmlWarning(xmlFile, "No node translation given, setting to 0 0 0")
+					--	rx, ry, rz = 0, 0, 0
+					--end
 					dbgprint("node: "..tostring(node), 2)
 					dbgprint("root: "..tostring(nodeRoot), 2)
 					dbgprint(string.format("moveTo: %d %d %d", nx, ny, nz), 2)

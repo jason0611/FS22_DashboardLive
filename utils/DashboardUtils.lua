@@ -11,12 +11,13 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame)
 	dbgprint("onPreLoad : vehicle: "..vehicle:getName(), 2)
 	dbgprint("onPreLoad : vehicle's filename: "..xmlPath, 2)
 	
-	local xmlFile = XMLFile.loadIfExists("vanillaDashboards", spec.vanillaDashboardsFile, "vanillaDashboards")
+	local xmlFile = XMLFile.loadIfExists("VanillaDashboards", spec.vanillaDashboardsFile, "vanillaDashboards")
 	if xmlFile ~= nil then
 		dbgprint("onPreLoad : xmlFile found!", 2)
 		local i = 0
 		while true do
 			local xmlRootPath = string.format("vanillaDashboards.vehicleDashboard(%d)", i)
+			dbgprint("onPreLoad : xmlRootPath: "..tostring(xmlRootPath), 2)
 			if not xmlFile:hasProperty(xmlRootPath) then break end
 			local vanillaFile = xmlFile:getValue(xmlRootPath.."#fileName")
 			dbgprint("onPreLoad : vanillaFile: "..tostring(vanillaFile), 2)

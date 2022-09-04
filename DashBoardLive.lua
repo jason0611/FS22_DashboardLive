@@ -11,7 +11,7 @@ if DashboardLive.MOD_NAME == nil then
 	DashboardLive.MOD_PATH = g_currentModDirectory
 end
 source(g_currentModDirectory.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 4)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(g_currentModDirectory.."utils/DashboardUtils.lua")

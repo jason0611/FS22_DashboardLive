@@ -93,7 +93,7 @@ function DashboardLive:onPreLoad(savegame)
 	spec.vanillaDashboardsFile = DashboardLive.MOD_PATH.."xml/vanillaDashboards.xml"
 	dbgprint("onPreLoad : Path set to "..spec.vanillaDashboardsFile, 2)
 	
-	if savegame ~= nil then DashboardUtils.createVanillaNodes(self, savegame) end
+	--if savegame ~= nil then DashboardUtils.createVanillaNodes(self, savegame) end
 end
 
 function DashboardLive:onLoad(savegame)

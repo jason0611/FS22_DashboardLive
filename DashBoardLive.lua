@@ -2,7 +2,6 @@
 -- Dashboard Extension for FS22
 --
 -- Jason06 / Glowins Modschmiede
--- Version 0.0.1.0
 --
 DashboardLive = {}
 

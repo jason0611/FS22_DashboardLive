@@ -247,11 +247,14 @@ local function getAttachedStatus(vehicle, group, mode, default)
     	if implement ~= nil then
             if mode == "raised" then
             	result = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered()
+            elseif mode == "lowered" then
+            	result = implement.object.getIsLowered ~= nil and implement.object:getIsLowered()
             elseif mode == "pto" then
             	result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive()
             elseif mode == "folded" then
-            	-- TODO: Check if foldable, return true if implement is not foldable
-            	result = implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded()
+            	result = implement.object.spec_foldable ~= nil and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded()
+            elseif mode == "unfolded" then
+            	result = implement.object.spec_foldable ~= nil and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
             end
         end
     end
@@ -292,7 +295,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		returnValue = getAttachedStatus(self, group, "raised")
 		
 	elseif group.dblCommand == "base_lowered" then
-		returnValue = not getAttachedStatus(self, group, "raised")
+		returnValue = getAttachedStatus(self, group, "lowered")
 	
 	elseif group.dblCommand == "base_pto" then
 		returnValue = getAttachedStatus(self, group, "pto")
@@ -301,7 +304,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		returnValue = getAttachedStatus(self, group, "folded")	
 	
 	elseif group.dblCommand == "base_unfolded" then
-		returnValue = not getAttachedStatus(self, group, "folded")	
+		returnValue = getAttachedStatus(self, group, "unfolded")	
 		
 	elseif specCS ~= nil and group.dblCommand == "base_steering" then
 		local dblOpt = group.dblOption

@@ -13,7 +13,7 @@ source(g_currentModDirectory.."tools/gmsDebug.lua")
 GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
-source(g_currentModDirectory.."utils/DashboardUtils.lua")
+
 
 -- Standards / Basics
 
@@ -27,26 +27,6 @@ function DashboardLive.initSpecialization()
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#op", "DashboardLive operator")
 	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#page", "DashboardLive page")
 	dbgprint("initSpecialization : DashboardLive registered", 2)
-	
-	local schemaVanilla = XMLSchema.new("vanillaDashboards")
-	local rootKey = "vanillaDashboards.vehicleDashboard"
-	local nodeKey = rootKey .. ".nodes.node(?)"
-	local groupKey = rootKey .. ".groups.group(?)"
-	local dashboardKey = rootKey .. ".default.dashboard(?)"
-	
-	schemaVanilla:setXMLSpecializationType("DashboardLive")
-	schemaVanilla:register(XMLValueType.STRING, rootKey .. "#name", "vehicle name")
-	schemaVanilla:register(XMLValueType.STRING, rootKey .. "#fileName", "vehicle XML filename")
-	schemaVanilla:register(XMLValueType.STRING, nodeKey .. "#name", "dashboard dode")
-	schemaVanilla:register(XMLValueType.NODE_INDEX, nodeKey .. "#root", "dashboard node's rootNode")
-	schemaVanilla:register(XMLValueType.VECTOR_TRANS, nodeKey .. "#moveTo", "translation vector")
-	schemaVanilla:register(XMLValueType.VECTOR_ROT, nodeKey .. "#rotate", "rotation vector")
-	
-	--schemaVanilla:register(XMLValueType.STRING, groupKey .. "#name", "dashboard group name")
-	--schemaVanilla:register(XMLValueType.STRING, groupKey .. "#isMotorStarting", "dashboard group name")
-	--schemaVanilla:register(XMLValueType.STRING, groupKey .. "#dbl", "DashboardLive command")
-    --schemaVanilla:register(XMLValueType.STRING, groupKey .. "#op", "DashboardLive operator")
-	dbgprint("initSpecialization : VanillaDashboards registered", 2)	
 end
 
 function DashboardLive.registerDashboardXMLPaths(schema, basePath, availableValueTypes)
@@ -88,11 +68,6 @@ end
 function DashboardLive:onPreLoad(savegame)
 	self.spec_DashboardLive = self["spec_"..DashboardLive.MOD_NAME..".DashboardLive"]
 	local spec = self.spec_DashboardLive
-	
-	spec.vanillaDashboardsFile = DashboardLive.MOD_PATH.."xml/vanillaDashboards.xml"
-	dbgprint("onPreLoad : Path set to "..spec.vanillaDashboardsFile, 2)
-	
-	--if savegame ~= nil then DashboardUtils.createVanillaNodes(self, savegame) end
 end
 
 function DashboardLive:onLoad(savegame)
@@ -244,19 +219,22 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	if not superFunc(self, xmlFile, key, group) then
         return false
     end
+    dbgprint("loadDashboardGroupFromXML : group: "..tostring(group.name), 2)
     group.dblCommand = xmlFile:getValue(key .. "#dbl")
+    dbgprint("loadDashboardGroupFromXML : dblCommand: "..tostring(group.dblCommand), 2)
 	if group.dblCommand == "page" then
 		group.dblPage = xmlFile:getValue(key .. "#page")
+		dbgprint("loadDashboardGroupFromXML : page: "..tostring(group.dblPage), 2)
 	end
 	group.dblOperator = xmlFile:getValue(key .. "#op", "or")
-	dbgprint("loadDashboardGroupFromXML : group: "..tostring(group.name), 2)
+	dbgprint("loadDashboardGroupFromXML : dblOperator: "..tostring(group.dblOperator), 2)
     
     return true
 end
 
 -- Supporting functions
 
-local function getAttachedStatus(vehicle, group, mode)
+local function getAttachedStatus(vehicle, group, mode, default)
 	if group.attacherJointIndices == "" or group.attacherJointIndices == nil then
 		Logging.xmlWarning(vehicle.xmlFile, "No attacherJointIndex given for DashboardLive attacher command")
 		return false
@@ -267,17 +245,17 @@ local function getAttachedStatus(vehicle, group, mode)
     for _, jointIndex in ipairs(group.attacherJointIndices) do
     	local implement = vehicle:getImplementFromAttacherJointIndex(jointIndex) 
     	if implement ~= nil then
-            hasAttachment = true
             if mode == "raised" then
             	result = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered()
             elseif mode == "pto" then
             	result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive()
             elseif mode == "folded" then
+            	-- TODO: Check if foldable, return true if implement is not foldable
             	result = implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded()
             end
         end
     end
-
+    
     return result
 end
 

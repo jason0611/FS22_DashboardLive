@@ -26,6 +26,8 @@ function DashboardLive.initSpecialization()
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl", "DashboardLive command")
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#op", "DashboardLive operator")
 	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#page", "DashboardLive page")
+	schema:register(XMLValueType.BOOL, Dashboard.GROUP_XML_KEY .. "#dblActiveWithoutImplement", "return 'true' without implement")
+	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblAttacherJointIndices")
 	dbgprint("initSpecialization : DashboardLive registered", 2)
 end
 
@@ -220,14 +222,24 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
         return false
     end
     dbgprint("loadDashboardGroupFromXML : group: "..tostring(group.name), 2)
+    
     group.dblCommand = xmlFile:getValue(key .. "#dbl")
     dbgprint("loadDashboardGroupFromXML : dblCommand: "..tostring(group.dblCommand), 2)
+	
 	if group.dblCommand == "page" then
 		group.dblPage = xmlFile:getValue(key .. "#page")
 		dbgprint("loadDashboardGroupFromXML : page: "..tostring(group.dblPage), 2)
 	end
+	
 	group.dblOperator = xmlFile:getValue(key .. "#op", "or")
 	dbgprint("loadDashboardGroupFromXML : dblOperator: "..tostring(group.dblOperator), 2)
+	
+	group.dblActiveWithoutImplement = xmlFile:getValue(key.. "#dblActiveWithoutImplement", false)
+	dbgprint("loadDashboardGroupFromXML : dblActiveWithoutImplement: "..tostring(group.dblDefault), 2)
+	
+	group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAttacherJointIndices", "", true)
+	--group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAttacherJointIndices")
+	dbgprint("loadDashboardGroupFromXML : dblAttacherJointIndices: "..tostring(group.dblAttacherJointIndices), 2)
     
     return true
 end
@@ -235,16 +247,21 @@ end
 -- Supporting functions
 
 local function getAttachedStatus(vehicle, group, mode, default)
-	if group.attacherJointIndices == "" or group.attacherJointIndices == nil then
-		Logging.xmlWarning(vehicle.xmlFile, "No attacherJointIndex given for DashboardLive attacher command")
-		return false
+	if group.dblAttacherJointIndices == nil or #group.dblAttacherJointIndices == 0 then
+		if group.attacherJointIndices ~= nil and #group.attacherJointIndices ~= 0 then
+			group.dblAttacherJointIndices = group.attacherJointIndices
+		else
+			Logging.xmlWarning(vehicle.xmlFile, "No attacherJointIndex given for DashboardLive attacher command")
+			return false
+		end
 	end
 	
-	local result = false
+	local result = default or false
 	
-    for _, jointIndex in ipairs(group.attacherJointIndices) do
+    for _, jointIndex in ipairs(group.dblAttacherJointIndices) do
     	local implement = vehicle:getImplementFromAttacherJointIndex(jointIndex) 
     	if implement ~= nil then
+    		local foldable = implement.object.spec_foldable ~= nil and implement.object.spec_foldable.foldingParts ~= nil and #implement.object.spec_foldable.foldingParts > 0
             if mode == "raised" then
             	result = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered()
             elseif mode == "lowered" then
@@ -252,9 +269,9 @@ local function getAttachedStatus(vehicle, group, mode, default)
             elseif mode == "pto" then
             	result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive()
             elseif mode == "folded" then
-            	result = implement.object.spec_foldable ~= nil and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded()
+            	result = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded()
             elseif mode == "unfolded" then
-            	result = implement.object.spec_foldable ~= nil and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
+            	result = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
             end
         end
     end
@@ -292,19 +309,19 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	
 	-- vanilla game
 	elseif group.dblCommand == "base_lifted" then
-		returnValue = getAttachedStatus(self, group, "raised")
+		returnValue = getAttachedStatus(self, group, "raised", group.dblActiveWithoutImplement)
 		
 	elseif group.dblCommand == "base_lowered" then
-		returnValue = getAttachedStatus(self, group, "lowered")
+		returnValue = getAttachedStatus(self, group, "lowered", group.dblActiveWithoutImplement)
 	
 	elseif group.dblCommand == "base_pto" then
-		returnValue = getAttachedStatus(self, group, "pto")
+		returnValue = getAttachedStatus(self, group, "pto", group.dblActiveWithoutImplement)
 	
 	elseif group.dblCommand == "base_folded" then
-		returnValue = getAttachedStatus(self, group, "folded")	
+		returnValue = getAttachedStatus(self, group, "folded", group.dblActiveWithoutImplement)	
 	
 	elseif group.dblCommand == "base_unfolded" then
-		returnValue = getAttachedStatus(self, group, "unfolded")	
+		returnValue = getAttachedStatus(self, group, "unfolded", group.dblActiveWithoutImplement)	
 		
 	elseif specCS ~= nil and group.dblCommand == "base_steering" then
 		local dblOpt = group.dblOption

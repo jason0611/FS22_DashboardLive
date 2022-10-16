@@ -273,6 +273,8 @@ local function getAttachedStatus(vehicle, group, mode, default)
             elseif mode == "unfolded" then
             	result = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
             end
+        elseif mode=="disconnected" then
+        	result = true
         end
     end
     
@@ -308,10 +310,13 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		returnValue = spec.actPage == group.dblPage
 	
 	-- vanilla game
+	elseif group.dblCommand == "base_disconnected" then
+		returnValue = getAttachedStatus(self, group, "disconnected")
+	
 	elseif group.dblCommand == "base_lifted" then
 		returnValue = getAttachedStatus(self, group, "raised", group.dblActiveWithoutImplement)
 		
-	elseif group.dblCommand == "base_lowered" then
+	elseif group.dblCommand == "base_lowered" then -- check if implement is allowed to be lowered
 		returnValue = getAttachedStatus(self, group, "lowered", group.dblActiveWithoutImplement)
 	
 	elseif group.dblCommand == "base_pto" then

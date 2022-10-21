@@ -266,15 +266,17 @@ local function getAttachedStatus(vehicle, group, mode, default)
             	result = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered()
             elseif mode == "lowered" then
             	result = implement.object.getIsLowered ~= nil and implement.object:getIsLowered()
-            elseif mode == "pto" then
+            elseif mode == "lowerable" then
+				result = implement.object.getAllowsLowering ~= nil and implement.object:getAllowsLowering()
+			elseif mode == "pto" then
             	result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive()
-            elseif mode == "folded" then
+            elseif mode == "foldable" then
+				result = foldable
+			elseif mode == "folded" then
             	result = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded()
             elseif mode == "unfolded" then
             	result = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
             end
-        elseif mode=="disconnected" then
-        	result = true
         end
     end
     
@@ -310,17 +312,20 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		returnValue = spec.actPage == group.dblPage
 	
 	-- vanilla game
-	elseif group.dblCommand == "base_disconnected" then
-		returnValue = getAttachedStatus(self, group, "disconnected")
-	
 	elseif group.dblCommand == "base_lifted" then
 		returnValue = getAttachedStatus(self, group, "raised", group.dblActiveWithoutImplement)
 		
-	elseif group.dblCommand == "base_lowered" then -- check if implement is allowed to be lowered
+	elseif group.dblCommand == "base_lowered" then
 		returnValue = getAttachedStatus(self, group, "lowered", group.dblActiveWithoutImplement)
+	
+	elseif group.dblCommand == "base_lowerable" then
+		returnValue = getAttachedStatus(self, group, "lowerable", group.dblActiveWithoutImplement)
 	
 	elseif group.dblCommand == "base_pto" then
 		returnValue = getAttachedStatus(self, group, "pto", group.dblActiveWithoutImplement)
+	
+	elseif group.dblCommand == "base_foldable" then
+		returnValue = getAttachedStatus(self, group, "foldable", group.dblActiveWithoutImplement)
 	
 	elseif group.dblCommand == "base_folded" then
 		returnValue = getAttachedStatus(self, group, "folded", group.dblActiveWithoutImplement)	

@@ -46,6 +46,7 @@ function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onReadUpdateStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteUpdateStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onPostAttachImplement", DashboardLive)
 end
 
 function DashboardLive.registerFunctions(vehicleType)
@@ -215,6 +216,19 @@ end
 
 -- Main script
 
+-- Debug stuff
+function DashboardLive:onPostAttachImplement(implement, x, jointDescIndex)
+	dbgprint("Implement "..implement:getFullName().." attached to "..self:getFullName().." at index "..tostring(jointDescIndex), 2)
+	if implement.getAllowsLowering ~= nil then
+		dbgprint("Implement is lowerable: "..tostring(implement:getAllowsLowering()), 2)
+	end
+	if implement.spec_pickup ~= nil then
+		dbgprint("Implement has pickup", 2)
+	end
+	dbgprint_r(implement, 4, 0)
+end
+
+
 -- Dashboard groups
 
 function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
@@ -263,20 +277,29 @@ local function getAttachedStatus(vehicle, group, mode, default)
     	if implement ~= nil then
     		local foldable = implement.object.spec_foldable ~= nil and implement.object.spec_foldable.foldingParts ~= nil and #implement.object.spec_foldable.foldingParts > 0
             if mode == "raised" then
-            	result = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered()
+            	result = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered() or false
+            	dbgprint(implement.object:getFullName().." raised: "..tostring(result), 4)
             elseif mode == "lowered" then
-            	result = implement.object.getIsLowered ~= nil and implement.object:getIsLowered()
+            	result = implement.object.getIsLowered ~= nil and implement.object:getIsLowered() or false
+            	dbgprint(implement.object:getFullName().." lowered: "..tostring(result), 4)
             elseif mode == "lowerable" then
-				result = implement.object.getAllowsLowering ~= nil and implement.object:getAllowsLowering()
+				result = (implement.object.getAllowsLowering ~= nil and implement.object:getAllowsLowering()) or implement.object.spec_pickup ~= nil or false
+				dbgprint(implement.object:getFullName().." lowerable: "..tostring(result), 4)
 			elseif mode == "pto" then
-            	result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive()
+            	result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive() or false
+            	dbgprint(implement.object:getFullName().." pto: "..tostring(result), 4)
             elseif mode == "foldable" then
-				result = foldable
+				result = foldable or false
+				dbgprint(implement.object:getFullName().." foldable: "..tostring(result), 4)
 			elseif mode == "folded" then
-            	result = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded()
+            	result = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded() or false
+            	dbgprint(implement.object:getFullName().." folded: "..tostring(result), 4)
             elseif mode == "unfolded" then
-            	result = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
+            	result = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
+            	dbgprint(implement.object:getFullName().." unfolded: "..tostring(result), 4)
             end
+        elseif mode=="disconnected" then
+        	result = true
         end
     end
     
@@ -312,6 +335,9 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		returnValue = spec.actPage == group.dblPage
 	
 	-- vanilla game
+	elseif group.dblCommand == "base_disconnected" then
+		returnValue = getAttachedStatus(self, group, "disconnected")
+	
 	elseif group.dblCommand == "base_lifted" then
 		returnValue = getAttachedStatus(self, group, "raised", group.dblActiveWithoutImplement)
 		

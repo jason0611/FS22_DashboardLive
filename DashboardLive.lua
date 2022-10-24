@@ -84,6 +84,10 @@ function DashboardLive:onLoad(savegame)
 	spec.groups[1] = true
 	spec.updateTimer = 0
 	
+	-- zoom data
+	spec.zoomed = false
+	spec.zoomPressed = false
+	
 	-- engine data
 	spec.motorTemperature = 20
 	spec.fanEnabled = false
@@ -187,7 +191,8 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
 			g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
 			g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
-		end		
+		end	
+		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM', self, DashboardLive.ZOOM, false, true, true, true, nil)	
 	end
 end
 
@@ -212,6 +217,12 @@ function DashboardLive:CHANGEPAGE(actionName, keyStatus, arg3, arg4, arg5)
 		spec.actPage = pageNum
 		dbgprint("CHANGEPAGE : NewPage = "..spec.actPage, 2)
 	end
+end
+
+function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
+	dbgprint("ZOOM", 4)
+	local spec = self.spec_DashboardLive
+	spec.zoomPressed = true
 end
 
 -- Main script
@@ -690,8 +701,21 @@ function DashboardLive:onUpdate(dt)
 	local spec = self.spec_DashboardLive
 	local mspec = self.spec_motorized
 	
-	spec.updateTimer = spec.updateTimer + dt
+	-- zoom
+	local spec = self.spec_DashboardLive
+	if spec.zoomPressed and not spec.zoomed then
+		dbgprint("Zooming in", 4)
+		g_currentMission:consoleCommandSetFOV("20")
+		spec.zoomed = true
+	elseif not spec.zoomPressed and spec.zoomed then
+		dbgprint("Zoomig out", 4)
+		g_currentMission:consoleCommandSetFOV("-1")
+		spec.zoomed = false
+	end
+	spec.zoomPressed = false
 	
+	-- sync engine data with server
+	spec.updateTimer = spec.updateTimer + dt
 	if self.isServer and self.getIsMotorStarted ~= nil and self:getIsMotorStarted() then
 		spec.motorTemperature = mspec.motorTemperature.value
 		spec.fanEnabled = mspec.motorFan.enabled

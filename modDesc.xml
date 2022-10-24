@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="67">
 	<author>Jason06 / Glowins Modschmiede</author>
-	<version>0.1.1.2</version>
+	<version>0.1.1.3</version>
 	<title>
 		<en>Dashboard Live</en>
     </title>
@@ -20,11 +20,11 @@
  	<actions>
 		<action name="DBL_PAGEUP" category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_PAGEDN" category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_ZOOM"   category="VEHICLE" ignoreComboMask="false" />
 	</actions>
 	<inputBinding>	
-		<actionBinding action="DBL_PAGEUP">
-		</actionBinding>
-		<actionBinding action="DBL_PAGEDN">
-		</actionBinding>
+		<actionBinding action="DBL_PAGEUP" />
+		<actionBinding action="DBL_PAGEDN" />
+		<actionBinding action="DBL_ZOOM" />
 	</inputBinding>
 </modDesc>

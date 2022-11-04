@@ -226,9 +226,12 @@ function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
 end
 
 -- Main script
+-- ===========
 
 -- Debug stuff
+
 function DashboardLive:onPostAttachImplement(implement, x, jointDescIndex)
+	-- implement - attacherJoint
 	dbgprint("Implement "..implement:getFullName().." attached to "..self:getFullName().." at index "..tostring(jointDescIndex), 2)
 	if implement.getAllowsLowering ~= nil then
 		dbgprint("Implement is lowerable: "..tostring(implement:getAllowsLowering()), 2)
@@ -238,7 +241,6 @@ function DashboardLive:onPostAttachImplement(implement, x, jointDescIndex)
 	end
 	dbgprint_r(implement, 4, 0)
 end
-
 
 -- Dashboard groups
 
@@ -324,17 +326,6 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
     local specCS = self.spec_crabSteering
     local specWM = self.spec_workMode
     
---[[
-    group.baseFrontLifted	= dblEntry == "base_front_lifted"
-    group.baseBackLifted 	= dblEntry == "base_back_lifted"
-    group.baseFrontPto 		= dblEntry == "base_front_pto"
-    group.baseBackPto 		= dblEntry == "base_back_pto"
-    
-    group.vcaPark 			= dblEntry == "vca_park"
-    group.vcaDiffFront 		= dblEntry == "vca_diff_front"
-	group.vcaDiffBack 		= dblEntry == "vca_diff_back"
-    group.vcaDiffAwd 		= dblEntry == "vca_diff_awd"
---]]
 	local returnValue = false
 	
 	-- command given?
@@ -700,6 +691,14 @@ end
 function DashboardLive:onUpdate(dt)
 	local spec = self.spec_DashboardLive
 	local mspec = self.spec_motorized
+	
+	-- debug stuff: selected device
+	local allImpl = self:getRootVehicle():getChildVehicles()
+	for _, impl in pairs(allImpl) do
+		if impl:getIsActiveForInput() then
+			dbgprint(impl:getFullName().." is active for input", 2)
+		end
+	end
 	
 	-- zoom
 	local spec = self.spec_DashboardLive

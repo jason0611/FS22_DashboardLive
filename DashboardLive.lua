@@ -28,6 +28,9 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#page", "DashboardLive page")
 	schema:register(XMLValueType.BOOL, Dashboard.GROUP_XML_KEY .. "#dblActiveWithoutImplement", "return 'true' without implement")
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblAttacherJointIndices")
+	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblSelection")
+	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblSelectionGroup")
+	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#dblRidgeMarker", "Ridgemarker state")
 	dbgprint("initSpecialization : DashboardLive registered", 2)
 end
 
@@ -87,6 +90,9 @@ function DashboardLive:onLoad(savegame)
 	-- zoom data
 	spec.zoomed = false
 	spec.zoomPressed = false
+	
+	-- selector data
+	spec.selectorActive = 0
 	
 	-- engine data
 	spec.motorTemperature = 20
@@ -267,6 +273,18 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAttacherJointIndices", "", true)
 	--group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAttacherJointIndices")
 	dbgprint("loadDashboardGroupFromXML : dblAttacherJointIndices: "..tostring(group.dblAttacherJointIndices), 2)
+	
+	group.dblSelection = xmlFile:getValue(key .. "#dblSelection", "0", true)
+	--group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblSelection")
+	dbgprint("loadDashboardGroupFromXML : dblSelection: "..tostring(group.dblAttacherJointIndices), 2)
+	
+	group.dblSelectionGroup = xmlFile:getValue(key .. "#dblSelectionGroup", "0", true)
+	--group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblSelectionGroup")
+	dbgprint("loadDashboardGroupFromXML : dblSelectionGroup: "..tostring(group.dblSelectionGroup), 2)
+	
+	group.dblRidgeMarker = xmlFile:getValue(key .. "#dblRidgeMarker", "1", true)
+	--group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblRidgeMarker")
+	dbgprint("loadDashboardGroupFromXML : dblRidgeMarker: "..tostring(group.dblRidgeMarker), 2)
     
     return true
 end
@@ -325,6 +343,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
     local spec = self.spec_DashboardLive
     local specCS = self.spec_crabSteering
     local specWM = self.spec_workMode
+    local specRM = self.spec_ridgeMarker
     
 	local returnValue = false
 	
@@ -336,7 +355,33 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "page" and group.dblPage ~= nil then 
 		returnValue = spec.actPage == group.dblPage
 	
-	-- vanilla game
+	-- vanilla game selector
+	elseif group.dblCommand == "base_selector" and group.dblSelection ~= nil then
+		local dblOpt = group.dblSelection
+		local selectorActive = false
+		if dblOpt[1] == -100 then
+			returnValue = spec.selectorActive < 0
+		elseif dblOpt[1] == 100 then
+			returnValue = spec.selectorActive > 0
+		else
+			for _,selector in ipairs(dblOpt) do
+				if selector == spec.selectorActive then selectorActive = true end
+			end
+			returnValue = selectorActive
+		end
+		
+	-- vanilla game selector group
+	elseif group.dblCommand == "base_selectorGroup" then
+		local dblOpt = group.dblSelectionGroup
+		local groupActive = false
+		if dblOpt ~= "" then
+			for _,selGroup in ipairs(dblOpt) do
+				if selGroup == spec.selectorGroup then groupActive = true end
+			end
+		end
+		returnValue = groupActive
+		
+	-- vanilla game implements
 	elseif group.dblCommand == "base_disconnected" then
 		returnValue = getAttachedStatus(self, group, "disconnected")
 	
@@ -377,6 +422,10 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		end
 		returnValue = specWM.state == tonumber(dblOpt)
 		
+	-- vanilla game ridgeMarker
+	elseif specRM ~= nil and group.dblCommand == "base_ridgeMarker" then
+		returnValue = group.dblRidgeMarker == specRM.ridgeMarkerState
+		
 	-- VCA / EV
 	elseif group.dblCommand == "vca_park" or group.dblCommand == "ev_park" then
 		returnValue = (spec.modVCAFound and self:vcaGetState("handbrake"))
@@ -400,6 +449,10 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		
 	elseif group.dblCommand == "vca_diff_awdF" then
 		returnValue = spec.modVCAFound and self:vcaGetState("diffFrontAdv")
+	
+	-- VCA / keep speed
+	elseif group.dblCommand == "vca_ks" then
+		returnValue = spec.modVCAFound and self:vcaGetState("ksIsOn")
 	
 	-- Headland Management
 	elseif group.dblCommand == "hlm_active_field" then
@@ -461,6 +514,32 @@ end
 
 -- Supporting functions
 
+-- recursive search through all attached vehicles including rootVehicle
+
+local function getIndexOfActiveImplement(rootVehicle, level)
+	if level == nil then level = 1 end
+	local returnVal = 0
+	if not rootVehicle:getIsActiveForInput() and rootVehicle.spec_attacherJoints ~= nil and rootVehicle.spec_attacherJoints.attacherJoints ~= nil then
+		for _,impl in pairs(rootVehicle.spec_attacherJoints.attachedImplements) do
+			if impl.object:getIsActiveForInput() then
+				local jointDescIndex = impl.jointDescIndex
+				local jointDesc = rootVehicle.spec_attacherJoints.attacherJoints[jointDescIndex]
+				local wx, wy, wz = getWorldTranslation(jointDesc.jointTransform)
+				local _, _, lz = worldToLocal(impl.object.steeringAxleNode, wx, wy, wz)
+				if lz > 0 then 
+					returnVal = -level
+				else 
+					returnVal = level
+				end 
+			else
+				returnVal = getIndexOfActiveImplement(impl.object, level+1)
+			end
+			if returnVal ~= 0 then break end
+		end
+	end	
+	return returnVal
+end
+
 local function getFillLevel(device, ftType)
 	dbgprint("getFillLevel", 4)
 	local fillLevel = {abs = nil, pct = nil, max = nil}
@@ -516,8 +595,7 @@ local function getFillLevelStatus(vehicle, ftIndex, ftType)
 			fillLevel = getFillLevel(implement.object, ftType)
 		end
 	end
-	
-	
+
 	-- second volume
 	if ftIndex == 2 then
 		dbgprint("getFillLevelStatus : second attached vehicle", 4)
@@ -692,14 +770,14 @@ function DashboardLive:onUpdate(dt)
 	local spec = self.spec_DashboardLive
 	local mspec = self.spec_motorized
 	
-	-- debug stuff: selected device
-	local allImpl = self:getRootVehicle():getChildVehicles()
-	for _, impl in pairs(allImpl) do
-		if impl:getIsActiveForInput() then
-			dbgprint(impl:getFullName().." is active for input", 2)
-		end
+	if self:getIsActiveForInput(true) then
+		-- get active vehicle
+		spec.selectorActive = getIndexOfActiveImplement(self:getRootVehicle())
+		spec.selectorGroup = self.currentSelection.subIndex or 0
+		--dbgprint("Selector value: "..tostring(spec.selectorActive), 2)
+		--dbgprint("Selector group: "..tostring(spec.selectorGroup), 2)
 	end
-	
+		
 	-- zoom
 	local spec = self.spec_DashboardLive
 	if spec.zoomPressed and not spec.zoomed then

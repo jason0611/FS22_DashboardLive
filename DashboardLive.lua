@@ -264,25 +264,29 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 		dbgprint("loadDashboardGroupFromXML : page: "..tostring(group.dblPage), 2)
 	end
 	
-	group.dblOperator = xmlFile:getValue(key .. "#op", "or")
+	group.dblOperator = xmlFile:getValue(key .. "#op", "and")
 	dbgprint("loadDashboardGroupFromXML : dblOperator: "..tostring(group.dblOperator), 2)
 	
 	group.dblActiveWithoutImplement = xmlFile:getValue(key.. "#dblActiveWithoutImplement", false)
+	group.dblActiveWithoutImplement = xmlFile:getValue(key.. "#dblAWI", group.dblActiveWithoutImplement)
 	dbgprint("loadDashboardGroupFromXML : dblActiveWithoutImplement: "..tostring(group.dblDefault), 2)
 	
 	group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAttacherJointIndices", "", true)
-	--group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAttacherJointIndices")
+	group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAJI", "", group.dblAttacherJointIndices
 	dbgprint("loadDashboardGroupFromXML : dblAttacherJointIndices: "..tostring(group.dblAttacherJointIndices), 2)
 	
 	group.dblSelection = xmlFile:getValue(key .. "#dblSelection", "0", true)
+	group.dblSelection = xmlFile:getValue(key .. "#dblS", "0", group.dblSelection)
 	--group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblSelection")
 	dbgprint("loadDashboardGroupFromXML : dblSelection: "..tostring(group.dblAttacherJointIndices), 2)
 	
 	group.dblSelectionGroup = xmlFile:getValue(key .. "#dblSelectionGroup", "0", true)
+	group.dblSelectionGroup = xmlFile:getValue(key .. "#dblSG", "0", group.dblSelectionGroup)
 	--group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblSelectionGroup")
 	dbgprint("loadDashboardGroupFromXML : dblSelectionGroup: "..tostring(group.dblSelectionGroup), 2)
 	
 	group.dblRidgeMarker = xmlFile:getValue(key .. "#dblRidgeMarker", "1", true)
+	group.dblRidgeMarker = xmlFile:getValue(key .. "#dblRM", "1", group.dblRidgeMarker)
 	--group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblRidgeMarker")
 	dbgprint("loadDashboardGroupFromXML : dblRidgeMarker: "..tostring(group.dblRidgeMarker), 2)
     
@@ -632,6 +636,57 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 			local spec = self.spec_DashboardLive
 			local c, o, t = dashboard.dblCommand, dashboard.dblOption, dashboard.dblTrailer
 			local newValue, minValue, maxValue = 0, 0, 1
+			
+			-- vanilla game
+
+			-- vanilla game implements
+			if c == "base_disconnected" then
+				newValue = getAttachedStatus(self, group, "disconnected") and 1 or 0
+		
+			elseif c == "base_lifted" then
+				newValue = getAttachedStatus(self, group, "raised", group.dblActiveWithoutImplement) and 1 or 0
+		
+			elseif c == "base_lowered" then
+				newValue = getAttachedStatus(self, group, "lowered", group.dblActiveWithoutImplement) and 1 or 0
+	
+			elseif c == "base_lowerable" then
+				newValue = getAttachedStatus(self, group, "lowerable", group.dblActiveWithoutImplement) and 1 or 0
+	
+			elseif c == "base_pto" then
+				newValue = getAttachedStatus(self, group, "pto", group.dblActiveWithoutImplement) and 1 or 0
+	
+	elseif c == "base_foldable" then
+		returnValue = getAttachedStatus(self, group, "foldable", group.dblActiveWithoutImplement)
+	
+	elseif c == "base_folded" then
+		returnValue = getAttachedStatus(self, group, "folded", group.dblActiveWithoutImplement)	
+	
+	elseif c == "base_unfolded" then
+		returnValue = getAttachedStatus(self, group, "unfolded", group.dblActiveWithoutImplement)	
+		
+	elseif specCS ~= nil and c == "base_steering" then
+		local dblOpt = group.dblOption
+		if dblOpt == "" or tonumber(dblOpt) == nil then
+			Logging.xmlWarning(vehicle.xmlFile, "No steering mode number given for DashboardLive steering command")
+			return false
+		end
+		returnValue = specCS.state == tonumber(dblOpt)
+
+	elseif specWM ~= nil and c == "base_swath" then
+		local dblOpt = group.dblOption
+		if dblOpt == "" or tonumber(dblOpt) == nil then
+			Logging.xmlWarning(vehicle.xmlFile, "No work mode number given for DashboardLive swath command")
+			return false
+		end
+		returnValue = specWM.state == tonumber(dblOpt)
+		
+	-- vanilla game ridgeMarker
+	elseif specRM ~= nil and c == "base_ridgeMarker" then
+		returnValue = group.dblRidgeMarker == specRM.ridgeMarkerState
+			
+			
+			--
+			
 			if c == "gps_lane" and spec.modGuidanceSteeringFound then
 				local gsSpec = self.spec_globalPositioningSystem
 				if gsSpec ~= nil and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.currentLane ~= nil then

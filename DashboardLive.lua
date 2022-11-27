@@ -655,8 +655,8 @@ function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
 			elseif c == "base_pto" then
 				newValue = getAttachedStatus(self, group, "pto", group.dblActiveWithoutImplement) and 1 or 0
 	
-	elseif c == "base_foldable" then
-		returnValue = getAttachedStatus(self, group, "foldable", group.dblActiveWithoutImplement)
+			elseif c == "base_foldable" then
+				returnValue = getAttachedStatus(self, group, "foldable", group.dblActiveWithoutImplement) and 1 or 0
 	
 	elseif c == "base_folded" then
 		returnValue = getAttachedStatus(self, group, "folded", group.dblActiveWithoutImplement)	

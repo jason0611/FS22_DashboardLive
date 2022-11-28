@@ -38,8 +38,10 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#dblRM", "Ridgemarker state")
 	dbgprint("initSpecialization : DashboardLive group options registered", 2)
 	
-	DashboardLive.DBL_XML_KEY = "vehicle.dashboard.default.dashboard(?)"
+	Dashboard.registerDashboardXMLPaths(schema, "vehicle.dashboard.dashboardLive", "dbl base vca gps print")
+	DashboardLive.DBL_XML_KEY = "vehicle.dashboard.dashboardLive.dashboard(?)"
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#dbl", "DashboardLive command")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#cmd", "DashboardLive command")
     schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#op", "DashboardLive operator")
 	schema:register(XMLValueType.BOOL, DashboardLive.DBL_XML_KEY .. "#dblActiveWithoutImplement", "return 'true' without implement")
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#dblAttacherJointIndices")
@@ -51,12 +53,10 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#dblS")
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#dblSG")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#dblRM", "Ridgemarker state")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#dblTrailer", "Trailer number")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#dblOption", "Option")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#dblOpt", "Option")
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
-end
-
-function DashboardLive.registerDashboardXMLPaths(schema, basePath, availableValueTypes)
-	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#dbl", "DashboardLive command")
-	dbgprint("registerDashboardXMLPaths : registered for path "..basePath, 2)
 end
 
 function DashboardLive.registerEventListeners(vehicleType)
@@ -130,7 +130,7 @@ function DashboardLive:onLoad(savegame)
                                additionalAttributesFunc = DashboardLive.getDashboardLiveAttributes
                                }
 
-        self:loadDashboardsFromXML(self.xmlFile, DashboardLive.DBL_XML_KEY, dashboardData)
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
     end
 end
 
@@ -282,13 +282,12 @@ end
 -- Supporting functions
 
 local function getAttachedStatus(vehicle, element, mode, default)
-	if type(element.dblAttacherJointIndices)=="number" then
+		if type(element.dblAttacherJointIndices)=="number" then
 		local newAttacher = {}
 		newAttacher[1] = element.dblAttacherJointIndices
 		element.dblAttacherJointIndices = newAttacher
 	end
-	if element.dblAttacherJointIndices == nil or #element.dblAttacherJointIndices == 0 then
-		dbgprint("getAttachedStatus : element.attacherJointIndices: "..tostring(element.attacherJointIndices), 2)
+	if element.dblAttacherJointIndices == nil then -- or #element.dblAttacherJointIndices == 0 then
 		if element.attacherJointIndices ~= nil and #element.attacherJointIndices ~= 0 then
 			element.dblAttacherJointIndices = element.attacherJointIndices
 		else
@@ -435,6 +434,7 @@ end
 
 function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	if not superFunc(self, xmlFile, key, group) then
+        dbgprint("loadDashboardGroupFromXML : superfunc failed for group "..tostring(group.name), 2)
         return false
     end
     dbgprint("loadDashboardGroupFromXML : group: "..tostring(group.name), 2)
@@ -469,7 +469,7 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 		dblSelection = xmlFile:getValue(key .. "#dblS")
 	end
 	group.dblSelection = dblSelection
-	dbgprint("loadDashboardGroupFromXML : dblSelection: "..tostring(group.dblAttacherJointIndices), 2)
+	dbgprint("loadDashboardGroupFromXML : dblSelection: "..tostring(group.dblSelection), 2)
 	
 	local dblSelectionGroup = xmlFile:getValue(key .. "#dblSelectionGroup")
 	if dblSelectionGroup == nil then
@@ -653,7 +653,7 @@ end
 
 -- ELEMENTS
 
-function DashboardLive.getDashboardLiveAttributes(self, xmlfile, key, dashboard)
+function DashboardLive.getDashboardLiveAttributes(self, xmlFile, key, dashboard)
     dbgprint("getDashBoardLiveAttributes : key: "..tostring(key), 2)
     
     dashboard.dblCommand = xmlFile:getValue(key .. "#dbl")
@@ -687,7 +687,7 @@ function DashboardLive.getDashboardLiveAttributes(self, xmlfile, key, dashboard)
 	
 	dashboard.dblOption = xmlFile:getValue(key .. "#dblOption")
 	dashboard.dblOption = xmlFile:getValue(key .. "#dblOpt", dashboard.dblOption)
-	dbgprint("getDashBoardLiveAttributes : dblRidgeMarker: "..tostring(dashboard.dblRidgeMarker), 2)
+	dbgprint("getDashBoardLiveAttributes : dblOption: "..tostring(dashboard.dblRidgeMarker), 2)
     
     return true
 end
@@ -702,7 +702,7 @@ end
 --]]
 
 function DashboardLive.getDashboardLiveState(self, dashboard)
-	dbgprint("getDashboardLiveState : dblCommand: "..tostring(dashboard.dblCommand), 2)
+	dbgprint("getDashboardLiveState : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	if dashboard.dblCommand ~= nil then
 		local spec = self.spec_DashboardLive
 		local specWM = self.spec_workMode

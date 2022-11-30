@@ -38,24 +38,15 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#dblRM", "Ridgemarker state")
 	dbgprint("initSpecialization : DashboardLive group options registered", 2)
 	
-	Dashboard.registerDashboardXMLPaths(schema, "vehicle.dashboard.dashboardLive", "dbl base vca gps print")
+	Dashboard.registerDashboardXMLPaths(schema, "vehicle.dashboard.dashboardLive", "base fillLevel fillType vca hlm gps gps_lane gps_width proseed selector")
 	DashboardLive.DBL_XML_KEY = "vehicle.dashboard.dashboardLive.dashboard(?)"
-	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#dbl", "DashboardLive command")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#cmd", "DashboardLive command")
-    schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#op", "DashboardLive operator")
-	schema:register(XMLValueType.BOOL, DashboardLive.DBL_XML_KEY .. "#dblActiveWithoutImplement", "return 'true' without implement")
-	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#dblAttacherJointIndices")
-	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#dblSelection")
-	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#dblSelectionGroup")
-	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#dblRidgeMarker", "Ridgemarker state")
-	schema:register(XMLValueType.BOOL, DashboardLive.DBL_XML_KEY .. "#dblAWI", "return 'true' without implement")
-	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#dblAJI")
-	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#dblS")
-	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#dblSG")
-	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#dblRM", "Ridgemarker state")
-	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#dblTrailer", "Trailer number")
-	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#dblOption", "Option")
-	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#dblOpt", "Option")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#joints")
+	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#selection")
+	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#selectionGroup")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#state", "state")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#trailer", "Trailer number")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#option", "Option")
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
 end
 
@@ -122,15 +113,90 @@ function DashboardLive:onLoad(savegame)
 	spec.lastDefUsage = 0
 	spec.lastAirUsage = 0
 	
+	-- Load Dashboards from XML
 	if self.loadDashboardsFromXML ~= nil then
+		local dashboardData
 		dbgprint("onLoad : loadDashboardsFromXML found", 2)
-        local dashboardData = {valueTypeToLoad = "dbl",
-                               valueObject = self,
-                               valueFunc = DashboardLive.getDashboardLiveState,
-                               additionalAttributesFunc = DashboardLive.getDashboardLiveAttributes
-                               }
-
+        -- base
+        dashboardData = {	
+        					valueTypeToLoad = "base",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveBase,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesBase
+                        }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        -- fillLevel
+        dashboardData = {	
+        					valueTypeToLoad = "fillLevel",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveFillLevel,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesFillLevel
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        -- fillType
+        dashboardData = {	
+        					valueTypeToLoad = "fillType",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveFillLevel,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesFillType
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        -- vca
+        dashboardData = {	
+        					valueTypeToLoad = "vca",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveVCA,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesVCA
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+		-- hlm
+        dashboardData = {	
+        					valueTypeToLoad = "hlm",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveHLM,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesHLM
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+		-- gps
+        dashboardData = {	
+        					valueTypeToLoad = "gps",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveGPS,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesGPS
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+		-- gpsLane
+        dashboardData = {	
+        					valueTypeToLoad = "gpsLane",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveGPSLane
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+		-- gpsWidth
+        dashboardData = {	
+        					valueTypeToLoad = "gpsWidth",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveGPSWidth
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+
+		
+		-- ps
+        dashboardData = {	
+        					valueTypeToLoad = "ps",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLivePS,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesPS
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+		-- selection
+        dashboardData = {	
+        					valueTypeToLoad = "selection",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveSelection,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesSelection
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)  
     end
 end
 
@@ -282,25 +348,35 @@ end
 -- Supporting functions
 
 local function getAttachedStatus(vehicle, element, mode, default)
-		if type(element.dblAttacherJointIndices)=="number" then
-		local newAttacher = {}
-		newAttacher[1] = element.dblAttacherJointIndices
-		element.dblAttacherJointIndices = newAttacher
-	end
-	if element.dblAttacherJointIndices == nil then -- or #element.dblAttacherJointIndices == 0 then
-		if element.attacherJointIndices ~= nil and #element.attacherJointIndices ~= 0 then
+	
+	if element.dblAttacherJointIndices == nil then
+		if element.attacherJointIndices ~= nil then
 			element.dblAttacherJointIndices = element.attacherJointIndices
 		else
-			Logging.xmlWarning(vehicle.xmlFile, "No attacherJointIndex given for DashboardLive attacher command")
+			Logging.xmlWarning(vehicle.xmlFile, "No attacherJointIndex given for DashboardLive attacher command "..tostring(mode))
 			return false
 		end
 	end
 	
+	local joints 
+	if type(element.dblAttacherJointIndices) == "number" then
+		joints = {}
+		joints[1] = element.dblAttacherJointIndices
+	elseif type(element.dblAttacherJointIndices) == "table" then
+		joints = element.dblAttacherJointIndices
+	else
+		joints = string.split(element.dblAttacherJointIndices, " ")
+	end
 	local result = default or false
+	local noImplement = true
 	
-    for _, jointIndex in ipairs(element.dblAttacherJointIndices) do
-    	local implement = vehicle:getImplementFromAttacherJointIndex(jointIndex) 
+    for _, jointIndex in ipairs(joints) do
+    	dbgprint("jointIndex: "..tostring(tonumber(jointIndex)), 4)
+    	local implement = vehicle:getImplementFromAttacherJointIndex(tonumber(jointIndex)) 
+    	dbgprint("implement: "..tostring(implement), 4)
+    	dbgprint_r(implement, 4, 1)
     	if implement ~= nil then
+    		noImplement = false
     		local foldable = implement.object.spec_foldable ~= nil and implement.object.spec_foldable.foldingParts ~= nil and #implement.object.spec_foldable.foldingParts > 0
             if mode == "raised" then
             	result = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered() or false
@@ -323,12 +399,17 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "unfolded" then
             	result = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(result), 4)
+            elseif mode == "disconnected" then
+            	dbgprint("AttacherJoint #"..tostring(jointIndex).." not disonnected", 4)
             end
-        elseif mode=="disconnected" then
-        	result = true
         end
+        dbgprint("result / noImplement: "..tostring(result).." / "..tostring(noImplement), 4)
     end
-    
+    if mode == "disconnected" and noImplement then
+        result = true
+        dbgprint("Disconnected!", 4)
+    end
+    dbgprint("ReturnValue: "..tostring(result), 4)
     return result
 end
 
@@ -653,362 +734,339 @@ end
 
 -- ELEMENTS
 
-function DashboardLive.getDashboardLiveAttributes(self, xmlFile, key, dashboard)
-    dbgprint("getDashBoardLiveAttributes : key: "..tostring(key), 2)
+-- base fillLevel fillType vca hlm gps gps_lane gps_width proseed selector
+
+-- readAttributes
+-- base
+function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+    dbgprint("getDashBoardLiveAttributes : command: "..tostring(dashboard.dblCommand), 2)
+    if dashboard.dblCommand == nil then 
+    	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'base'")
+    	return false
+    end
     
-    dashboard.dblCommand = xmlFile:getValue(key .. "#dbl")
-    dbgprint("getDashBoardLiveAttributes : dblCommand: "..tostring(dashboard.dblCommand), 2)
+    dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
+	dbgprint("getDashBoardLiveAttributes : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
+
+	dashboard.dblState = xmlFile:getValue(key .. "#state") -- swath state, ridgemarker state
+	dbgprint("getDashBoardLiveAttributes : state: "..tostring(dashboard.dblState), 2)
 	
-	dashboard.dblOperator = xmlFile:getValue(key .. "#op", "and")
-	dbgprint("getDashBoardLiveAttributes : dblOperator: "..tostring(dashboard.dblOperator), 2)
+	dashboard.dblOption = xmlFile:getValue(key .. "#option") -- nil or 'default'
+	dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblOption), 2)
 	
-	dashboard.dblActiveWithoutImplement = xmlFile:getValue(key.. "#dblActiveWithoutImplement")
-	--dashboard.dblActiveWithoutImplement = xmlFile:getValue(key.. "#dblAWI", dashboard.dblActiveWithoutImplement)
-	dbgprint("getDashBoardLiveAttributes : dblActiveWithoutImplement: "..tostring(dashboard.dblDefault), 2)
-	
-	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAttacherJointIndices")
-	--dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAJI", dashboard.dblAttacherJointIndices)
-	dbgprint("getDashBoardLiveAttributes : dblAttacherJointIndices: "..tostring(dashboard.dblAttacherJointIndices), 2)
-	
-	dashboard.dblSelection = xmlFile:getValue(key .. "#dblSelection", "0")
-	--dashboard.dblSelection = xmlFile:getValue(key .. "#dblS", dashboard.dblSelection)
-	dbgprint("getDashBoardLiveAttributes : dblSelection: "..tostring(dashboard.dblAttacherJointIndices), 2)
-	
-	dashboard.dblSelectionGroup = xmlFile:getValue(key .. "#dblSelectionGroup", "0")
-	--dashboard.dblSelectionGroup = xmlFile:getValue(key .. "#dblSG", dashboard.dblSelectionGroup)
-	dbgprint("getDashBoardLiveAttributes : dblSelectionGroup: "..tostring(dashboard.dblSelectionGroup), 2)
-	
-	dashboard.dblRidgeMarker = xmlFile:getValue(key .. "#dblRidgeMarker")
-	--dashboard.dblRidgeMarker = xmlFile:getValue(key .. "#dblRM", dashboard.dblRidgeMarker)
-	dbgprint("getDashBoardLiveAttributes : dblRidgeMarker: "..tostring(dashboard.dblRidgeMarker), 2)
-	
-	dashboard.dblTrailer = xmlFile:getValue(key .. "#dblTrailer", "0")
-	dbgprint("getDashBoardLiveAttributes : dblTrailer: "..tostring(dashboard.dblTrailer), 2)
-	
-	dashboard.dblOption = xmlFile:getValue(key .. "#dblOption")
-	dashboard.dblOption = xmlFile:getValue(key .. "#dblOpt", dashboard.dblOption)
-	dbgprint("getDashBoardLiveAttributes : dblOption: "..tostring(dashboard.dblRidgeMarker), 2)
-    
+	return true
+end
+-- fillLevel
+function DashboardLive.getDBLAttributesFillLevel(self, xmlFile, key, dashboard)
+	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- trailer
+	dbgprint("getDashBoardLiveAttributes : trailer: "..tostring(dashboard.dblTrailer), 2)
+	if dashboard.dblOption == nil then 
+    	Logging.xmlWarning(self.xmlFile, "No '#option' given for valueType 'fillLevel'")
+    	return false
+    end
+	dashboard.dblOption = xmlFile:getValue(key .. "#option", "") -- empty=absolut or "percent"
+    dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblOption), 2)
+    if dashboard.dblOption == "percent" then
+    	dashboard.minFunc = 0
+    	dashboard.maxFunc = 1
+	end
+	return true
+end
+-- fillType
+function DashboardLive.getDBLAttributesFillType(self, xmlFile, key, dashboard)
+	dashboard.dblOption = xmlFile:getValue(key .. "#trailer") -- trailer
+	dbgprint("getDashBoardLiveAttributes : trailer: "..tostring(dashboard.dblRidgeMarker), 2)
+	if dashboard.dblOption == nil then 
+    	Logging.xmlWarning(self.xmlFile, "No '#trailer' given for valueType 'fillType'")
+    	return false
+    end
+	dashboard.dblOption = xmlFile:getValue(key .. "#option", "") -- empty or wanted fillType
+    dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblCommand), 2)
+
+	return true
+end
+--vca
+function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+    dbgprint("getDashBoardLiveAttributes : cmd: "..tostring(dashboard.dblCommand), 2)
+    if dashboard.dblCommand == nil then 
+    	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'vca'")
+    	return false
+    end
+
+	return true
+end
+--HLM
+function DashboardLive.getDBLAttributesHLM(self, xmlFile, key, dashboard)
+	dashboard.dblOption = xmlFile:getValue(key .. "#option")
+    dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblOption), 2)
+
     return true
 end
+--  gps
+function DashboardLive.getDBLAttributesGPS(self, xmlFile, key, dashboard)
+	dashboard.dblOption = xmlFile:getValue(key .. "#option", "on") -- 'on' or 'active'
+    dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblOption), 2)
 
---[[
-function DashboardLive:loadDashboardFromXML(superFunc, xmlFile, key, dashboard)
-	dashboard.dblCommand = xmlFile:getString(key.."#dbl")
-	dashboard.dblOption = xmlFile:getString(key.."#dblOpt")
-	dashboard.dblTrailer = xmlFile:getInt(key.."#dblTrailer")
-	return superFunc(self, xmlFile, key, dashboard)
+	return true
 end
---]]
+-- ps
+function DashboardLive.getDBLAttributesPS(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd", "track")
+    dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblCommand), 2)
 
-function DashboardLive.getDashboardLiveState(self, dashboard)
-	dbgprint("getDashboardLiveState : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	return true
+end
+-- selector
+function DashboardLive.getDBLAttributesSelection(self, xmlFile, key, dashboard)
+	dashboard.dblSelection = xmlFile:getValue(key .. "#selection")
+	dbgprint("getDashBoardLiveAttributes : selection: "..tostring(dashboard.dblAttacherJointIndices), 2)
+	
+	dashboard.dblSelectionGroup = xmlFile:getValue(key .. "#selectionGroup")
+	dbgprint("getDashBoardLiveAttributes : selectionGroup: "..tostring(dashboard.dblSelectionGroup), 2)
+	
+	if dashboard.dblSelection == nil and dashboard.dblSelectionGroup == nil then 
+		Logging.xmlWarning(self.xmlFile, "Neither '#selection' nor '#selectionGroup' given for valueType 'selector'")
+		return false
+	end
+	if dashboard.dblSelection ~= nil and dashboard.dblSelectionGroup ~= nil then 
+		Logging.xmlWarning(self.xmlFile, "'#selection' and '#selectionGroup' given for valueType 'selector'")
+		return false
+	end
+	
+	return true
+end
+
+-- get states
+
+function DashboardLive.getDashboardLiveBase(self, dashboard)
+	dbgprint("getDashboardLiveBase : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	if dashboard.dblCommand ~= nil then
 		local spec = self.spec_DashboardLive
 		local specWM = self.spec_workMode
 		local specRM = self.spec_ridgeMarker
-		local c, o, t = dashboard.dblCommand, dashboard.dblOption, dashboard.dblTrailer
+		local c, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption
 		
-		-- vanilla game
-
-		-- vanilla game implements
-		if c == "base_disconnected" then
-			return getAttachedStatus(self, group, "disconnected")
+		-- joint states
+		if c == "disconnected" then
+			return getAttachedStatus(self, dashboard, "disconnected")
 	
-		elseif c == "base_lifted" then
-			return getAttachedStatus(self, group, "raised", dashboard.dblActiveWithoutImplement)
+		elseif c == "lifted" then
+			return getAttachedStatus(self, dashboard, "raised", o == "default")
 	
-		elseif c == "base_lowered" then
-			return getAttachedStatus(self, group, "lowered", dashboard.dblActiveWithoutImplement)
+		elseif c == "lowered" then
+			return getAttachedStatus(self, dashboard, "lowered", o == "default")
 
-		elseif c == "base_lowerable" then
-			return getAttachedStatus(self, group, "lowerable", dashboard.dblActiveWithoutImplement)
+		elseif c == "lowerable" then
+			return getAttachedStatus(self, dashboard, "lowerable", o == "default")
 
-		elseif c == "base_pto" then
-			return getAttachedStatus(self, group, "pto", dashboard.dblActiveWithoutImplement)
+		elseif c == "pto" then
+			return getAttachedStatus(self, dashboard, "pto", o == "default")
 
-		elseif c == "base_foldable" then
-			returnValue = getAttachedStatus(self, group, "foldable", dashboard.dblActiveWithoutImplement)
+		elseif c == "foldable" then
+			return getAttachedStatus(self, dashboard, "foldable", o == "default")
 
-		elseif c == "base_folded" then
-			returnValue = getAttachedStatus(self, group, "folded", dashboard.dblActiveWithoutImplement)
+		elseif c == "folded" then
+			return getAttachedStatus(self, dashboard, "folded", o == "default")
 
-		elseif c == "base_unfolded" then
-			returnValue = getAttachedStatus(self, group, "unfolded", dashboard.dblActiveWithoutImplement)
+		elseif c == "unfolded" then
+			return getAttachedStatus(self, dashboard, "unfolded", o == "default")
 
-		elseif specWM ~= nil and c == "base_swath" then
-			local dblOpt = dashboard.dblOption
-			if dblOpt == "" or tonumber(dblOpt) == nil then
-				Logging.xmlWarning(vehicle.xmlFile, "No work mode number given for DashboardLive swath command")
+		elseif specWM ~= nil and c == "swath" then
+			if s == "" or tonumber(s) == nil then
+				Logging.xmlWarning(vehicle.xmlFile, "No swath state number given for DashboardLive swath command")
 				return false
 			end
-			returnValue = specWM.state == tonumber(dblOpt)
+			return specWM.state == tonumber(s)
 	
-		-- vanilla game ridgeMarker
-		elseif c == "base_ridgeMarker" and specRM ~= nil then
-			return dashboard.dblRidgeMarker == specRM.ridgeMarkerState
-			
-		elseif c == "gps_lane" and spec.modGuidanceSteeringFound then
-			local gsSpec = self.spec_globalPositioningSystem
-			if gsSpec ~= nil and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.currentLane ~= nil then
-				return math.abs(gsSpec.guidanceData.currentLane) / 10
-			else
-				return 0
+		-- ridgeMarker
+		elseif c == "ridgeMarker" and specRM ~= nil then
+			if s == "" or tonumber(s) == nil then
+				Logging.xmlWarning(vehicle.xmlFile, "No ridgeMarker state given for DashboardLive ridgeMarker command")
+				return false
 			end
-		
-		elseif c == "gps_width" and spec.modGuidanceSteeringFound then
-			local gsSpec = self.spec_globalPositioningSystem
-			if gsSpec ~= nil and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.width ~= nil then
-				return gsSpec.guidanceData.width * 10
-			else
-				return 0
-			end
+			return specRM.ridgeMarkerState == tonumber(s)
+		end
+	end
+	
+	return false
+end
+	
+function DashboardLive.getDashboardLiveFillLevel(self, dashboard)
+	dbgprint("getDashboardLiveFillLevel : trailer, option: "..tostring(dashboard.dblTrailer)..", "..tostring(dashboard.dblOption), 4)
 
-		elseif c == "vca_park" or c == "ev_park" then
+	local spec = self.spec_DashboardLive
+	local o, t = dashboard.dblOption, dashboard.dblTrailer
+
+	if t ~= nil then
+		local maxValue, pctValue, absValue
+		local fillLevel = getFillLevelStatus(self, t)
+		dbgprint_r(fillLevel, 4, 2)
+		if fillLevel.abs == nil then 
+			maxValue, absValue, pctValue = 0, 0, 0
+		else
+			maxValue, absValue, pctValue = fillLevel.max, fillLevel.abs, fillLevel.pct
+		end
+
+		dbgrender("maxValue: "..tostring(maxValue), 1 + t * 4, 3)
+		dbgrender("absValue: "..tostring(absValue), 2 + t * 4, 3)
+		dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
+
+		if o == "percent" then
+			return pctValue
+		else
+			return absValue * 100
+		end
+	end
+	
+	return false
+end
+
+function DashboardLive.getDashboardLiveVCA(self, dashboard)
+	dbgprint("getDashboardLiveVCA : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	if dashboard.dblCommand ~= nil then
+		local spec = self.spec_DashboardLive
+		local c = dashboard.dblCommand
+
+		if c == "park" or c == "park" then
 			if (spec.modVCAFound and self:vcaGetState("handbrake")) or (spec.modEVFound and self.vData.is[13]) then 
 				return true
 			else 
 				return false
 			end
-
-		elseif c == "base_fillLevel" or c == "base_fillLevel_percent" and t ~= nil then
-			local maxValue, pctValue, absValue, retValue
-			local ftType = o
-			local fillLevel = getFillLevelStatus(self, t, ftType)
-			dbgprint_r(fillLevel, 4, 2)
-			if fillLevel.abs == nil then 
-				maxValue, absValue, pctValue = 0, 0, 0
-			else
-				maxValue, absValue, pctValue = fillLevel.max, fillLevel.abs, fillLevel.pct
-			end
-			if c == "base_fillLevel" then
-				retValue = absValue
-			else
-				retValue = pctValue * 100
-			end
+		elseif c == "diff_front" or c == "diff_front" then
+			return (spec.modVCAFound and self:vcaGetState("diffLockFront")) or (spec.modEVFound and self.vData.is[1])
+	
+		elseif c == "diff_back" or c == "diff_back"then
+			return (spec.modVCAFound and self:vcaGetState("diffLockBack")) or (spec.modEVFound and self.vData.is[2])
+	
+		elseif c == "diff" or c == "diff" then
+			return (spec.modVCAFound and (self:vcaGetState("diffLockFront") or self:vcaGetState("diffLockBack"))) 
+					or (spec.modEVFound and (self.vData.is[1] or self.vData.is[2]))
+	
+		elseif c == "diff_awd" or c == "diff_awd" then
+			return (spec.modVCAFound and self:vcaGetState("diffLockAWD")) or (spec.modEVFound and self.vData.is[3]==1)
 		
-			dbgrender("maxValue: "..tostring(maxValue), 1 + t * 4, 3)
-			dbgrender("absValue: "..tostring(absValue), 2 + t * 4, 3)
-			dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
-		
-			return retValue
-
-		elseif c == "print" and o ~= nil then
-			return o
+		elseif c == "diff_awdF" then
+			return spec.modVCAFound and self:vcaGetState("diffFrontAdv")
+	
+		elseif c == "ks" then
+			return spec.modVCAFound and self:vcaGetState("ksIsOn")
 		end
 	end
 	
-	return 0
+	return false
 end
 
---[[
-function DashboardLive.updateDashboards(self, superFunc, dashboards, dt, force)
--- Giants's stuff ----------------------------------------
-    for i=1, #dashboards do
-        local dashboard = dashboards[i]
-        local isActive = true
-        for j=1, #dashboard.groups do
-            if not dashboard.groups[j].isActive then
-                isActive = false
-                break
-            end
-        end
-        
--- Own stuff ---------------------------------------------
-		local override = false -- override forced dashboard update if update is done here already
-		if dashboard.dblCommand ~= nil then
-			local spec = self.spec_DashboardLive
-			local specCS = self.spec_crabSteering
-		    local specWM = self.spec_workMode
-    		local specRM = self.spec_ridgeMarker
-			local c, o, t = dashboard.dblCommand, dashboard.dblOption, dashboard.dblTrailer
-			local newValue, minValue, maxValue = 0, 0, 1
-			
-			-- vanilla game
-
-			-- vanilla game implements
-			if c == "base_disconnected" then
-				newValue = getAttachedStatus(self, group, "disconnected") and 1 or 0
+function DashboardLive.getDashboardLiveHLM(self, dashboard)
+	dbgprint("getDashboardLiveHLM : dblOption: "..tostring(dashboard.dblOption), 4)
+		local spec = self.spec_DashboardLive
+		local specHLM = self.spec_HeadlandManagement
 		
-			elseif c == "base_lifted" then
-				newValue = getAttachedStatus(self, group, "raised", group.dblActiveWithoutImplement) and 1 or 0
-		
-			elseif c == "base_lowered" then
-				newValue = getAttachedStatus(self, group, "lowered", group.dblActiveWithoutImplement) and 1 or 0
-	
-			elseif c == "base_lowerable" then
-				newValue = getAttachedStatus(self, group, "lowerable", group.dblActiveWithoutImplement) and 1 or 0
-	
-			elseif c == "base_pto" then
-				newValue = getAttachedStatus(self, group, "pto", group.dblActiveWithoutImplement) and 1 or 0
-	
-			elseif c == "base_foldable" then
-				newValue = getAttachedStatus(self, group, "foldable", group.dblActiveWithoutImplement) and 1 or 0
-	
-			elseif c == "base_folded" then
-				newValue = getAttachedStatus(self, group, "folded", group.dblActiveWithoutImplement)	and 1 or 0
-	
-			elseif c == "base_unfolded" then
-				newValue = getAttachedStatus(self, group, "unfolded", group.dblActiveWithoutImplement) and 1 or 0
-		
-	elseif specCS ~= nil and c == "base_steering" then
-		local dblOpt = group.dblOption
-		if dblOpt == "" or tonumber(dblOpt) == nil then
-			Logging.xmlWarning(vehicle.xmlFile, "No steering mode number given for DashboardLive steering command")
-			return false
-		end
-		returnValue = specCS.state == tonumber(dblOpt)
+		local o = dashboard.dblOption
 
-	elseif specWM ~= nil and c == "base_swath" then
-		local dblOpt = group.dblOption
-		if dblOpt == "" or tonumber(dblOpt) == nil then
-			Logging.xmlWarning(vehicle.xmlFile, "No work mode number given for DashboardLive swath command")
-			return false
-		end
-		returnValue = specWM.state == tonumber(dblOpt)
-		
-	-- vanilla game ridgeMarker
-	elseif specRM ~= nil and c == "base_ridgeMarker" then
-		returnValue = group.dblRidgeMarker == specRM.ridgeMarkerState
-			
-			
-			--
-			
-			if c == "gps_lane" and spec.modGuidanceSteeringFound then
-				local gsSpec = self.spec_globalPositioningSystem
-				if gsSpec ~= nil and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.currentLane ~= nil then
-					maxValue = 999
-					newValue = math.abs(gsSpec.guidanceData.currentLane) / 10
-					dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
-				end
+		if specHLM ~= nil and specHLM.exists then
+			if o == "field" then
+				return specHLM.isOn and not specHLM.isActive
+			elseif o == "headland" then
+				return specHLM.isOn and specHLM.isActive
+			else
+				return spec.HLM.isOn
 			end
-			if c == "gps_width" and spec.modGuidanceSteeringFound then
-				local gsSpec = self.spec_globalPositioningSystem
-				if gsSpec ~= nil and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.width ~= nil then
-					maxValue = 999
-					newValue = gsSpec.guidanceData.width * 10
-					dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
-				end
-			end
-			if c == "vca_park" or c == "ev_park" then
-				if (spec.modVCAFound and self:vcaGetState("handbrake")) or (spec.modEVFound and self.vData.is[13]) then 
-					newValue = 1 
-				else 
-					newValue = 0 
-				end
-				dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
-				override = true
-			end
-			if c == "base_fillLevel" or c == "base_fillLevel_percent" and t ~= nil then
-				local pctValue, absValue
-				local ftType = o
-				local fillLevel = getFillLevelStatus(self, t, ftType)
-				dbgprint_r(fillLevel, 4, 2)
-				if fillLevel.abs == nil then 
-					maxValue, absValue, pctValue = 0, 0, 0
-				else
-					maxValue, absValue, pctValue = fillLevel.max, fillLevel.abs, fillLevel.pct
-				end
-				if c == "base_fillLevel" then
-					newValue = absValue
-				else
-					newValue = pctValue * 100
-				end
-				
-				dbgrender("maxValue: "..tostring(maxValue), 1 + t * 4, 3)
-				dbgrender("absValue: "..tostring(absValue), 2 + t * 4, 3)
-				dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
-				
-				minValue = 0
-				dashboard.stateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
-				override = true	
-			end
-			if c == "print" and o ~= nil then
-				dashboard.stateFunc(self, dashboard, o, nil, nil, isActive)
-				override = true
-			end
-		end
-		
--- Own stuff end -----------------------------------------
-	
--- Giant's stuff -----------------------------------------
-        if dashboard.valueObject ~= nil and dashboard.valueFunc ~= nil then
-            local value = self:getDashboardValue(dashboard.valueObject, dashboard.valueFunc, dashboard)
-
-            if dashboard.valueFactor ~= nil and type(value) == "number" then
-                value = value * dashboard.valueFactor
-            end
-
-            if not isActive then
-                value = dashboard.idleValue
-            end
-
-            if dashboard.doInterpolation and type(value) == "number" and value ~= dashboard.lastInterpolationValue then
-                local dir = MathUtil.sign(value - dashboard.lastInterpolationValue)
-                local limitFunc = math.min
-                if dir < 0 then
-                    limitFunc = math.max
-                end
-
-                value = limitFunc(dashboard.lastInterpolationValue + dashboard.interpolationSpeed * dir * dt, value)
-                dashboard.lastInterpolationValue = value
-            end
-
-            if value ~= dashboard.lastValue or force then
-                dashboard.lastValue = value
-
-                local min, max
-                if type(value) == "number" then
-                    -- for idle values while not active we ignore the limits
-                    min = self:getDashboardValue(dashboard.valueObject, dashboard.minFunc, dashboard)
-                    if min ~= nil and isActive then
-                        value = math.max(min, value)
-                    end
-
-                    max = self:getDashboardValue(dashboard.valueObject, dashboard.maxFunc, dashboard)
-                    if max ~= nil and isActive then
-                        value = math.min(max, value)
-                    end
-
-                    local center = self:getDashboardValue(dashboard.valueObject, dashboard.centerFunc, dashboard)
-                    if center ~= nil then
-                        local maxValue = math.max(math.abs(min), math.abs(max))
-                        if value < center then
-                            value = -value / min * maxValue
-                        elseif value > center then
-                            value = value / max * maxValue
-                        end
-
-                        max = maxValue
-                        min = -maxValue
-                    end
-                end
-
-                if dashboard.valueCompare ~= nil then
-                    if type(dashboard.valueCompare) == "table" then
-                        local oldValue = value
-                        value = false
-                        for _, compareValue in ipairs(dashboard.valueCompare) do
-                            if oldValue == compareValue then
-                                value = true
-                            end
-                        end
-                    else
-                        value = value == dashboard.valueCompare
-                    end
-                end
-
-                dashboard.stateFunc(self, dashboard, value, min, max, isActive)
-            end
--- Own addition: Skip forced update if stateFunc was already called
-        elseif force and not override then
-            dashboard.stateFunc(self, dashboard, true, nil, nil, isActive)
-        end
-    end
--- Giant's stuff end -------------------------------------
+		end	
+	return false
 end
 
---]]
+function DashboardLive.getDashboardLiveGPS(self, dashboard)
+	dbgprint("getDashboardLiveGPS : dblOption: "..tostring(dashboard.dblOption), 4)
+	local spec = self.spec_DashboardLive
+	local specGS = self.spec_globalPositioningSystem
+	local o = dashboard.dblOption
+	
+	if spec.modGuidanceSteeringFound and specGS ~= nil then
+		if o == "on" then
+			return specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+		
+		elseif o == "active" then
+			return specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
+	
+		elseif o == "lane+" then
+			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane >= 0	
+			return returnValue
+
+		elseif o == "lane-" then
+			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane < 0
+			return returnValue
+		end	
+	end
+	
+	return false
+end
+
+function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
+	dbgprint("getDashboardLiveGPS : dblOption: "..tostring(dashboard.dblOption), 4)
+	local spec = self.spec_DashboardLive
+	local specGS = self.spec_globalPositioningSystem
+	
+	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil then
+		return math.abs(specGS.guidanceData.currentLane) / 10
+	else
+		return 0
+	end
+end
+
+function DashboardLive.getDashboardLiveGPSWidth(self, dashboard)
+	dbgprint("getDashboardLiveGPSWidth : dblOption: "..tostring(dashboard.dblOption), 4)
+	local spec = self.spec_DashboardLive
+	local specGS = self.spec_globalPositioningSystem
+	
+	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.width ~= nil then
+		return specGS.guidanceData.width * 10
+	else
+		return 0
+	end
+end
+		
+function DashboardLive.getDashboardLivePS(self, dashboard)
+	dbgprint("getDashboardLivePS : running", 4)
+	return false
+end
+
+function DashboardLive.getDashboardLiveSelection(self, dashboard)
+	dbgprint("getDashboardLiveSelection : dblSelection, dblSelectionGroup: "..tostring(dashboard.dblSelection)..", "..tostring(dashboard.dblSelectionGroup), 4)
+
+	local spec = self.spec_DashboardLive
+	local s, g = dashboard.dblSelection, dashboard.dblSelectionGroup
+	
+-- vanilla game selector
+	if s ~= nil then
+		local selectorActive = false
+		if type(s) == "number" and s == -100 then
+			return spec.selectorActive < 0
+		elseif type(s) == "number" and s == 100 then
+			returnValue = spec.selectorActive > 0
+		else
+			for _,selector in ipairs(s) do
+				if selector == spec.selectorActive then selectorActive = true end
+			end
+			return selectorActive
+		end
+		
+-- vanilla game selector group
+	elseif g ~= nil then
+		local groupActive = false
+		if g ~= "" then
+			for _,selGroup in ipairs(g) do
+				if selGroup == spec.selectorGroup then groupActive = true end
+			end
+		end
+		return groupActive
+	end
+	return false
+end		
 
 function DashboardLive:onUpdate(dt)
 	local spec = self.spec_DashboardLive

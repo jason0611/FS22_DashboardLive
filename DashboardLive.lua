@@ -696,14 +696,18 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	-- Guidance Steering
 	elseif group.dblCommand == "gps_on" then
 		local gsSpec = self.spec_globalPositioningSystem
+		local hlmSpec = self.spec_HeadlandManagement
 		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceIsActive
 		returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0) 
+		returnValue = returnValue or (hlmSpec ~= nil and hlmSpec.exists and hlmSpec.isOn and hlmSpec.contour ~= 0)
 
 	elseif group.dblCommand == "gps_active" then
 		local gsSpec = self.spec_globalPositioningSystem
+		local hlmSpec = self.spec_HeadlandManagement
 		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceSteeringIsActive
 		returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapIsOn")) 
 		returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
+		returnValue = returnValue or (hlmSpec ~= nil and hlmSpec.exists and hlmSpec.isOn and not hlmSpec.isActive and hlmSpec.contour ~= 0 and not contourSetActive)
 		
 	elseif group.dblCommand == "gps_lane+" then
 		local spec = self.spec_DashboardLive
@@ -985,18 +989,21 @@ function DashboardLive.getDashboardLiveGPS(self, dashboard)
 	dbgprint("getDashboardLiveGPS : dblOption: "..tostring(dashboard.dblOption), 4)
 	local spec = self.spec_DashboardLive
 	local specGS = self.spec_globalPositioningSystem
+	local specHLM = self.spec_HeadlandManagement
 	local o = dashboard.dblOption
 	
 	if spec.modGuidanceSteeringFound and specGS ~= nil then
 		if o == "on" then
 			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0) 
+			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and specHLM.contour ~= 0)
 			return returnValue
 		
 		elseif o == "active" then
 			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapIsOn")) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
+			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0 and not specHLM.contourSetActive)
 			return returnValue
 	
 		elseif o == "lane+" then

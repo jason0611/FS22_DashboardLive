@@ -697,11 +697,14 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "gps_on" then
 		local gsSpec = self.spec_globalPositioningSystem
 		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceIsActive
-		
+		returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0) 
+
 	elseif group.dblCommand == "gps_active" then
 		local gsSpec = self.spec_globalPositioningSystem
 		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceSteeringIsActive
-	
+		returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapIsOn")) 
+		returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
+		
 	elseif group.dblCommand == "gps_lane+" then
 		local spec = self.spec_DashboardLive
 		local gsSpec = self.spec_globalPositioningSystem
@@ -986,10 +989,15 @@ function DashboardLive.getDashboardLiveGPS(self, dashboard)
 	
 	if spec.modGuidanceSteeringFound and specGS ~= nil then
 		if o == "on" then
-			return specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0) 
+			return returnValue
 		
 		elseif o == "active" then
-			return specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
+			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
+			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapIsOn")) 
+			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
+			return returnValue
 	
 		elseif o == "lane+" then
 			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive

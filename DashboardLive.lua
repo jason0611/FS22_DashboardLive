@@ -768,10 +768,6 @@ end
 function DashboardLive.getDBLAttributesFillLevel(self, xmlFile, key, dashboard)
 	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- trailer
 	dbgprint("getDashBoardLiveAttributes : trailer: "..tostring(dashboard.dblTrailer), 2)
-	if dashboard.dblOption == nil then 
-    	Logging.xmlWarning(self.xmlFile, "No '#option' given for valueType 'fillLevel'")
-    	return false
-    end
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "") -- empty=absolut or "percent"
     dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblOption), 2)
     if dashboard.dblOption == "percent" then
@@ -921,9 +917,9 @@ function DashboardLive.getDashboardLiveFillLevel(self, dashboard)
 		dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
 
 		if o == "percent" then
-			return pctValue
+			return pctValue * 100
 		else
-			return absValue * 100
+			return absValue
 		end
 	end
 	

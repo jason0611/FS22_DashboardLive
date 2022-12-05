@@ -197,6 +197,14 @@ function DashboardLive:onLoad(savegame)
                             additionalAttributesFunc = DashboardLive.getDBLAttributesSelection
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)  
+        -- print
+        dashboardData = {	
+        					valueTypeToLoad = "print",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLivePrint,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesPrint
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)  
     end
 end
 
@@ -824,7 +832,7 @@ end
 -- selector
 function DashboardLive.getDBLAttributesSelection(self, xmlFile, key, dashboard)
 	dashboard.dblSelection = xmlFile:getValue(key .. "#selection")
-	dbgprint("getDashBoardLiveAttributes : selection: "..tostring(dashboard.dblAttacherJointIndices), 2)
+	dbgprint("getDashBoardLiveAttributes : selection: "..tostring(dashboard.dblSelection), 2)
 	
 	dashboard.dblSelectionGroup = xmlFile:getValue(key .. "#selectionGroup")
 	dbgprint("getDashBoardLiveAttributes : selectionGroup: "..tostring(dashboard.dblSelectionGroup), 2)
@@ -838,6 +846,12 @@ function DashboardLive.getDBLAttributesSelection(self, xmlFile, key, dashboard)
 		return false
 	end
 	
+	return true
+end
+-- print
+function DashboardLive.getDBLAttributePrint(self, xmlFile, key, dashboard)
+	dashboard.dblOption = xmlFile:getValue(key .. "#option", "")
+	dbgprint("getDBLAttributePrint : option: "..tostring(dashboard.dblOption), 2)
 	return true
 end
 
@@ -1058,18 +1072,21 @@ function DashboardLive.getDashboardLiveSelection(self, dashboard)
 		if type(s) == "number" and s == -100 then
 			return spec.selectorActive < 0
 		elseif type(s) == "number" and s == 100 then
-			returnValue = spec.selectorActive > 0
+			return spec.selectorActive > 0
+		elseif type(s) == "number" then
+			return spec.selectorActive == s
 		else
 			for _,selector in ipairs(s) do
 				if selector == spec.selectorActive then selectorActive = true end
 			end
 			return selectorActive
 		end
-		
 -- vanilla game selector group
 	elseif g ~= nil then
 		local groupActive = false
-		if g ~= "" then
+		if type(g) == "number" then
+			return spec.selectorGroup == g
+		else
 			for _,selGroup in ipairs(g) do
 				if selGroup == spec.selectorGroup then groupActive = true end
 			end
@@ -1079,6 +1096,12 @@ function DashboardLive.getDashboardLiveSelection(self, dashboard)
 	return false
 end		
 
+function DashboardLive.getDashboardLivePrint(self, dashboard)
+	dbgprint("getDashboardLivePrint : dblOption: "..tostring(dashboard.dblOption), 4)
+	local returnValue = dashboard.dblOption or ""
+	return returnValue
+end
+	
 function DashboardLive:onUpdate(dt)
 	local spec = self.spec_DashboardLive
 	local mspec = self.spec_motorized

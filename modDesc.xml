@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="67">
 	<author>Jason06 / Glowins Modschmiede</author>
-	<version>0.2.1.2</version>
+	<version>0.2.1.3</version>
 	<title>
 		<en>Dashboard Live</en>
     </title>
@@ -18,13 +18,32 @@
     	<sourceFile filename="RegisterDashboardLive.lua" />
     </extraSourceFiles>
  	<actions>
-		<action name="DBL_PAGEUP" category="VEHICLE" ignoreComboMask="false" />
-		<action name="DBL_PAGEDN" category="VEHICLE" ignoreComboMask="false" />
-		<action name="DBL_ZOOM"   category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_PAGEUP" 		category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_PAGEDN" 		category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_ZOOM"   		category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_ZOOM_PERM"	category="VEHICLE" ignoreComboMask="false" />
 	</actions>
 	<inputBinding>	
 		<actionBinding action="DBL_PAGEUP" />
 		<actionBinding action="DBL_PAGEDN" />
 		<actionBinding action="DBL_ZOOM" />
+		<actionBinding action="DBL_ZOOM_PERM" />
 	</inputBinding>
+	<l10n>
+		<text name="input_DBL_PAGEUP">
+            <en>Page up</en>
+            <de>Seite vor</de>
+        </text>
+        <text name="input_DBL_PAGEDN">
+            <en>Page down</en>
+            <de>Seite zurück</de>
+        </text>
+        <text name="input_DBL_ZOOM">
+            <en>Quick Zoom</en>
+            <de>Kurzer Zoom</de>
+        </text>
+        <text name="input_DBL_ZOOM_PERM">
+            <en>Zoom</en>
+        </text>
+	</l10n>
 </modDesc>

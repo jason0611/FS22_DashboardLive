@@ -47,6 +47,7 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#state", "state")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#trailer", "Trailer number")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#option", "Option")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
 end
 
@@ -101,6 +102,7 @@ function DashboardLive:onLoad(savegame)
 	-- zoom data
 	spec.zoomed = false
 	spec.zoomPressed = false
+	spec.zoomPerm = false
 	
 	-- selector data
 	spec.selectorActive = 0
@@ -169,14 +171,16 @@ function DashboardLive:onLoad(savegame)
         dashboardData = {	
         					valueTypeToLoad = "gpsLane",
                         	valueObject = self,
-                        	valueFunc = DashboardLive.getDashboardLiveGPSLane
+                        	valueFunc = DashboardLive.getDashboardLiveGPSLane,
+                        	additionalAttributesFunc = DashboardLive.getDBLAttributesGPSNumbers
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
 		-- gpsWidth
         dashboardData = {	
         					valueTypeToLoad = "gpsWidth",
                         	valueObject = self,
-                        	valueFunc = DashboardLive.getDashboardLiveGPSWidth
+                        	valueFunc = DashboardLive.getDashboardLiveGPSWidth,
+                        	additionalAttributesFunc = DashboardLive.getDBLAttributesGPSNumbers
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
 
@@ -304,6 +308,7 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 			g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
 		end	
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM', self, DashboardLive.ZOOM, false, true, true, true, nil)	
+		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true, nil)	
 	end
 end
 
@@ -333,6 +338,9 @@ end
 function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
 	dbgprint("ZOOM", 4)
 	local spec = self.spec_DashboardLive
+	if actionName == "DBL_ZOOM_PERM" then
+		spec.zoomPerm = not spec.zoomPerm
+	end
 	spec.zoomPressed = true
 end
 
@@ -755,29 +763,29 @@ end
 -- base
 function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
-    dbgprint("getDashBoardLiveAttributes : command: "..tostring(dashboard.dblCommand), 2)
+    dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
     if dashboard.dblCommand == nil then 
     	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'base'")
     	return false
     end
     
     dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
-	dbgprint("getDashBoardLiveAttributes : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
+	dbgprint("getDBLAttributesBase : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
 
 	dashboard.dblState = xmlFile:getValue(key .. "#state") -- swath state, ridgemarker state
-	dbgprint("getDashBoardLiveAttributes : state: "..tostring(dashboard.dblState), 2)
+	dbgprint("getDBLAttributesBase : state: "..tostring(dashboard.dblState), 2)
 	
 	dashboard.dblOption = xmlFile:getValue(key .. "#option") -- nil or 'default'
-	dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblOption), 2)
+	dbgprint("getDBLAttributesBase : option: "..tostring(dashboard.dblOption), 2)
 	
 	return true
 end
 -- fillLevel
 function DashboardLive.getDBLAttributesFillLevel(self, xmlFile, key, dashboard)
 	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- trailer
-	dbgprint("getDashBoardLiveAttributes : trailer: "..tostring(dashboard.dblTrailer), 2)
+	dbgprint("getDBLAttributesFillLevel : trailer: "..tostring(dashboard.dblTrailer), 2)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "") -- empty=absolut or "percent"
-    dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblOption), 2)
+    dbgprint("getDBLAttributesFillLevel : option: "..tostring(dashboard.dblOption), 2)
     if dashboard.dblOption == "percent" then
     	dashboard.minFunc = 0
     	dashboard.maxFunc = 1
@@ -787,20 +795,20 @@ end
 -- fillType
 function DashboardLive.getDBLAttributesFillType(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#trailer") -- trailer
-	dbgprint("getDashBoardLiveAttributes : trailer: "..tostring(dashboard.dblRidgeMarker), 2)
+	dbgprint("getDBLAttributesFillType : trailer: "..tostring(dashboard.dblRidgeMarker), 2)
 	if dashboard.dblOption == nil then 
     	Logging.xmlWarning(self.xmlFile, "No '#trailer' given for valueType 'fillType'")
     	return false
     end
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "") -- empty or wanted fillType
-    dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblCommand), 2)
+    dbgprint("getDBLAttributesFillType : option: "..tostring(dashboard.dblCommand), 2)
 
 	return true
 end
 --vca
 function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
 	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
-    dbgprint("getDashBoardLiveAttributes : cmd: "..tostring(dashboard.dblCommand), 2)
+    dbgprint("getDBLAttributesVCA : cmd: "..tostring(dashboard.dblCommand), 2)
     if dashboard.dblCommand == nil then 
     	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'vca'")
     	return false
@@ -811,31 +819,37 @@ end
 --HLM
 function DashboardLive.getDBLAttributesHLM(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option")
-    dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblOption), 2)
+    dbgprint("getDBLAttributesHLM : option: "..tostring(dashboard.dblOption), 2)
 
     return true
 end
 --  gps
 function DashboardLive.getDBLAttributesGPS(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "on") -- 'on' or 'active'
-    dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblOption), 2)
+    dbgprint("getDBLAttributesGPS : option: "..tostring(dashboard.dblOption), 2)
+
+	return true
+end
+function DashboardLive.getDBLAttributesGPSNumbers(self, xmlFile, key, dashboard)
+	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1")
+    dbgprint("getDBLAttributesNumbers : factor: "..tostring(dashboard.dblFactor), 2)
 
 	return true
 end
 -- ps
 function DashboardLive.getDBLAttributesPS(self, xmlFile, key, dashboard)
 	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd", "track")
-    dbgprint("getDashBoardLiveAttributes : option: "..tostring(dashboard.dblCommand), 2)
+    dbgprint("getDBLAttributesPS : option: "..tostring(dashboard.dblCommand), 2)
 
 	return true
 end
 -- selector
 function DashboardLive.getDBLAttributesSelection(self, xmlFile, key, dashboard)
 	dashboard.dblSelection = xmlFile:getValue(key .. "#selection")
-	dbgprint("getDashBoardLiveAttributes : selection: "..tostring(dashboard.dblSelection), 2)
+	dbgprint("getDBLAttributesSelection : selection: "..tostring(dashboard.dblSelection), 2)
 	
 	dashboard.dblSelectionGroup = xmlFile:getValue(key .. "#selectionGroup")
-	dbgprint("getDashBoardLiveAttributes : selectionGroup: "..tostring(dashboard.dblSelectionGroup), 2)
+	dbgprint("getDBLAttributesSelection : selectionGroup: "..tostring(dashboard.dblSelectionGroup), 2)
 	
 	if dashboard.dblSelection == nil and dashboard.dblSelectionGroup == nil then 
 		Logging.xmlWarning(self.xmlFile, "Neither '#selection' nor '#selectionGroup' given for valueType 'selector'")
@@ -852,6 +866,7 @@ end
 function DashboardLive.getDBLAttributePrint(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "")
 	dbgprint("getDBLAttributePrint : option: "..tostring(dashboard.dblOption), 2)
+	
 	return true
 end
 
@@ -1036,8 +1051,10 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	local spec = self.spec_DashboardLive
 	local specGS = self.spec_globalPositioningSystem
 	
+	local factor = dashboard.dblFactor or 1
+	
 	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil then
-		return math.abs(specGS.guidanceData.currentLane) / 10
+		return math.abs(specGS.guidanceData.currentLane) * factor
 	else
 		return 0
 	end
@@ -1048,8 +1065,10 @@ function DashboardLive.getDashboardLiveGPSWidth(self, dashboard)
 	local spec = self.spec_DashboardLive
 	local specGS = self.spec_globalPositioningSystem
 	
+	local factor = dashboard.dblFactor or 1
+	
 	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.width ~= nil then
-		return specGS.guidanceData.width * 10
+		return specGS.guidanceData.width * factor
 	else
 		return 0
 	end
@@ -1098,8 +1117,8 @@ end
 
 function DashboardLive.getDashboardLivePrint(self, dashboard)
 	dbgprint("getDashboardLivePrint : dblOption: "..tostring(dashboard.dblOption), 4)
-	local returnValue = dashboard.dblOption or ""
-	return returnValue
+	
+	return dashboard.dblOption or ""
 end
 	
 function DashboardLive:onUpdate(dt)
@@ -1116,11 +1135,11 @@ function DashboardLive:onUpdate(dt)
 		
 	-- zoom
 	local spec = self.spec_DashboardLive
-	if spec.zoomPressed and not spec.zoomed then
+	if (spec.zoomPressed or spec.zoomPerm) and not spec.zoomed then
 		dbgprint("Zooming in", 4)
 		g_currentMission:consoleCommandSetFOV("20")
 		spec.zoomed = true
-	elseif not spec.zoomPressed and spec.zoomed then
+	elseif (not spec.zoomPressed and not spec.zoomPerm) and spec.zoomed then
 		dbgprint("Zoomig out", 4)
 		g_currentMission:consoleCommandSetFOV("-1")
 		spec.zoomed = false

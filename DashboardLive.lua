@@ -989,7 +989,7 @@ function DashboardLive.getDashboardLiveHLM(self, dashboard)
 			elseif o == "headland" then
 				return specHLM.isOn and specHLM.isActive
 			else
-				return spec.HLM.isOn
+				return specHLM.isOn
 			end
 		end	
 	return false

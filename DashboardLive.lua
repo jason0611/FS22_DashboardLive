@@ -415,6 +415,9 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "unfolded" then
             	result = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(result), 4)
+            elseif mode == "ridgeMarker" then
+            	local specRM = implement.object.spec_ridgeMarker
+            	result = specRM ~= nil and specRM.ridgeMarkerState or 0
             elseif mode == "disconnected" then
             	dbgprint("AttacherJoint #"..tostring(jointIndex).." not disonnected", 4)
             end
@@ -913,12 +916,12 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			return specWM.state == tonumber(s)
 	
 		-- ridgeMarker
-		elseif c == "ridgeMarker" and specRM ~= nil then
+		elseif c == "ridgeMarker" then
 			if s == "" or tonumber(s) == nil then
-				Logging.xmlWarning(vehicle.xmlFile, "No ridgeMarker state given for DashboardLive ridgeMarker command")
-				return false
+				Logging.xmlWarning(self.xmlFile, "No ridgeMarker state given for DashboardLive ridgeMarker command")
+				return 0
 			end
-			return specRM.ridgeMarkerState == tonumber(s)
+			return getAttachedStatus(self, dashboard, "ridgeMarker") == tonumber(s)
 		end
 	end
 	

@@ -866,7 +866,7 @@ function DashboardLive.getDBLAttributesSelection(self, xmlFile, key, dashboard)
 	return true
 end
 -- print
-function DashboardLive.getDBLAttributePrint(self, xmlFile, key, dashboard)
+function DashboardLive.getDBLAttributesPrint(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "")
 	dbgprint("getDBLAttributePrint : option: "..tostring(dashboard.dblOption), 2)
 	

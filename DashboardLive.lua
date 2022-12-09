@@ -187,7 +187,7 @@ function DashboardLive:onLoad(savegame)
 		
 		-- ps
         dashboardData = {	
-        					valueTypeToLoad = "ps",
+        					valueTypeToLoad = "proSeed",
                         	valueObject = self,
                         	valueFunc = DashboardLive.getDashboardLivePS,
                             additionalAttributesFunc = DashboardLive.getDBLAttributesPS
@@ -841,8 +841,9 @@ function DashboardLive.getDBLAttributesGPSNumbers(self, xmlFile, key, dashboard)
 end
 -- ps
 function DashboardLive.getDBLAttributesPS(self, xmlFile, key, dashboard)
-	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd", "track")
-    dbgprint("getDBLAttributesPS : option: "..tostring(dashboard.dblCommand), 2)
+	dashboard.dblOption = xmlFile:getValue(key .. "#option", "mode")
+	dashboard.dblState = xmlFile:getValue(key .. "#state", "")
+    dbgprint("getDBLAttributesPS : option: "..tostring(dashboard.dblOption).." / state: "..tostring(dashboard.dblState), 2)
 
 	return true
 end
@@ -1079,6 +1080,45 @@ end
 		
 function DashboardLive.getDashboardLivePS(self, dashboard)
 	dbgprint("getDashboardLivePS : running", 4)
+	local o, s = dashboard.dblOption, dashboard.dblState
+	local specPS = self.spec_proSeedTramLines
+	local specSE = self.spec_proSeedSowingExtension
+	if specPS ~= nil and specSE ~= nil then
+		if o == "mode" then
+			if tonumber(s) ~= nil then
+				return specPS.tramLineMode == tonumber(s)
+			else
+				local mode = specPS.tramLineMode
+				local text = ProSeedTramLines.TRAMLINE_MODE_TO_KEY[mode]
+				return self.i18n:getText(("info_mode_%s"):format(text))
+			end
+		elseif o == "distance" then
+			return specPS.tramLineDistance
+		elseif o == "laneDrive" then
+			return specPS.currentLane
+		elseif o == "laneFull" then
+			return specPS.tramLinePeriodicSequence 
+		elseif o == "tram" then
+			return specPS.createPreMarkedTramLines
+		elseif o == "fert" then
+			return specSE.allowFertilizer
+		elseif o == "areawork" then
+			return specSE.sessionHectaresSent
+		elseif o == "areafield" then
+			return specSE.totalHectaresSent
+		elseif o == "timeuse" then
+			return specSE.hectarePerHour
+		elseif o == "seeduse" then
+			return specSE.seedUsage
+		elseif o == "segment" then
+			local state = tonumber(s) or 0
+			return specPS.shutoffMode == state
+		elseif o == "tramtype" then
+			return specPS.createPreMarkedTramLines
+		elseif o == "audio" then
+			return specSE.allowSound
+		end	
+	end
 	return false
 end
 

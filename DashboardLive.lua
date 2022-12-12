@@ -13,12 +13,10 @@ source(g_currentModDirectory.."tools/gmsDebug.lua")
 GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
-
-
 -- Standards / Basics
 
 function DashboardLive.prerequisitesPresent(specializations)
-  return true
+  return SpecializationUtil.hasSpecialization(Dashboard, specializations) and SpecializationUtil.hasSpecialization(Motorized, specializations)
 end
 
 function DashboardLive.initSpecialization()

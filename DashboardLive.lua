@@ -361,6 +361,39 @@ end
 
 -- Supporting functions
 
+local function findSpecialization(device, specName)
+	if device ~= nil and device[specName] ~= nil then
+		return device[specName]
+	elseif device.getAttachedImplements ~= nil then
+		local implements = device:getAttachedImplements()
+		for _,implement in pairs(implements) do
+			local device = implement.object
+			local spec = findSpecialization(device, specName)
+			if spec ~= nil then 
+				return spec 
+			end
+		end
+	else 
+		return nil
+	end
+end
+
+local function findSpecializationImplement(device, specName)
+	if device ~= nil and device[specName] ~= nil then
+		return device
+	elseif device.getAttachedImplements ~= nil then
+		local implements = device:getAttachedImplements()
+		for _,implement in pairs(implements) do
+			local device = findSpecializationImplement(implement.object, specName)
+			if device ~= nil then 
+				return device 
+			end
+		end
+	else 
+		return nil
+	end
+end
+
 local function getAttachedStatus(vehicle, element, mode, default)
 	
 	if element.dblAttacherJointIndices == nil then
@@ -402,7 +435,9 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				result = (implement.object.getAllowsLowering ~= nil and implement.object:getAllowsLowering()) or implement.object.spec_pickup ~= nil or false
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(result), 4)
 			elseif mode == "pto" then
-            	result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive() or false
+				local ptoDevice = findSpecializationImplement(implement.object, "spec_powerTakeOffs")
+            	--result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive() or false
+            	result = ptoDevice ~= nil and ptoDevice.getIsPowerTakeOffActive ~= nil and ptoDevice:getIsPowerTakeOffActive() or false
             	dbgprint(implement.object:getFullName().." pto: "..tostring(result), 4)
             elseif mode == "foldable" then
 				result = foldable or false
@@ -737,16 +772,6 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		local gsSpec = self.spec_globalPositioningSystem
 		returnValue = spec.modGuidanceSteeringFound and gsSpec ~= nil and gsSpec.lastInputValues ~= nil and gsSpec.lastInputValues.guidanceIsActive
 		returnValue = returnValue and gsSpec.guidanceData ~= nil and gsSpec.guidanceData.currentLane ~= nil and gsSpec.guidanceData.currentLane < 0	
-		
-	elseif group.dblCommand == "ps_mode" then
-	
-	elseif group.dblCommand == "ps_trackNum" then
-	
-	elseif group.dblCommand == "ps_trackAnz" then
-	
-	elseif group.dblCommand == "ps_half" then
-	
-	elseif group.dblCommand == "ps_marker" then
 	end
 	
     if group.dblOperator == "and" or group.dblCommand == "page" then 
@@ -1054,7 +1079,6 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	local specGS = self.spec_globalPositioningSystem
 	
 	local factor = dashboard.dblFactor or 1
-	
 	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil then
 		return math.abs(specGS.guidanceData.currentLane) * factor
 	else
@@ -1068,7 +1092,9 @@ function DashboardLive.getDashboardLiveGPSWidth(self, dashboard)
 	local specGS = self.spec_globalPositioningSystem
 	
 	local factor = dashboard.dblFactor or 1
-	
+	if spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0 then 
+		return self.spec_vca.snapDistance * factor
+	end
 	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.width ~= nil then
 		return specGS.guidanceData.width * factor
 	else
@@ -1079,8 +1105,8 @@ end
 function DashboardLive.getDashboardLivePS(self, dashboard)
 	dbgprint("getDashboardLivePS : running", 4)
 	local o, s = dashboard.dblOption, dashboard.dblState
-	local specPS = self.spec_proSeedTramLines
-	local specSE = self.spec_proSeedSowingExtension
+	local specPS = findSpecialization(self, "spec_proSeedTramLines")
+	local specSE = findSpecialization(self, "spec_proSeedSowingExtension")
 	if specPS ~= nil and specSE ~= nil then
 		if o == "mode" then
 			if tonumber(s) ~= nil then

@@ -1111,9 +1111,9 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 		if o == "mode" then
 			if tonumber(s) ~= nil then
 				return specPS.tramLineMode == tonumber(s)
-			else
+			elseif FS22_proSeed ~= nil and FS22_proSeed.ProSeedTramLines ~= nil then
 				local mode = specPS.tramLineMode
-				local text = ProSeedTramLines.TRAMLINE_MODE_TO_KEY[mode]
+				local text = FS22_proSeed.ProSeedTramLines.TRAMLINE_MODE_TO_KEY[mode]
 				return self.i18n:getText(("info_mode_%s"):format(text))
 			end
 		elseif o == "distance" then

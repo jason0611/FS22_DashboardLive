@@ -361,6 +361,22 @@ end
 
 -- Supporting functions
 
+local function trim(text, textLength)
+	local l = string.len(text)
+	if l == textLength then
+		return text
+	elseif l < textLength then
+		local diff = textLength - l
+		local newText = string.rep(" ", math.floor(diff/2))..text..string.rep(" ", math.floor(diff/2))
+		if string.len(newText) < textLength then
+			newText = newText .. " "
+		end
+		return newText
+	elseif l > textLength then
+		return string.sub(text, 1, textLength)
+	end
+end
+
 local function findSpecialization(device, specName)
 	if device ~= nil and device[specName] ~= nil then
 		return device[specName]
@@ -451,9 +467,6 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(result), 4)
 			elseif mode == "pto" then
 				return findPTOStatus(implement.object)
-            	--result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive() or false
-            	--result = ptoDevice ~= nil and ptoDevice.getIsPowerTakeOffActive ~= nil and ptoDevice:getIsPowerTakeOffActive() or false
-            	--dbgprint(implement.object:getFullName().." pto: "..tostring(result), 4)
             elseif mode == "foldable" then
 				result = foldable or false
 				dbgprint(implement.object:getFullName().." foldable: "..tostring(result), 4)
@@ -464,7 +477,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	result = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(result), 4)
             elseif mode == "ridgeMarker" then
-            	local specRM = implement.object.spec_ridgeMarker
+            	local specRM = findSpecialization(implement.object, "spec_ridgeMarker")
             	result = specRM ~= nil and specRM.ridgeMarkerState or 0
             elseif mode == "disconnected" then
             	dbgprint("AttacherJoint #"..tostring(jointIndex).." not disonnected", 4)
@@ -1129,16 +1142,16 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 			elseif FS22_proSeed ~= nil and FS22_proSeed.ProSeedTramLines ~= nil then
 				local mode = specPS.tramLineMode
 				local text = FS22_proSeed.ProSeedTramLines.TRAMLINE_MODE_TO_KEY[mode]
-				return g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text))
+				return trim(g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text)), 7)
 			end
 		elseif o == "distance" then
 			return specPS.tramLineDistance
 		elseif o == "laneDrive" then
-			return specPS.currentLane
+			return specPS.currentLaneSent
 		elseif o == "laneFull" then
 			return specPS.tramLinePeriodicSequence 
 		elseif o == "tram" then
-			return specPS.createPreMarkedTramLines
+			return specPS.createTramLinesSent
 		elseif o == "fert" then
 			return specSE.allowFertilizer
 		elseif o == "areawork" then

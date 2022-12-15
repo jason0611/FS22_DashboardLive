@@ -394,6 +394,21 @@ local function findSpecializationImplement(device, specName)
 	end
 end
 
+local function findPTOStatus(device)
+	if device ~= nil and device.getIsPowerTakeOffActive ~= nil and device:getIsPowerTakeOffActive() then
+		return true
+	elseif device.getAttachedImplements ~= nil then
+		local implements = device:getAttachedImplements()
+		for _,implement in pairs(implements) do
+			local device = implement.object
+			return findPTOStatus(device)
+		end
+		return false
+	else 
+		return false
+	end
+end
+
 local function getAttachedStatus(vehicle, element, mode, default)
 	
 	if element.dblAttacherJointIndices == nil then
@@ -435,10 +450,10 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				result = (implement.object.getAllowsLowering ~= nil and implement.object:getAllowsLowering()) or implement.object.spec_pickup ~= nil or false
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(result), 4)
 			elseif mode == "pto" then
-				local ptoDevice = findSpecializationImplement(implement.object, "spec_powerTakeOffs")
+				return findPTOStatus(implement.object)
             	--result = implement.object.getIsPowerTakeOffActive ~= nil and implement.object:getIsPowerTakeOffActive() or false
-            	result = ptoDevice ~= nil and ptoDevice.getIsPowerTakeOffActive ~= nil and ptoDevice:getIsPowerTakeOffActive() or false
-            	dbgprint(implement.object:getFullName().." pto: "..tostring(result), 4)
+            	--result = ptoDevice ~= nil and ptoDevice.getIsPowerTakeOffActive ~= nil and ptoDevice:getIsPowerTakeOffActive() or false
+            	--dbgprint(implement.object:getFullName().." pto: "..tostring(result), 4)
             elseif mode == "foldable" then
 				result = foldable or false
 				dbgprint(implement.object:getFullName().." foldable: "..tostring(result), 4)
@@ -1114,7 +1129,7 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 			elseif FS22_proSeed ~= nil and FS22_proSeed.ProSeedTramLines ~= nil then
 				local mode = specPS.tramLineMode
 				local text = FS22_proSeed.ProSeedTramLines.TRAMLINE_MODE_TO_KEY[mode]
-				return self.i18n:getText(("info_mode_%s"):format(text))
+				return g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text))
 			end
 		elseif o == "distance" then
 			return specPS.tramLineDistance

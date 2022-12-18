@@ -1147,17 +1147,17 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 		elseif o == "distance" then
 			return specPS.tramLineDistance
 		elseif o == "laneDrive" then
-			return specPS.currentLaneSent
+			return specPS.currentLane
 		elseif o == "laneFull" then
 			return specPS.tramLinePeriodicSequence 
 		elseif o == "tram" then
-			return specPS.createTramLinesSent
+			return specPS.createTramLines
 		elseif o == "fert" then
 			return specSE.allowFertilizer
 		elseif o == "areawork" then
-			return specSE.sessionHectaresSent
+			return specSE.sessionHectares
 		elseif o == "areafield" then
-			return specSE.totalHectaresSent
+			return specSE.totalHectares
 		elseif o == "timeuse" then
 			return specSE.hectarePerHour
 		elseif o == "seeduse" then

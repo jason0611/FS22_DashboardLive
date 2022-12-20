@@ -494,31 +494,46 @@ local function getAttachedStatus(vehicle, element, mode, default)
 end
 
 -- recursive search through all attached vehicles including rootVehicle
+-- usage: call getIndexOfActiveImplement(rootVehicle)
 
 local function getIndexOfActiveImplement(rootVehicle, level)
-	if level == nil then level = 1 end
+	
+	local level = level or 1
 	local returnVal = 0
+	local returnSign = 1
+	
 	if not rootVehicle:getIsActiveForInput() and rootVehicle.spec_attacherJoints ~= nil and rootVehicle.spec_attacherJoints.attacherJoints ~= nil then
+	
 		for _,impl in pairs(rootVehicle.spec_attacherJoints.attachedImplements) do
-			if impl.object:getIsActiveForInput() then
+			
+			-- called from rootVehicle
+			if level == 1 then
 				local jointDescIndex = impl.jointDescIndex
 				local jointDesc = rootVehicle.spec_attacherJoints.attacherJoints[jointDescIndex]
 				local wx, wy, wz = getWorldTranslation(jointDesc.jointTransform)
-				local _, _, lz = worldToLocal(impl.object.steeringAxleNode, wx, wy, wz)
+				local _, _, lz = worldToLocal(rootVehicle.steeringAxleNode, wx, wy, wz)
 				if lz > 0 then 
-					returnVal = -level
+					returnSign = 1
 				else 
-					returnVal = level
+					returnSign = -1
 				end 
+			end
+			
+			if impl.object:getIsActiveForInput() then
+				returnVal = level
 			else
 				returnVal = getIndexOfActiveImplement(impl.object, level+1)
 			end
+			-- found active implement? --> exit recursion
 			if returnVal ~= 0 then break end
-		end
-	end	
-	return returnVal
+		
+		end		
+	end
+
+	return returnVal * returnSign
 end
 
+	
 local function getFillLevel(device, ftType)
 	dbgprint("getFillLevel", 4)
 	local fillLevel = {abs = nil, pct = nil, max = nil}
@@ -587,7 +602,7 @@ local function getFillLevelStatus(vehicle, ftIndex, ftType)
 			end
 		end
 	end
-	dbgrenderTable(fillLevel, 1 + 5 * ftIndex, 3)
+	--dbgrenderTable(fillLevel, 1 + 5 * ftIndex, 3)
 	return fillLevel
 end
 
@@ -1226,6 +1241,7 @@ function DashboardLive:onUpdate(dt)
 		spec.selectorGroup = self.currentSelection.subIndex or 0
 		--dbgprint("Selector value: "..tostring(spec.selectorActive), 2)
 		--dbgprint("Selector group: "..tostring(spec.selectorGroup), 2)
+		dbgrenderTable(spec, 1, 3)
 	end
 		
 	-- zoom

@@ -3,7 +3,7 @@
 	<!--vehicleDashboard name="XUV865M" fileName="data/vehicles/johnDeere/xuv865M/xuv865M.xml"/-->
 	<vehicleDashboard name="SKE50electric" fileName="data/vehicles/rigitrac/ske50/ske50.xml">
 		<nodes>
-			<node name="dblNodeAWD" root="0>0|0" moveTo="0 0 0" rotate="0 0 0"/>
+			<node base="0>0|0" symbol="0|0" moveTo="0 0 0" rotate="0 0 0"/>
 		</nodes>
 		<groups>
 			<group name="DLB_AWD" isMotorStarting="true" op="or" dbl="vca_diff_awd"/>

@@ -13,6 +13,8 @@ source(g_currentModDirectory.."tools/gmsDebug.lua")
 GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
+--source(g_currentModDirectory.."utils/DashboardUtils.lua")
+
 -- Standards / Basics
 
 function DashboardLive.prerequisitesPresent(specializations)
@@ -112,6 +114,9 @@ function DashboardLive:onLoad(savegame)
 	spec.lastFuelUsage = 0
 	spec.lastDefUsage = 0
 	spec.lastAirUsage = 0
+	
+	-- Integrate vanilla dashboards
+	--DashboardUtils.createVanillaGroups(self, savegame)
 	
 	-- Load Dashboards from XML
 	if self.loadDashboardsFromXML ~= nil then

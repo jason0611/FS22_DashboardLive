@@ -1,32 +1,25 @@
-Base game:
+Base game valueTypes:
 
-displayTypes: (parameter)
-isAttached = true/false (and) - attachable
-attacherJointIndices = "# # #" (or) - attacherJoints
-states = "# # #" (or) - crabSteering
-isMotorStarting = true/false (and) - motorized
-isMotorRunning = true/false (and) - motorized
-isReverseDriving = true/false (and) - reverseDriving
-
-ValueTypes:
-driveable:
+spec_driveable:
 cruiseControl - NUMBER
 directionForward
 directionBackward
---movingDirection - ROT/ANIMATION
+movingDirection - ROT/ANIMATION
 cruiseControlActive - EMITTER
---accelerationAxis - ROT
---decelerationAxis - ROT
+accelerationAxis - ROT
+decelerationAxis - ROT
 ac_decelerationAxis
 ac_decelerationAxis
 
-motorized:
+spec_motorized:
+speedDir
 rpm - NUMBER
 load - NUMBER
 speed - NUMBER
 fuelUsage - NUMBER
 motorTemperature - NUMBER
 motorTemperatureWarning - EMITTER
+distanceTotal
 clutchPedal - ANIMATION
 gear - NUMBER
 gearGroup - NUMBER
@@ -36,38 +29,28 @@ directionBackward - EMITTER
 ignitionState - MULTI-STATE
 battery - NUMBER
 
-DashboardLive:
+spec_fillUnit:
+fillLevel
+fillLevelPct
 
-dbl:
-base_front_lifted
-base_back_lifted
-base_back_pto
-base_front_pto
-vca_park
-vca_diff_front
-vca_diff_back
-vca_diff_awd
-hlm_active_field
-hlm_active_headland
+spec_lights:
+lightState (erfordert lightTypes="x")
+beaconLight
+turnLightLeft
+turnLightRight
+turnLightHazard
 
----
+spec_enterable:
+time
 
-Werkzeug ausgehoben/abgesenkt			--> base_lifted
-Werkzeug angeschaltet/abgeschaltet		--> base_pto
-Werkzeug ausgeklappt/eingeklappt		--> base_folded
+Todos:
 
-Füllstand Hänger 1
-Füllstand Hänger 2
+spec_pipe:
+pipe status?
 
-VCA/EHV:
-Parkbremse aktiv									--> vca_park
-Differential vorne/hinten 							--> vca_diff_front / vca_diff_back
-Allradantrieb										--> vca_diff_awd
+spec_dischargeable:
+discharge state?
 
-HLM:
-Aktiv+Feldmodus/Aktiv+Vorgewendemodus				--> hlm_on / hlm_active_field / hlm_active_headland
-
-Ifkos Mods:
 Lenkachse gesperrt
 Ballenzähler-Informationen
 
@@ -76,6 +59,5 @@ Tempomat 1
 Tempomat 2
 Tempomat 3
 
-GS:
-GS aktiv
-GS Spurführung aktiv
+displayTypes: (parameter)
+isReverseDriving = true/false (and) - reverseDriving

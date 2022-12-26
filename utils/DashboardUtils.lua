@@ -1,25 +1,26 @@
 DashboardUtils = {}
 
-function DashboardUtils.createVanillaNodes(vehicle, savegame)
+-- Vanilla Integration POC --
+
+function DashboardUtils.createVanillaNodes(vehicle, savegame, xmlFile)
 	local spec = vehicle.spec_DashboardLive
 	
 	local vehFile = savegame.xmlFile
 	local vehKey = savegame.key
 	local xmlPath = vehFile:getString(vehKey.."#filename")
 	
-	local i3dLibPath = "utils\DBL_MeshLibrary"
+	local i3dLibPath = DashboardLive.MOD_PATH.."utils/DBL_MeshLibary"
 	local i3dLibFile = "DBL_MeshLibary.i3d"
 	
-	-- Inject extended Dashboard Emitters into Vanilla Vehicles
+	-- Inject extended Dashboard Symbols into Vanilla Vehicles
 	dbgprint("createVanillaNodes : vehicle: "..vehicle:getName(), 2)
 	dbgprint("createVanillaNodes : vehicle's filename: "..xmlPath, 2)
 	
-	local xmlFile = XMLFile.loadIfExists("VanillaDashboards", spec.vanillaDashboardsFile, "Dashboard")
 	if xmlFile ~= nil then
 		dbgprint("createVanillaNodes : reading file", 2)
 		local i = 0
 		while true do
-			local xmlRootPath = string.format("vanillaDashboards.vehicleDashboard(%d)", i)
+			local xmlRootPath = string.format("vanillaDashboards.vanillaDashboard(%d)", i)
 			if not xmlFile:hasProperty(xmlRootPath) then break end
 			dbgprint("createVanillaNodes : xmlRootPath: "..tostring(xmlRootPath), 2)
 			
@@ -40,10 +41,16 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame)
 						nodeName = "dashboardLive"
 					end
 					
-					local rootNodeName = xmlFile:getString(xmlNodePath .. "#rootNode")
-					if rootNodeName == nil then
+					local node = xmlFile:getString(xmlNodePath .. "#node")
+					if node == nil then
 						Logging.xmlWarning(xmlFile, "No root node given, setting to 0>0")
-						rootNodeName = "0>0"
+						node = "0>0"
+					end
+					
+					local index = xmlFile:getString(xmlNodePath .. "#symbol")
+					if index == nil then
+						Logging.xmlWarning(xmlFile, "No symbol given, setting to 0>0|1")
+						index = "0>0|1"
 					end
 
 					local nx, ny, nz = 0, 0, 0
@@ -63,49 +70,23 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame)
 					end
 					
 					dbgprint("nodeName: "..tostring(nodeName), 2)
-					dbgprint("rootNodeName: "..tostring(rootNodeName), 2)
+					dbgprint("node: "..tostring(node), 2)
 					dbgprint(string.format("moveTo: %f %f %f", nx, ny, nz), 2)
 					dbgprint(string.format("rotate: %f %f %f", rx, ry, rz), 2)
 					
-					-- function LicensePlates:linkPlates()
-						-- local spec = self.spec_licensePlates
-
-						-- for _, wrapper in ipairs(spec.licensePlates) do
-							-- local i3d = g_i3DManager:loadSharedI3DFile(LicensePlates.I3D, LicensePlates.DIRECTORY, false, false)
-							-- local index = wrapper.isSmall and "0|0|1" or "0|0|0"
-
-							-- wrapper.i3d = I3DUtil.indexToObject(i3d, index)
-
-							-- -- apply position data
-							-- setTranslation(wrapper.i3d, wrapper.translation[1], wrapper.translation[2], wrapper.translation[3])
-							-- setRotation(wrapper.i3d, math.rad(wrapper.rotation[1]), math.rad(wrapper.rotation[2]), math.rad(wrapper.rotation[3]))
-							-- link(wrapper.linkNode, wrapper.i3d)
-
-							-- -- i3d can not be used again because index is strange
-							-- delete(i3d)
-						-- end
-					-- end
-					
-					local symbolsI3D = g_i3DManager:loadSharedI3DFile(i3dLibPath.."/"..i3dLibFile, false, false)
-					local symbolIndex = "0|1" -- to be loaded from xmlFile
-					
-					local dashboardSymbol = I3DUtil.indexToObject(symbolsI3D, symbolIndex)
-					
-					
-					local tgNode = createTransformGroup(nodeName)
-					dbgprint("rootNode: "..tostring(rootNode), 2)
-					dbgprint("tgNode: "..tostring(tgNode), 2)
-										
-					link(rootNode, tgNode) 
-					setTranslation(tgNode, nx, ny, nz)
-					setRotation(tgNode, rx, ry, rz)
-					
-					--local dblEmitter = Debug2DArea.new(true, true, {1, 0, 0, 1}, false)
-					--local dblEmitter = DebugCube.new()
-					--dblEmitter:createWithNode(tgNode, 0.1, 0.1, 0.1)
-					--spec.emitter = dblEmitter
-					--spec.emitterNode = tgNode
-					
+					local i3d = g_i3DManager:loadSharedI3DFile(i3dLibPath.."/"..i3dLibFile, false, false)
+					local symbol = I3DUtil.indexToObject(i3d, index)
+					local linkNode = I3DUtil.indexToObject(vehicle.components, node, vehicle.i3dMappings)
+		
+					setTranslation(symbol, nx, ny, nz)
+					setRotation(symbol, math.rad(rx), math.rad(ry), math.rad(rz))
+		
+					--DashboardLive.editSymbol = symbol
+		
+					link(linkNode, symbol)
+					delete(i3d)
+		
+					spec.vanillaIntegration = true
 					n = n + 1
 				end
 			end
@@ -114,6 +95,7 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame)
 	end
 end
 
+--[[
 -- Giant's stuff adopted to read xml-value before any schema is usable
 local function loadDashboardGroupFromXML(vehicle, xmlFile, key, group)
     group.name = xmlFile:getString(key .. "#name")
@@ -227,3 +209,5 @@ function DashboardUtils.createVanillaDashboards(vehicle, savegame)
 		i = i + 1
 	end
 end
+
+--]]

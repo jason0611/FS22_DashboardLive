@@ -35,6 +35,8 @@
 		<action name="DBL_YL" 			category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZR" 			category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZL" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_SCALEIN" 		category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_SCALEOUT"		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_PRINTOUT" 	category="VEHICLE" ignoreComboMask="false" />
 	</actions>
 	<l10n>

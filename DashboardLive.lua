@@ -15,9 +15,14 @@ GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
 
+-- DashboardLive Editor
 DashboardLive.xTrans, DashboardLive.yTrans, DashboardLive.zTrans = 0, 0, 0
 DashboardLive.xRot, DashboardLive.yRot, DashboardLive.zRot = 0, 0, 0
+DashboardLive.editScale = 1
+DashboardLive.editIndex = 1
+DashboardLive.editNode = ""
 DashboardLive.editSymbol = nil
+DashboardLive.editMode = false
 
 DashboardLive.vanillaSchema = nil
 
@@ -67,9 +72,6 @@ function DashboardLive.initSpecialization()
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#option", "Option")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#factor", "Factor")
 	dbgprint("initSpecialization : vanillaSchema element options registered", 2)
-	
-	print_r(DashboardLive.vanillaSchema)
-	
 end
 
 function DashboardLive.registerEventListeners(vehicleType)
@@ -143,6 +145,7 @@ function DashboardLive:onLoad(savegame)
 	if DashboardLive.vanillaIntegrationXMLFile ~= nil then
 		DashboardUtils.createVanillaNodes(self, savegame, DashboardLive.vanillaIntegrationXMLFile)
 	end
+	DashboardLive.savegameReference = savegame
 	
 	-- Load Dashboards from XML
 	if self.loadDashboardsFromXML ~= nil then
@@ -186,7 +189,6 @@ function DashboardLive:onLoad(savegame)
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
         if spec.vanillaIntegration then
         	dbgprint("onLoad : VanillaIntegration <vca>", 2)
-        	print_r(DashboardLive.vanillaIntegrationXMLFile)
         	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, "vanillaDashboards.vanillaDashboard.dashboardLive", dashboardData)
         	--self:loadDashboardsFromXML(self.xmlFile, "vanillaDashboards.vanillaDashboard.dashboardLive", dashboardData)
         end
@@ -404,6 +406,21 @@ function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
 	spec.zoomPressed = true
 end
 
+-- Dashboard Editor Mode
+function DashboardLive:startEditorMode(node)
+	if node ~= nil and type(node)=="string" then
+		DashboardUtils:createEditorNode(node, DashboardLive.editIndex)
+		DashboardLive.editMode = true
+	else
+		--if DashboardLive.editSymbol ~= nil then
+		--	setVisibility(DashboardLive.editSymbol, false)
+		--end
+		DashboardLive.editSymbol = nil
+		DashboardLive.editMode = false
+	end
+end
+addConsoleCommand("dblEditorMode", "Glowins Mod Smithery: Enable Editor Mode: dblEditorMode [<node>]", "startEditorMode", DashboardLive)
+
 function DashboardLive:MOVESYMBOL(actionName, keyStatus)
 	dbgprint("MOVESYMBOL", 4)
 	if DashboardLive.editSymbol == nil then return end
@@ -444,9 +461,20 @@ function DashboardLive:MOVESYMBOL(actionName, keyStatus)
 	elseif actionName == "DBL_ZL" then
 		DashboardLive.zRot = DashboardLive.zRot - 1
 		dbgprint("zRot: "..tostring(DashboardLive.zRot), 2)
+	elseif actionName == "DBL_SCALEIN" then
+		DashboardLive.scale = DashboardLive.scale + 0.001
+		dbgprint("scale: "..tostring(DashboardLive.scale), 2)
+	elseif actionName == "DBL_SCALEOUT" then
+		DashboardLive.scale = DashboardLive.scale - 0.001
+		dbgprint("scale: "..tostring(DashboardLive.scale), 2)
 	end
 	setTranslation(DashboardLive.editSymbol, DashboardLive.xTrans, DashboardLive.yTrans, DashboardLive.zTrans)
 	setRotation(DashboardLive.editSymbol, math.rad(DashboardLive.xRot), math.rad(DashboardLive.yRot), math.rad(DashboardLive.zRot))
+end
+
+function DashboardLive:CHANGESYMBOL(actionName, keyStatus)
+	DashboardLive.editIndex = DashbordLive.editIndex + 1
+	if DashboardLive.editIndex > 64 then DashboardLive.editIndex = 1 end
 end
 
 function DashboardLive:PRINTSYMBOL(actionName, keyStatus)

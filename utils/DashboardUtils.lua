@@ -49,8 +49,8 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame, xmlFile)
 					
 					local index = xmlFile:getString(xmlNodePath .. "#symbol")
 					if index == nil then
-						Logging.xmlWarning(xmlFile, "No symbol given, setting to 0>0|1")
-						index = "0>0|1"
+						Logging.xmlWarning(xmlFile, "No symbol given, setting to 0|1")
+						index = "0|1"
 					end
 
 					local nx, ny, nz = 0, 0, 0
@@ -81,6 +81,7 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame, xmlFile)
 		
 					setTranslation(symbol, nx, ny, nz)
 					setRotation(symbol, math.rad(rx), math.rad(ry), math.rad(rz))
+					setScale(symbol, 1, 1, 1)
 		
 					--DashboardLive.editSymbol = symbol
 		
@@ -95,6 +96,32 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame, xmlFile)
 			i = i + 1
 		end
 	end
+end
+
+function DashboardUtils.createEditorNode(vehicle, node, symbolIndex)
+	local spec = vehicle.spec_DashboardLive
+	
+	local i3dLibPath = DashboardLive.MOD_PATH.."utils/DBL_MeshLibary"
+	local i3dLibFile = "DBL_MeshLibary.i3d"
+	
+	local index = "0|"..tostring(symbolIndex)
+					
+	local i3d = g_i3DManager:loadSharedI3DFile(i3dLibPath.."/"..i3dLibFile, false, false)
+	local symbol = I3DUtil.indexToObject(i3d, index)
+	local linkNode = I3DUtil.indexToObject(vehicle.components, node, vehicle.i3dMappings)
+	local tgNode = createTransformGroup("editorNode")
+		
+	setTranslation(symbol, DashboardLive.xTrans, DashboardLive.yTrans, DashboardLive.zTrans)
+	setRotation(symbol, math.rad(DashboardLive.xRot), math.rad(DashboardLive.yRot), math.rad(DashboardLive.zRot))
+	setScale(symbol, DashboardLive.editScale, DashboardLive.editScale, DashboardLive.editScale)
+		
+	link(tgNode, symbol)
+	link(linkNode, tgNode)
+	
+	DashboardLive.editNode = node
+	DashboardLive.editSymbol = symbol
+	
+	delete(i3d)
 end
 
 --[[

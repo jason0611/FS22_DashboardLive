@@ -7,8 +7,8 @@
 		</nodes>
 		<dashboardLive>
 			<!-- VCA -->
-			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|9|6|8" groups="MOTOR_ACTIVE" />
-			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|9|6|8" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|9|6|8|0|0" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|9|6|8|0|0" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
 		</dashboardLive>
 	</vanillaDashboard>
 </vanillaDashboards>

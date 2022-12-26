@@ -77,13 +77,15 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame, xmlFile)
 					local i3d = g_i3DManager:loadSharedI3DFile(i3dLibPath.."/"..i3dLibFile, false, false)
 					local symbol = I3DUtil.indexToObject(i3d, index)
 					local linkNode = I3DUtil.indexToObject(vehicle.components, node, vehicle.i3dMappings)
+					local tgNode = createTransformGroup(nodeName)
 		
 					setTranslation(symbol, nx, ny, nz)
 					setRotation(symbol, math.rad(rx), math.rad(ry), math.rad(rz))
 		
 					--DashboardLive.editSymbol = symbol
 		
-					link(linkNode, symbol)
+					link(tgNode, symbol)
+					link(linkNode, tgNode)
 					delete(i3d)
 		
 					spec.vanillaIntegration = true

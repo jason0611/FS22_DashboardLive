@@ -2,12 +2,11 @@ DashboardUtils = {}
 
 -- Vanilla Integration POC --
 
-function DashboardUtils.createVanillaNodes(vehicle, savegame, xmlFile)
+function DashboardUtils.createVanillaNodes(vehicle, xmlFile)
 	local spec = vehicle.spec_DashboardLive
 	
-	local vehFile = savegame.xmlFile
-	local vehKey = savegame.key
-	local xmlPath = vehFile:getString(vehKey.."#filename")
+	if vehicle.xmlFile == nil then return false end
+	local xmlPath = vehicle.xmlFile.filename
 	
 	local i3dLibPath = DashboardLive.MOD_PATH.."utils/DBL_MeshLibary"
 	local i3dLibFile = "DBL_MeshLibary.i3d"
@@ -69,6 +68,9 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame, xmlFile)
 						Logging.xmlWarning(xmlFile, "No node translation given, setting to 0 0 0")
 					end
 					
+					local scale = xmlFile:getFloat(xmlNodePath .. "#scale")
+					if scale == nil then scale = 1 end
+					
 					dbgprint("nodeName: "..tostring(nodeName), 2)
 					dbgprint("node: "..tostring(node), 2)
 					dbgprint(string.format("moveTo: %f %f %f", nx, ny, nz), 2)
@@ -77,19 +79,16 @@ function DashboardUtils.createVanillaNodes(vehicle, savegame, xmlFile)
 					local i3d = g_i3DManager:loadSharedI3DFile(i3dLibPath.."/"..i3dLibFile, false, false)
 					local symbol = I3DUtil.indexToObject(i3d, index)
 					local linkNode = I3DUtil.indexToObject(vehicle.components, node, vehicle.i3dMappings)
-					local tgNode = createTransformGroup(nodeName)
 		
 					setTranslation(symbol, nx, ny, nz)
 					setRotation(symbol, math.rad(rx), math.rad(ry), math.rad(rz))
-					setScale(symbol, 1, 1, 1)
+					setScale(symbol, scale, scale, scale)
 		
-					--DashboardLive.editSymbol = symbol
-		
-					link(tgNode, symbol)
-					link(linkNode, tgNode)
+					link(linkNode, symbol)
+					g_i3DManager:releaseSharedI3DFile(i3d, false)
 					delete(i3d)
 		
-					spec.vanillaIntegration = true
+					spec.vanillaIntegration = i
 					n = n + 1
 				end
 			end
@@ -109,18 +108,16 @@ function DashboardUtils.createEditorNode(vehicle, node, symbolIndex)
 	local i3d = g_i3DManager:loadSharedI3DFile(i3dLibPath.."/"..i3dLibFile, false, false)
 	local symbol = I3DUtil.indexToObject(i3d, index)
 	local linkNode = I3DUtil.indexToObject(vehicle.components, node, vehicle.i3dMappings)
-	local tgNode = createTransformGroup("editorNode")
 		
 	setTranslation(symbol, DashboardLive.xTrans, DashboardLive.yTrans, DashboardLive.zTrans)
 	setRotation(symbol, math.rad(DashboardLive.xRot), math.rad(DashboardLive.yRot), math.rad(DashboardLive.zRot))
 	setScale(symbol, DashboardLive.editScale, DashboardLive.editScale, DashboardLive.editScale)
 		
-	link(tgNode, symbol)
-	link(linkNode, tgNode)
+	link(linkNode, symbol)
 	
 	DashboardLive.editNode = node
 	DashboardLive.editSymbol = symbol
-	
+	g_i3DManager:releaseSharedI3DFile(i3d, false)
 	delete(i3d)
 end
 

@@ -3,12 +3,26 @@
 	<!--vehicleDashboard name="XUV865M" fileName="data/vehicles/johnDeere/xuv865M/xuv865M.xml"/-->
 	<vanillaDashboard name="SKE50electric" fileName="data/vehicles/rigitrac/ske50/ske50.xml">
 		<nodes>
-			<node name="vcaPark" node="0>0|9|6|8" symbol="0|1" moveTo="-0.002 -0.011 -0.041" rotate="-129 0 180"/>
+			<node name="vcaPark" node="0>0|9|6|8" symbol="0|1" moveTo="-0.0001 0.009 -0.0044" rotate="-129 0 180" scale="2"/>
+			<node name="pto1" node="0>0|9|6|8" symbol="0|125" moveTo="0.0688 0.003 -0.0085" rotate="-61 0 0" scale="2.514"/>
 		</nodes>
 		<dashboardLive>
-			<!-- VCA -->
-			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|9|6|8|0|0" groups="MOTOR_ACTIVE" />
-			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|9|6|8|0|0" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|9|6|8|0" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|9|6|8|0" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" joints="1 3 4" displayType="VISIBILITY" node="0>0|9|6|8|1" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" joints="1 3 4" displayType="EMITTER" node="0>0|9|6|8|1" emitColor="NEWHOLLAND_ORANGE1" intensity="0.5" groups="MOTOR_ACTIVE" />
+		</dashboardLive>
+	</vanillaDashboard>
+	<vanillaDashboard name="TGS 18.500 4x4" fileName="data/vehicles/man/tgs18500/tgs18500.xml">
+		<nodes>
+			<node name="vcaPark" node="0>0|6|0|5|11" symbol="0|1" moveTo="0.0361 -0.0066 0.0002" rotate="91 0 0" scale="1.445"/>
+			<node name="pto1" node="0>0|6|0|5|11" symbol="0|125" moveTo="0.0162 -0.0308 0.0003" rotate="91 0 0" scale="1.4"/>
+		</nodes>
+		<dashboardLive>
+			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|6|0|5|11|1" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|6|0|5|11|1" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" joints="1 2 3" displayType="VISIBILITY" node="0>0|6|0|5|11|2" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|2" emitColor="NEWHOLLAND_ORANGE1" intensity="0.5" groups="MOTOR_ACTIVE" />
 		</dashboardLive>
 	</vanillaDashboard>
 </vanillaDashboards>

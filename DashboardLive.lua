@@ -63,8 +63,8 @@ function DashboardLive.initSpecialization()
 	
 	DashboardLive.vanillaSchema = XMLSchema.new("vanillaIntegration")
 	
-	Dashboard.registerDashboardXMLPaths(DashboardLive.vanillaSchema, "vanillaDashboards.vanillaDashboard.dashboardLive", "base vca gps")
-	DashboardLive.DBL_Vanilla_XML_KEY = "vanillaDashboards.vanillaDashboard.dashboardLive.dashboard(?)"
+	Dashboard.registerDashboardXMLPaths(DashboardLive.vanillaSchema, "vanillaDashboards.vanillaDashboard(?).dashboardLive", "base vca gps")
+	DashboardLive.DBL_Vanilla_XML_KEY = "vanillaDashboards.vanillaDashboard(?).dashboardLive.dashboard(?)"
 	
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#cmd", "DashboardLive command")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#joints")
@@ -141,11 +141,9 @@ function DashboardLive:onLoad(savegame)
 	-- Integrate vanilla dashboards
 	DashboardLive.vanillaIntegrationXML = DashboardLive.MOD_PATH.."xml/vanillaDashboards.xml"
 	DashboardLive.vanillaIntegrationXMLFile = XMLFile.loadIfExists("VanillaDashboards", DashboardLive.vanillaIntegrationXML, DashboardLive.vanillaSchema)
-	--DashboardLive.vanillaIntegrationXMLFile = XMLFile.loadIfExists("VanillaDashboards", DashboardLive.vanillaIntegrationXML, "vanillaIntegration")
 	if DashboardLive.vanillaIntegrationXMLFile ~= nil then
-		DashboardUtils.createVanillaNodes(self, savegame, DashboardLive.vanillaIntegrationXMLFile)
+		DashboardUtils.createVanillaNodes(self, DashboardLive.vanillaIntegrationXMLFile)
 	end
-	DashboardLive.savegameReference = savegame
 	
 	-- Load Dashboards from XML
 	if self.loadDashboardsFromXML ~= nil then
@@ -161,7 +159,7 @@ function DashboardLive:onLoad(savegame)
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
         if spec.vanillaIntegration then
         	dbgprint("onLoad : VanillaIntegration <base>", 2)
-        	--self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, "vanillaDashboards.vanillaDashboard.dashboardLive", dashboardData)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
         end
         -- fillLevel
         dashboardData = {	
@@ -189,7 +187,7 @@ function DashboardLive:onLoad(savegame)
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
         if spec.vanillaIntegration then
         	dbgprint("onLoad : VanillaIntegration <vca>", 2)
-        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, "vanillaDashboards.vanillaDashboard.dashboardLive", dashboardData)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
         	--self:loadDashboardsFromXML(self.xmlFile, "vanillaDashboards.vanillaDashboard.dashboardLive", dashboardData)
         end
 		-- hlm
@@ -210,7 +208,7 @@ function DashboardLive:onLoad(savegame)
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
         if spec.vanillaIntegration then
         	dbgprint("onLoad : VanillaIntegration <gps>", 2)
-        	--self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, "vanillaDashboards.vanillaDashboard.dashboardLive", dashboardData)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
         end
 		-- gpsLane
         dashboardData = {	
@@ -368,6 +366,8 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YL', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
 			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZR', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
 			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZL', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
+			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_SCALEIN', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
+			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_SCALEOUT', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
 			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PRINTOUT', self, DashboardLive.PRINTSYMBOL, false, true, false, true, nil)				
 		end	
 		
@@ -407,14 +407,14 @@ function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
 end
 
 -- Dashboard Editor Mode
-function DashboardLive:startEditorMode(node)
-	if node ~= nil and type(node)=="string" then
-		DashboardUtils:createEditorNode(node, DashboardLive.editIndex)
+function DashboardLive:startEditorMode(node, index)
+	if node ~= nil and index ~= nil then
+		DashboardUtils.createEditorNode(g_currentMission.controlledVehicle, tostring(node), tonumber(index))
 		DashboardLive.editMode = true
 	else
-		--if DashboardLive.editSymbol ~= nil then
-		--	setVisibility(DashboardLive.editSymbol, false)
-		--end
+		if DashboardLive.editSymbol ~= nil then
+			setVisibility(DashboardLive.editSymbol, false)
+		end
 		DashboardLive.editSymbol = nil
 		DashboardLive.editMode = false
 	end
@@ -426,22 +426,22 @@ function DashboardLive:MOVESYMBOL(actionName, keyStatus)
 	if DashboardLive.editSymbol == nil then return end
 
 	if actionName == "DBL_XUP" then
-		DashboardLive.xTrans = DashboardLive.xTrans + 0.001
+		DashboardLive.xTrans = DashboardLive.xTrans - 0.0001
 		dbgprint("xTrans: "..tostring(DashboardLive.xTrans), 2)
 	elseif actionName == "DBL_XDN" then
-		DashboardLive.xTrans = DashboardLive.xTrans - 0.001
+		DashboardLive.xTrans = DashboardLive.xTrans + 0.0001
 		dbgprint("xTrans: "..tostring(DashboardLive.xTrans), 2)
 	elseif actionName == "DBL_YUP" then
-		DashboardLive.yTrans = DashboardLive.yTrans + 0.001
+		DashboardLive.yTrans = DashboardLive.yTrans + 0.0001
 		dbgprint("yTrans: "..tostring(DashboardLive.yTrans), 2)
 	elseif actionName == "DBL_YDN" then
-		DashboardLive.yTrans = DashboardLive.yTrans - 0.001
+		DashboardLive.yTrans = DashboardLive.yTrans - 0.0001
 		dbgprint("yTrans: "..tostring(DashboardLive.yTrans), 2)
 	elseif actionName == "DBL_ZUP" then
-		DashboardLive.zTrans = DashboardLive.zTrans + 0.001
+		DashboardLive.zTrans = DashboardLive.zTrans + 0.0001
 		dbgprint("zTrans: "..tostring(DashboardLive.zTrans), 2)
 	elseif actionName == "DBL_ZDN" then
-		DashboardLive.zTrans = DashboardLive.zTrans - 0.001
+		DashboardLive.zTrans = DashboardLive.zTrans - 0.0001
 		dbgprint("zTrans: "..tostring(DashboardLive.zTrans), 2)
 	elseif actionName == "DBL_XR" then
 		DashboardLive.xRot = DashboardLive.xRot + 1
@@ -462,19 +462,15 @@ function DashboardLive:MOVESYMBOL(actionName, keyStatus)
 		DashboardLive.zRot = DashboardLive.zRot - 1
 		dbgprint("zRot: "..tostring(DashboardLive.zRot), 2)
 	elseif actionName == "DBL_SCALEIN" then
-		DashboardLive.scale = DashboardLive.scale + 0.001
-		dbgprint("scale: "..tostring(DashboardLive.scale), 2)
+		DashboardLive.editScale = DashboardLive.editScale + 0.001
+		dbgprint("scale: "..tostring(DashboardLive.editScale), 2)
 	elseif actionName == "DBL_SCALEOUT" then
-		DashboardLive.scale = DashboardLive.scale - 0.001
-		dbgprint("scale: "..tostring(DashboardLive.scale), 2)
+		DashboardLive.editScale = DashboardLive.editScale - 0.001
+		dbgprint("scale: "..tostring(DashboardLive.editScale), 2)
 	end
 	setTranslation(DashboardLive.editSymbol, DashboardLive.xTrans, DashboardLive.yTrans, DashboardLive.zTrans)
 	setRotation(DashboardLive.editSymbol, math.rad(DashboardLive.xRot), math.rad(DashboardLive.yRot), math.rad(DashboardLive.zRot))
-end
-
-function DashboardLive:CHANGESYMBOL(actionName, keyStatus)
-	DashboardLive.editIndex = DashbordLive.editIndex + 1
-	if DashboardLive.editIndex > 64 then DashboardLive.editIndex = 1 end
+	setScale(DashboardLive.editSymbol, DashboardLive.editScale, DashboardLive.editScale, DashboardLive.editScale)
 end
 
 function DashboardLive:PRINTSYMBOL(actionName, keyStatus)
@@ -484,6 +480,7 @@ function DashboardLive:PRINTSYMBOL(actionName, keyStatus)
 	print("x_rot = "..tostring(DashboardLive.xRot))
 	print("y_rot = "..tostring(DashboardLive.yRot))
 	print("z_rot = "..tostring(DashboardLive.zRot))
+	print("scale = "..tostring(DashboardLive.editScale))
 end
 
 

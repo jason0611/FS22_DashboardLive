@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="67">
 	<author>Jason06 / Glowins Modschmiede</author>
-	<version>0.2.5.2</version>
+	<version>0.3.0.0</version>
 	<title>
 		<en>Dashboard Live</en>
     </title>
@@ -22,13 +22,23 @@
 		<action name="DBL_PAGEDN" 		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZOOM"   		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZOOM_PERM"	category="VEHICLE" ignoreComboMask="false" />
+		
+		<action name="DBL_XUP" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_XDN" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_YUP" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_YDN" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_ZUP" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_ZDN" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_XR" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_XL" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_YR" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_YL" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_ZR" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_ZL" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_SCALEIN" 		category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_SCALEOUT"		category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_PRINTOUT" 	category="VEHICLE" ignoreComboMask="false" />
 	</actions>
-	<inputBinding>	
-		<actionBinding action="DBL_PAGEUP" />
-		<actionBinding action="DBL_PAGEDN" />
-		<actionBinding action="DBL_ZOOM" />
-		<actionBinding action="DBL_ZOOM_PERM" />
-	</inputBinding>
 	<l10n>
 		<text name="input_DBL_PAGEUP">
             <en>Page up</en>

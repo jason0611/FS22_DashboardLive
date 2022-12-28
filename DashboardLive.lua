@@ -76,7 +76,7 @@ end
 
 function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onLoad", DashboardLive)
-	SpecializationUtil.registerEventListener(vehicleType, "onPreLoad", DashboardLive)
+--	SpecializationUtil.registerEventListener(vehicleType, "onPreLoad", DashboardLive)
     SpecializationUtil.registerEventListener(vehicleType, "onPostLoad", DashboardLive)
     SpecializationUtil.registerEventListener(vehicleType, "onRegisterActionEvents", DashboardLive)
  	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", DashboardLive)
@@ -87,23 +87,9 @@ function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onPostAttachImplement", DashboardLive)
 end
 
-function DashboardLive.registerFunctions(vehicleType)
-end
-
 function DashboardLive.registerOverwrittenFunctions(vehicleType)
 	SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsDashboardGroupActive", DashboardLive.getIsDashboardGroupActive)
-    
-    --SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadEmitterDashboardFromXML", DashboardLive.loadDashboardFromXML)
-    --SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadNumberDashboardFromXML", DashboardLive.loadDashboardFromXML)
-    --SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadTextDashboardFromXML", DashboardLive.loadDashboardFromXML)
-    --SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadAnimationDashboardFromXML", DashboardLive.loadDashboardFromXML)
-    --SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadRotationDashboardFromXML", DashboardLive.loadDashboardFromXML)
-    --SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadVisibilityDashboardFromXML", DashboardLive.loadDashboardFromXML)
-    --SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadSliderDashboardFromXML", DashboardLive.loadDashboardFromXML)
-    --SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadMultiStateDashboardFromXML", DashboardLive.loadDashboardFromXML)
-    
-    --SpecializationUtil.registerOverwrittenFunction(vehicleType, "updateDashboards", DashboardLive.updateDashboards)
 end
 
 function DashboardLive:onPreLoad(savegame)
@@ -145,10 +131,10 @@ function DashboardLive:onLoad(savegame)
 		DashboardUtils.createVanillaNodes(self, DashboardLive.vanillaIntegrationXMLFile)
 	end
 	
-	-- Load Dashboards from XML
+	-- Load and initialize Dashboards from XML
 	if self.loadDashboardsFromXML ~= nil then
 		local dashboardData
-		dbgprint("onLoad : loadDashboardsFromXML found", 2)
+		dbgprint("onLoad : loadDashboardsFromXML", 2)
         -- base
         dashboardData = {	
         					valueTypeToLoad = "base",
@@ -188,7 +174,6 @@ function DashboardLive:onLoad(savegame)
         if spec.vanillaIntegration then
         	dbgprint("onLoad : VanillaIntegration <vca>", 2)
         	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
-        	--self:loadDashboardsFromXML(self.xmlFile, "vanillaDashboards.vanillaDashboard.dashboardLive", dashboardData)
         end
 		-- hlm
         dashboardData = {	
@@ -407,6 +392,7 @@ function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
 end
 
 -- Dashboard Editor Mode
+
 function DashboardLive:startEditorMode(node, index)
 	if node ~= nil and index ~= nil then
 		DashboardUtils.createEditorNode(g_currentMission.controlledVehicle, tostring(node), tonumber(index))
@@ -474,6 +460,13 @@ function DashboardLive:MOVESYMBOL(actionName, keyStatus)
 end
 
 function DashboardLive:PRINTSYMBOL(actionName, keyStatus)
+	print("DashboardLive Editor Printout:")
+	print("==============================")
+	print("Vehicle: "..self:vehicle:getName())
+	if self.xmlFile ~= nil then
+		print("Vehicle XML-Path: "..self.xmlFile.filename)
+	end
+	print("Reference node: "..tostring(DashboardLive.editNode))
 	print("x_trans = "..tostring(DashboardLive.xTrans))
 	print("y_trans = "..tostring(DashboardLive.yTrans))
 	print("z_trans = "..tostring(DashboardLive.zTrans))

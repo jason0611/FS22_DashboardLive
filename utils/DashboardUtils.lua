@@ -117,6 +117,7 @@ function DashboardUtils.createEditorNode(vehicle, node, symbolIndex)
 	
 	DashboardLive.editNode = node
 	DashboardLive.editSymbol = symbol
+	DashboardLive.editSymbolIndex = index
 	g_i3DManager:releaseSharedI3DFile(i3d, false)
 	delete(i3d)
 end

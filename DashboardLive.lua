@@ -22,6 +22,7 @@ DashboardLive.editScale = 1
 DashboardLive.editIndex = 1
 DashboardLive.editNode = ""
 DashboardLive.editSymbol = nil
+DashboardLive.editSymbolIndex = ""
 DashboardLive.editMode = false
 
 DashboardLive.vanillaSchema = nil
@@ -76,7 +77,7 @@ end
 
 function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onLoad", DashboardLive)
---	SpecializationUtil.registerEventListener(vehicleType, "onPreLoad", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onPreLoad", DashboardLive)
     SpecializationUtil.registerEventListener(vehicleType, "onPostLoad", DashboardLive)
     SpecializationUtil.registerEventListener(vehicleType, "onRegisterActionEvents", DashboardLive)
  	SpecializationUtil.registerEventListener(vehicleType, "onReadStream", DashboardLive)
@@ -462,10 +463,12 @@ end
 function DashboardLive:PRINTSYMBOL(actionName, keyStatus)
 	print("DashboardLive Editor Printout:")
 	print("==============================")
-	print("Vehicle: "..self:vehicle:getName())
+	print("Vehicle: "..self:getName())
+	local xmlPath
 	if self.xmlFile ~= nil then
-		print("Vehicle XML-Path: "..self.xmlFile.filename)
+		xmlPath = self.xmlFile.filename
 	end
+	print("Vehicle XML-Path: "..tostring(xmlPath))
 	print("Reference node: "..tostring(DashboardLive.editNode))
 	print("x_trans = "..tostring(DashboardLive.xTrans))
 	print("y_trans = "..tostring(DashboardLive.yTrans))
@@ -474,7 +477,16 @@ function DashboardLive:PRINTSYMBOL(actionName, keyStatus)
 	print("y_rot = "..tostring(DashboardLive.yRot))
 	print("z_rot = "..tostring(DashboardLive.zRot))
 	print("scale = "..tostring(DashboardLive.editScale))
+	if xmlPath == nil then return end
+	print("==============================")
+	print("<vanillaDashboard name=\""..tostring(self:getName()).."\" fileName=\""..tostring(xmlPath).."\" >")
+	print("	<nodes>")
+	print("		<node name=\"<set a name here>\" node=\""..DashboardLive.editNode.."\" symbol=\""..DashboardLive.editSymbolIndex.."\" moveTo=\""..tostring(DashboardLive.xTrans).." "..tostring(DashboardLive.yTrans).." "..tostring(DashboardLive.zTrans).."\" rotate=\""..tostring(DashboardLive.xRot).." "..tostring(DashboardLive.yRot).." "..tostring(DashboardLive.zRot).."\" scale=\""..tostring(DashboardLive.editScale).."\"/>")
+	print("	</nodes>")
+	print("</vanillaDashboard")
+	print("==============================")
 end
+
 
 
 -- Main script

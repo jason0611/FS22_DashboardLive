@@ -483,7 +483,7 @@ function DashboardLive:PRINTSYMBOL(actionName, keyStatus)
 	print("	<nodes>")
 	print("		<node name=\"<set a name here>\" node=\""..DashboardLive.editNode.."\" symbol=\""..DashboardLive.editSymbolIndex.."\" moveTo=\""..tostring(DashboardLive.xTrans).." "..tostring(DashboardLive.yTrans).." "..tostring(DashboardLive.zTrans).."\" rotate=\""..tostring(DashboardLive.xRot).." "..tostring(DashboardLive.yRot).." "..tostring(DashboardLive.zRot).."\" scale=\""..tostring(DashboardLive.editScale).."\"/>")
 	print("	</nodes>")
-	print("</vanillaDashboard")
+	print("</vanillaDashboard>")
 	print("==============================")
 end
 

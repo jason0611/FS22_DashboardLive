@@ -623,11 +623,16 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "unfolded" then
             	result = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(result), 4)
+            elseif mode == "tipping" then
+            	local specTR = findSpecialization(implement.object, "spec_trailer")
+            	result = specTR ~= nil and specTR:getTipState() > 0
             elseif mode == "ridgeMarker" then
             	local specRM = findSpecialization(implement.object, "spec_ridgeMarker")
             	result = specRM ~= nil and specRM.ridgeMarkerState or 0
+            elseif mode == "connected" then
+            	result = true
             elseif mode == "disconnected" then
-            	dbgprint("AttacherJoint #"..tostring(jointIndex).." not disonnected", 4)
+            	dbgprint("AttacherJoint #"..tostring(jointIndex).." not disconnected", 4)
             end
         end
         dbgprint("result / noImplement: "..tostring(result).." / "..tostring(noImplement), 4)
@@ -1100,6 +1105,9 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		-- joint states
 		if c == "disconnected" then
 			return getAttachedStatus(self, dashboard, "disconnected")
+			
+		elseif c == "connected" then
+			return getAttachedStatus(self, dashboard, "connected")
 	
 		elseif c == "lifted" then
 			return getAttachedStatus(self, dashboard, "raised", o == "default")
@@ -1121,6 +1129,9 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 
 		elseif c == "unfolded" then
 			return getAttachedStatus(self, dashboard, "unfolded", o == "default")
+			
+		elseif c == "tipping" then
+			return getAttachedStatus(self, dashboard, "tipping", o == "default")
 
 		elseif specWM ~= nil and c == "swath" then
 			if s == "" or tonumber(s) == nil then

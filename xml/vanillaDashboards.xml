@@ -17,12 +17,52 @@
 		<nodes>
 			<node name="vcaPark" node="0>0|6|0|5|11" symbol="0|1" moveTo="0.0361 -0.0066 0.0002" rotate="91 0 0" scale="1.445"/>
 			<node name="pto1" node="0>0|6|0|5|11" symbol="0|125" moveTo="0.0162 -0.0308 0.0003" rotate="91 0 0" scale="1.4"/>
+			<node name="trailer" node="0>0|6|0|5|11" symbol="0|83" moveTo="0.0428 -0.0307 -0.0001" rotate="86 0 0" scale="1.181"/>
+			<node name="lowered" node="0>0|6|0|5|11" symbol="0|53" moveTo="0.0339 -0.0305 0.0004" rotate="86 0 0" scale="1"/>
+			<node name="tipping" node="0>0|6|0|5|11" symbol="0|65" moveTo="0.0252 -0.0305 0.0004" rotate="75 0 0" scale="1"/>
 		</nodes>
 		<dashboardLive>
 			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|6|0|5|11|1" groups="MOTOR_ACTIVE" />
 			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|6|0|5|11|1" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
 			<dashboard valueType="base" cmd="pto" joints="1 2 3" displayType="VISIBILITY" node="0>0|6|0|5|11|2" groups="MOTOR_ACTIVE" />
 			<dashboard valueType="base" cmd="pto" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|2" emitColor="NEWHOLLAND_ORANGE1" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="connected" joints="1 2 3" displayType="VISIBILITY" node="0>0|6|0|5|11|3" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="connected" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|3" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" joints="1 2 3" displayType="VISIBILITY" node="0>0|6|0|5|11|4" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|4" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="tipping" joints="1 2 3" displayType="VISIBILITY" node="0>0|6|0|5|11|5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="tipping" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|5" emitColor="YELLOW" intensity="0.5" groups="MOTOR_ACTIVE" />
+		</dashboardLive>
+	</vanillaDashboard>
+	<vanillaDashboard name="TGX HKL 500 PS" fileName="/Users/martin/Library/Application Support/FarmingSimulator2022/mods/FS22_MAN_TGX_HKL_Pack/TGXHKL.xml" >
+		<nodes>
+			<node name="referenceNode" node="0>0|4|0|3|5" symbol="0|0" moveTo="0.7525 0.1298 0.77462" rotate="-110 0 -181" scale="1.6449999999999"/>
+			<node name="vcaPark" node="0>0|4|0|3|5|0" symbol="0|1" moveTo="0.0361 -0.0066 0.0002" rotate="91 0 0" scale="1.445"/>
+			<node name="pto1" node="0>0|4|0|3|5|0" symbol="0|125" moveTo="0.0162 -0.0308 0.0003" rotate="91 0 0" scale="1.4"/>
+			<node name="trailer" node="0>0|4|0|3|5|0" symbol="0|83" moveTo="0.0428 -0.0307 -0.0001" rotate="86 0 0" scale="1.181"/>
+			<node name="lowered" node="0>0|4|0|3|5|0" symbol="0|53" moveTo="0.0339 -0.0305 0.0004" rotate="86 0 0" scale="1"/>
+			<node name="tipping" node="0>0|4|0|3|5|0" symbol="0|65" moveTo="0.0252 -0.0305 0.0004" rotate="75 0 0" scale="1"/>
+		</nodes>
+		<dashboardLive>
+			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|4|0|3|5|0|0" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|4|0|3|5|0|0" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" joints="1 2 3" displayType="VISIBILITY" node="0>0|4|0|3|5|0|1" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" joints="1 2 3" displayType="EMITTER" node="0>0|4|0|3|5|0|1" emitColor="NEWHOLLAND_ORANGE1" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="connected" joints="1 2 3" displayType="VISIBILITY" node="0>0|4|0|3|5|0|2" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="connected" joints="1 2 3" displayType="EMITTER" node="0>0|4|0|3|5|0|2" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" joints="1 2 3" displayType="VISIBILITY" node="0>0|4|0|3|5|0|3" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" joints="1 2 3" displayType="EMITTER" node="0>0|4|0|3|5|0|3" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="tipping" joints="1 2 3" displayType="VISIBILITY" node="0>0|4|0|3|5|0|4" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="tipping" joints="1 2 3" displayType="EMITTER" node="0>0|4|0|3|5|0|4" emitColor="YELLOW" intensity="0.5" groups="MOTOR_ACTIVE" />
+		</dashboardLive>
+	</vanillaDashboard>
+	<vanillaDashboard name="Fastrac 4220" fileName="data/vehicles/jcb/fastrac4220/fastrac4220.xml" >
+		<nodes>
+			<node name="AWD" node="0>0|12|6" symbol="0|76" moveTo="-0.0301 0 0.0202" rotate="1 -180 -3" scale="2.9069999999998"/>
+		</nodes>
+		<dashboardLive>
+			<dashboard valueType="vca" cmd="diff_front" displayType="VISIBILITY" node="0>0|12|6|0" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="diff_front" displayType="EMITTER" node="0>0|12|6|0" emitColor="GREEN" intensity="0.8" groups="MOTOR_ACTIVE" />
 		</dashboardLive>
 	</vanillaDashboard>
 </vanillaDashboards>

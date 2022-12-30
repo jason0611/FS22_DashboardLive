@@ -597,7 +597,13 @@ local function getAttachedStatus(vehicle, element, mode, default)
 	
     for _, jointIndex in ipairs(joints) do
     	dbgprint("jointIndex: "..tostring(tonumber(jointIndex)), 4)
-    	local implement = vehicle:getImplementFromAttacherJointIndex(tonumber(jointIndex)) 
+    	local implement
+    	if tonumber(jointIndex) == 0 then
+    		implement = {}
+    		implement.object = vehicle
+    	else
+    		implement = vehicle:getImplementFromAttacherJointIndex(tonumber(jointIndex)) 
+    	end
     	dbgprint("implement: "..tostring(implement), 4)
     	dbgprint_r(implement, 4, 1)
     	if implement ~= nil then

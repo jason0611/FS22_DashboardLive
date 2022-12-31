@@ -26,6 +26,7 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlFile)
 			local vanillaFile = xmlFile:getString(xmlRootPath .. "#fileName")
 			dbgprint("createVanillaNodes : vanillaFile: "..tostring(vanillaFile), 2)
 			
+			-- Merker: absoluter Pfad bei Mods: Anpassungen notwendig!
 			if vanillaFile == xmlPath then
 				dbgprint("createVanillaNodes : found vehicle in vanillaDashboards", 2)
 								

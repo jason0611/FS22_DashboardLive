@@ -45,7 +45,7 @@
 	</vanillaDashboard>
 	
 	<!-- Mods -->
-	<vanillaDashboard name="TGX HKL 500 PS" fileName="/Users/martin/Library/Application Support/FarmingSimulator2022/mods/FS22_MAN_TGX_HKL_Pack/TGXHKL.xml" >
+	<vanillaDashboard name="TGX HKL 500 PS" fileName="FS22_MAN_TGX_HKL_Pack/TGXHKL.xml" >
 		<nodes>
 			<node name="vcaPark" node="0>0|4|0|3|4" symbol="0|1" moveTo="-0.0409 0.0189 0.0169" rotate="0 0 0" scale="1.4809999999999"/>
 			<node name="pto" node="0>0|4|0|3|4" symbol="0|125" moveTo="-0.060000000000001 0.0189 0.0443" rotate="0 0 0" scale="1.4809999999999"/>
@@ -66,7 +66,7 @@
 			<dashboard valueType="base" cmd="tipping" joints="0 1 2" displayType="EMITTER" node="0>0|4|0|3|4|3" emitColor="YELLOW" intensity="0.5" groups="MOTOR_ACTIVE" />
 		</dashboardLive>
 	</vanillaDashboard>
-	<vanillaDashboard name="LEXION 8900" fileName="/Users/martin/Library/Application Support/FarmingSimulator2022/mods/FS22_Claas_Lexion_Pack/lexionnoanimation.xml" >
+	<vanillaDashboard name="LEXION 8900" fileName="FS22_Claas_Lexion_Pack/lexionnoanimation.xml" >
 		<nodes>
 			<node name="vcaPark" node="0>0|6|1|2|10|1" symbol="0|1" moveTo="-0.0505 0.0002 0.0006" rotate="89 0 -1" scale="1.7679999999999"/>
 			<node name="unfolded" node="0>0|6|1|2|10|1" symbol="0|161" moveTo="-0.097600000000002 0.136 1.8973538018496e-19" rotate="89 0 -1" scale="1.7679999999999"/>

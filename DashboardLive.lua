@@ -8,7 +8,10 @@ DashboardLive = {}
 if DashboardLive.MOD_NAME == nil then
 	DashboardLive.MOD_NAME = g_currentModName
 	DashboardLive.MOD_PATH = g_currentModDirectory
+	DashboardLive.MODSETTINGSDIR = g_currentModSettingsDirectory
+	createFolder(DashboardLive.MODSETTINGSDIR)
 end
+
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
 GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
@@ -96,6 +99,12 @@ end
 function DashboardLive:onPreLoad(savegame)
 	self.spec_DashboardLive = self["spec_"..DashboardLive.MOD_NAME..".DashboardLive"]
 	local spec = self.spec_DashboardLive
+	
+	DashboardLive.vanillaIntegrationXML = DashboardLive.MOD_PATH.."xml/vanillaDashboards.xml"
+	DashboardLive.vanillaIntegrationXMLFile = XMLFile.loadIfExists("VanillaDashboards", DashboardLive.vanillaIntegrationXML, DashboardLive.vanillaSchema)
+
+	DashboardLive.modIntegrationXML = DashboardLive.MODSETTINGSDIR.."modDashboards.xml"
+	DashboardLive.modIntegrationXMLFile = XMLFile.loadIfExists("ModDashboards", DashboardLive.modIntegrationXML, DashboardLive.vanillaSchema)
 end
 
 function DashboardLive:onLoad(savegame)
@@ -126,10 +135,8 @@ function DashboardLive:onLoad(savegame)
 	spec.lastAirUsage = 0
 	
 	-- Integrate vanilla dashboards
-	DashboardLive.vanillaIntegrationXML = DashboardLive.MOD_PATH.."xml/vanillaDashboards.xml"
-	DashboardLive.vanillaIntegrationXMLFile = XMLFile.loadIfExists("VanillaDashboards", DashboardLive.vanillaIntegrationXML, DashboardLive.vanillaSchema)
 	if DashboardLive.vanillaIntegrationXMLFile ~= nil then
-		DashboardUtils.createVanillaNodes(self, DashboardLive.vanillaIntegrationXMLFile)
+		DashboardUtils.createVanillaNodes(self, DashboardLive.vanillaIntegrationXMLFile, DashboardLive.modIntegrationXMLFile)
 	end
 	
 	-- Load and initialize Dashboards from XML
@@ -147,6 +154,10 @@ function DashboardLive:onLoad(savegame)
         if spec.vanillaIntegration then
         	dbgprint("onLoad : VanillaIntegration <base>", 2)
         	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <base>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
         -- fillLevel
         dashboardData = {	
@@ -176,6 +187,10 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : VanillaIntegration <vca>", 2)
         	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
         end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <vca>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
 		-- hlm
         dashboardData = {	
         					valueTypeToLoad = "hlm",
@@ -184,6 +199,14 @@ function DashboardLive:onLoad(savegame)
                             additionalAttributesFunc = DashboardLive.getDBLAttributesHLM
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <hlm>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <hlm>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
 		-- gps
         dashboardData = {	
         					valueTypeToLoad = "gps",
@@ -195,6 +218,10 @@ function DashboardLive:onLoad(savegame)
         if spec.vanillaIntegration then
         	dbgprint("onLoad : VanillaIntegration <gps>", 2)
         	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <gps>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
 		-- gpsLane
         dashboardData = {	
@@ -212,8 +239,6 @@ function DashboardLive:onLoad(savegame)
                         	additionalAttributesFunc = DashboardLive.getDBLAttributesGPSNumbers
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
-
-		
 		-- ps
         dashboardData = {	
         					valueTypeToLoad = "proSeed",

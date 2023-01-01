@@ -620,6 +620,10 @@ local function getAttachedStatus(vehicle, element, mode, default)
 	local result = default or false
 	local noImplement = true
 	
+	local andMode = element.options == "all"
+	local orMode = element.options == "any"
+	local firstRun = true
+	
     for _, jointIndex in ipairs(joints) do
     	dbgprint("jointIndex: "..tostring(tonumber(jointIndex)), 4)
     	local implement
@@ -632,45 +636,68 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	dbgprint("implement: "..tostring(implement), 4)
     	dbgprint_r(implement, 4, 1)
     	if implement ~= nil then
-    		noImplement = false
     		local foldable = implement.object.spec_foldable ~= nil and implement.object.spec_foldable.foldingParts ~= nil and #implement.object.spec_foldable.foldingParts > 0
             if mode == "raised" then
-            	result = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered() or false
-            	dbgprint(implement.object:getFullName().." raised: "..tostring(result), 4)
+            	resultValue = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered() or false
+            	dbgprint(implement.object:getFullName().." raised: "..tostring(resultValue), 4)
+            	
             elseif mode == "lowered" then
-            	result = implement.object.getIsLowered ~= nil and implement.object:getIsLowered() or false
-            	dbgprint(implement.object:getFullName().." lowered: "..tostring(result), 4)
+            	resultValue = implement.object.getIsLowered ~= nil and implement.object:getIsLowered() or false
+            	dbgprint(implement.object:getFullName().." lowered: "..tostring(resultValue), 4)
+            	
             elseif mode == "lowerable" then
-				result = (implement.object.getAllowsLowering ~= nil and implement.object:getAllowsLowering()) or implement.object.spec_pickup ~= nil or false
-				dbgprint(implement.object:getFullName().." lowerable: "..tostring(result), 4)
+				resultValue = (implement.object.getAllowsLowering ~= nil and implement.object:getAllowsLowering()) or implement.object.spec_pickup ~= nil or false
+				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
+				
 			elseif mode == "pto" then
 				return findPTOStatus(implement.object)
+				
             elseif mode == "foldable" then
-				result = foldable or false
-				dbgprint(implement.object:getFullName().." foldable: "..tostring(result), 4)
+				resultValue = foldable or false
+				dbgprint(implement.object:getFullName().." foldable: "..tostring(resultValue), 4)
+				
 			elseif mode == "folded" then
-            	result = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded() or false
-            	dbgprint(implement.object:getFullName().." folded: "..tostring(result), 4)
+				resultValue = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded() and implement.object.spec_foldable.foldAnimTime == 0 or false
+            	dbgprint(implement.object:getFullName().." folded: "..tostring(resultValue), 4)
+            	
             elseif mode == "unfolded" then
-            	result = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
-            	dbgprint(implement.object:getFullName().." unfolded: "..tostring(result), 4)
+            	resultValue = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
+            	dbgprint(implement.object:getFullName().." unfolded: "..tostring(resultValue), 4)
+            	
+            elseif mode == "unfolding" or mode == "folding" then
+            	resultValue = foldable and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 or false
+               	dbgprint(implement.object:getFullName().." unfolding: "..tostring(resultValue), 4)
+               	
             elseif mode == "tipping" then
             	local specTR = findSpecialization(implement.object, "spec_trailer")
-            	result = specTR ~= nil and specTR:getTipState() > 0
+            	resultValue = specTR ~= nil and specTR:getTipState() > 0
+            	
             elseif mode == "ridgeMarker" then
             	local specRM = findSpecialization(implement.object, "spec_ridgeMarker")
-            	result = specRM ~= nil and specRM.ridgeMarkerState or 0
+            	resultValue = specRM ~= nil and specRM.ridgeMarkerState or 0
+            	
             elseif mode == "connected" then
-            	result = true
+            	resultValue = true
+            	
             elseif mode == "disconnected" then
             	dbgprint("AttacherJoint #"..tostring(jointIndex).." not disconnected", 4)
+            	noImplement = false
+            end
+            
+            if andMode and not firstRun then
+            	result = result and resultValue
+            elseif orMode then
+            	result = result or resultValue
+            else 
+            	result = resultValue
+            	firstRun = false
             end
         end
         dbgprint("result / noImplement: "..tostring(result).." / "..tostring(noImplement), 4)
     end
-    if mode == "disconnected" and noImplement then
-        result = true
+    if mode == "disconnected" then
         dbgprint("Disconnected!", 4)
+        return noImplement
     end
     dbgprint("ReturnValue: "..tostring(result), 4)
     return result
@@ -1016,11 +1043,18 @@ end
 function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
     dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
-    if dashboard.dblCommand == nil then 
+--[[
+	if dashboard.dblCommand == nil then 
     	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'base'")
     	return false
     end
-    
+--]]
+	if dashboard.dblCommand == nil then 
+		dashboard.dblCommand = ""
+		dbgprint("getDBLAttributesBase : cmd is empty", 2)
+    	return true
+    end
+	
     dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
 	dbgprint("getDBLAttributesBase : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
 
@@ -1161,6 +1195,12 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		elseif c == "unfolded" then
 			return getAttachedStatus(self, dashboard, "unfolded", o == "default")
 			
+		elseif c == "folding" then
+			return getAttachedStatus(self, dashboard, "folding", o == "default")
+			
+		elseif c == "unfolding" then
+			return getAttachedStatus(self, dashboard, "unfolding", o == "default")
+			
 		elseif c == "tipping" then
 			return getAttachedStatus(self, dashboard, "tipping", o == "default")
 
@@ -1178,6 +1218,10 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				return 0
 			end
 			return getAttachedStatus(self, dashboard, "ridgeMarker") == tonumber(s)
+		
+		-- empty command is allowed here to add symbols (EMITTER) in off-state, too
+		elseif c == "" then
+			return true
 		end
 	end
 	

@@ -24,14 +24,14 @@
 		<dashboardLive>
 			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|6|0|5|11|1" groups="MOTOR_ACTIVE" />
 			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|6|0|5|11|1" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
-			<dashboard valueType="base" cmd="pto" joints="1 2 3" displayType="VISIBILITY" node="0>0|6|0|5|11|2" groups="MOTOR_ACTIVE" />
-			<dashboard valueType="base" cmd="pto" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|2" emitColor="NEWHOLLAND_ORANGE1" intensity="0.5" groups="MOTOR_ACTIVE" />
-			<dashboard valueType="base" cmd="connected" joints="1 2 3" displayType="VISIBILITY" node="0>0|6|0|5|11|3" groups="MOTOR_ACTIVE" />
-			<dashboard valueType="base" cmd="connected" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|3" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
-			<dashboard valueType="base" cmd="unfolded" joints="1 2 3" displayType="VISIBILITY" node="0>0|6|0|5|11|4" groups="MOTOR_ACTIVE" />
-			<dashboard valueType="base" cmd="unfolded" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|4" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
-			<dashboard valueType="base" cmd="tipping" joints="1 2 3" displayType="VISIBILITY" node="0>0|6|0|5|11|5" groups="MOTOR_ACTIVE" />
-			<dashboard valueType="base" cmd="tipping" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|5" emitColor="YELLOW" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|2" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|2" baseColor="DARK_GREY" emitColor="NEWHOLLAND_ORANGE1" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|3" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="connected" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|3" baseColor="DARK_GREY" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|4" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|4" baseColor="DARK_GREY" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="tipping" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|5" baseColor="DARK_GREY" emitColor="YELLOW" intensity="0.5" groups="MOTOR_ACTIVE" />
 		</dashboardLive>
 	</vanillaDashboard>
 	<vanillaDashboard name="Fastrac 4220" fileName="data/vehicles/jcb/fastrac4220/fastrac4220.xml" >

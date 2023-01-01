@@ -5,11 +5,6 @@ DashboardUtils = {}
 function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 	local spec = vehicle.spec_DashboardLive
 	
-	print("Vanilla:")
-	print_r(xmlVanillaFile, 0)
-	print("Mods:")
-	print_r(xmlModFile, 0)
-	
 	if vehicle.xmlFile == nil then return false end
 	local xmlPath = vehicle.xmlFile.filename
 	

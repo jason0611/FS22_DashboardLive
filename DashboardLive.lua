@@ -60,7 +60,8 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#selection")
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#selectionGroup")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#state", "state")
-	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#trailer", "Trailer number")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#trailer", "trailer number")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#partition", "trailer partition")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#option", "Option")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
@@ -528,7 +529,7 @@ function DashboardLive:onPostAttachImplement(implement, x, jointDescIndex)
 	if implement.spec_pickup ~= nil then
 		dbgprint("Implement has pickup", 2)
 	end
-	dbgprint_r(implement, 4, 0)
+	--dbgprint_r(implement, 4, 0)
 end
 
 -- Supporting functions
@@ -634,7 +635,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
     		implement = vehicle:getImplementFromAttacherJointIndex(tonumber(jointIndex)) 
     	end
     	dbgprint("implement: "..tostring(implement), 4)
-    	dbgprint_r(implement, 4, 1)
+    	--dbgprint_r(implement, 4, 1)
     	if implement ~= nil then
     		local foldable = implement.object.spec_foldable ~= nil and implement.object.spec_foldable.foldingParts ~= nil and #implement.object.spec_foldable.foldingParts > 0
             if mode == "raised" then
@@ -675,6 +676,9 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "ridgeMarker" then
             	local specRM = findSpecialization(implement.object, "spec_ridgeMarker")
             	resultValue = specRM ~= nil and specRM.ridgeMarkerState or 0
+            	
+            elseif mode == "fillLevel" then
+            	
             	
             elseif mode == "connected" then
             	resultValue = true
@@ -744,21 +748,42 @@ local function getIndexOfActiveImplement(rootVehicle, level)
 end
 
 	
-local function getFillLevel(device, ftType)
-	dbgprint("getFillLevel", 4)
+local function getFillLevel(device, ftPartition, ftType)
+	dbgprint("getFillLevel: "..tostring(device:getName()), 4)
 	local fillLevel = {abs = nil, pct = nil, max = nil}
+	
 	if device.spec_fillUnit ~= nil then -- only if device has got a fillUnit
-		local fillUnits = device:getFillUnits()
-		for i,_ in pairs(fillUnits) do
-			local ftIndex = device:getFillUnitFillType(i)
-			local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
-			if ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] or ftType == "ALL" then
-				if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
-				fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
-				fillLevel.abs = fillLevel.abs + device:getFillUnitFillLevel(i)
-				fillLevel.max = fillLevel.max + device:getFillUnitCapacity(i)
+		
+		if ftPartition ~= 0 then
+			local fillUnit = device:getFillUnitByIndex(ftPartition)
+			dbgprint("getFillLevel: fillUnit = "..tostring(fillUnit), 4)
+			if fillUnit ~= nil then
+				local ftIndex = device:getFillUnitFillType(ftPartition)
+				dbgprint("getFillLevel: ftIndex = "..tostring(ftIndex), 4)
+				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
+				dbgprint("getFillLevel: ftCategory = "..tostring(ftCategory), 4)
+				if ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] or ftType == "ALL" then
+					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
+					fillLevel.pct = device:getFillUnitFillLevelPercentage(ftPartition)
+					fillLevel.abs = device:getFillUnitFillLevel(ftPartition)
+					fillLevel.max = device:getFillUnitCapacity(ftPartition)
+					dbgprint_r(fillLevel, 4, 0)
+				end	
+			end
+		else
+			local fillUnits = device:getFillUnits()
+			for i,_ in pairs(fillUnits) do
+				local ftIndex = device:getFillUnitFillType(i)
+				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
+				if ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] or ftType == "ALL" then
+					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
+					fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
+					fillLevel.abs = fillLevel.abs + device:getFillUnitFillLevel(i)
+					fillLevel.max = fillLevel.max + device:getFillUnitCapacity(i)
+				end
 			end
 		end
+		
 	end
 	return fillLevel
 end
@@ -768,7 +793,7 @@ end
 -- param ftIndex - index of fillVolume: 1 - root/first trailer/implement, 2 - first/second trailer/implement, 3 - root/first and first/second trailer or implement
 -- param ftType  - fillType
 
-local function getFillLevelStatus(vehicle, ftIndex, ftType)
+local function getFillLevelStatus(vehicle, ftIndex, ftPartition, ftType)
 	dbgprint("getFillLevelStatus", 4)
 	local spec = vehicle.spec_DashboardLive
 	local fillLevel = {abs = nil, pct = nil, max = nil}
@@ -1068,8 +1093,10 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 end
 -- fillLevel
 function DashboardLive.getDBLAttributesFillLevel(self, xmlFile, key, dashboard)
-	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- trailer
-	dbgprint("getDBLAttributesFillLevel : trailer: "..tostring(dashboard.dblTrailer), 2)
+	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer", 0) -- trailer
+	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", 0) -- trailer partition
+	dbgprint("getDBLAttributesFillLevel : trailer: "..type(dashboard.dblTrailer), 2)
+	dbgprint("getDBLAttributesFillLevel : partition: "..type(dashboard.dblPartition), 2)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "") -- empty=absolut or "percent"
     dbgprint("getDBLAttributesFillLevel : option: "..tostring(dashboard.dblOption), 2)
     if dashboard.dblOption == "percent" then
@@ -1080,9 +1107,10 @@ function DashboardLive.getDBLAttributesFillLevel(self, xmlFile, key, dashboard)
 end
 -- fillType
 function DashboardLive.getDBLAttributesFillType(self, xmlFile, key, dashboard)
-	dashboard.dblOption = xmlFile:getValue(key .. "#trailer") -- trailer
+	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- trailer
+	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", "1") -- trailer partition
 	dbgprint("getDBLAttributesFillType : trailer: "..tostring(dashboard.dblRidgeMarker), 2)
-	if dashboard.dblOption == nil then 
+	if dashboard.dblTrailer == nil then 
     	Logging.xmlWarning(self.xmlFile, "No '#trailer' given for valueType 'fillType'")
     	return false
     end
@@ -1229,14 +1257,14 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 end
 	
 function DashboardLive.getDashboardLiveFillLevel(self, dashboard)
-	dbgprint("getDashboardLiveFillLevel : trailer, option: "..tostring(dashboard.dblTrailer)..", "..tostring(dashboard.dblOption), 4)
+	dbgprint("getDashboardLiveFillLevel : trailer, partition, option: "..tostring(dashboard.dblTrailer)..", "..tostring(dashboard.dblPartition)..", "..tostring(dashboard.dblOption), 4)
 
 	local spec = self.spec_DashboardLive
-	local o, t = dashboard.dblOption, dashboard.dblTrailer
+	local o, t, p = dashboard.dblOption, dashboard.dblTrailer, dashboard.dblPartition
 
 	if t ~= nil then
 		local maxValue, pctValue, absValue
-		local fillLevel = getFillLevelStatus(self, t)
+		local fillLevel = getFillLevelStatus(self, t, p)
 		dbgprint_r(fillLevel, 4, 2)
 		if fillLevel.abs == nil then 
 			maxValue, absValue, pctValue = 0, 0, 0

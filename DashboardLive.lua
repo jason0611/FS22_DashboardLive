@@ -76,6 +76,8 @@ function DashboardLive.initSpecialization()
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#state", "state")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#option", "Option")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#factor", "Factor")
+	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#trailer", "trailer number")
+	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#partition", "partition number")
 	dbgprint("initSpecialization : vanillaSchema element options registered", 2)
 end
 
@@ -160,6 +162,8 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : ModIntegration <base>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
+        
+        --[[ 
         -- fillLevel
         dashboardData = {	
         					valueTypeToLoad = "fillLevel",
@@ -168,6 +172,8 @@ function DashboardLive:onLoad(savegame)
                             additionalAttributesFunc = DashboardLive.getDBLAttributesFillLevel
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        --]]
+        
         -- fillType
         dashboardData = {	
         					valueTypeToLoad = "fillType",
@@ -598,6 +604,126 @@ local function findPTOStatus(device)
 	end
 end
 
+-- recursive search through all attached vehicles including rootVehicle
+-- usage: call getIndexOfActiveImplement(rootVehicle)
+
+local function getIndexOfActiveImplement(rootVehicle, level)
+	
+	local level = level or 1
+	local returnVal = 0
+	local returnSign = 1
+	
+	if not rootVehicle:getIsActiveForInput() and rootVehicle.spec_attacherJoints ~= nil and rootVehicle.spec_attacherJoints.attacherJoints ~= nil then
+	
+		for _,impl in pairs(rootVehicle.spec_attacherJoints.attachedImplements) do
+			
+			-- called from rootVehicle
+			if level == 1 then
+				local jointDescIndex = impl.jointDescIndex
+				local jointDesc = rootVehicle.spec_attacherJoints.attacherJoints[jointDescIndex]
+				local wx, wy, wz = getWorldTranslation(jointDesc.jointTransform)
+				local _, _, lz = worldToLocal(rootVehicle.steeringAxleNode, wx, wy, wz)
+				if lz > 0 then 
+					returnSign = 1
+				else 
+					returnSign = -1
+				end 
+			end
+			
+			if impl.object:getIsActiveForInput() then
+				returnVal = level
+			else
+				returnVal = getIndexOfActiveImplement(impl.object, level+1)
+			end
+			-- found active implement? --> exit recursion
+			if returnVal ~= 0 then break end
+		
+		end		
+	end
+
+	return returnVal * returnSign
+end
+
+	
+local function getFillLevel(device, ftPartition, ftType)
+	dbgprint("getFillLevel: "..tostring(device:getName()), 4)
+	local fillLevel = {abs = nil, pct = nil, max = nil}
+	
+	if device.spec_fillUnit ~= nil then -- only if device has got a fillUnit
+		
+		if ftPartition ~= 0 then
+			local fillUnit = device:getFillUnitByIndex(ftPartition)
+			dbgprint("getFillLevel: fillUnit = "..tostring(fillUnit), 4)
+			if fillUnit ~= nil then
+				local ftIndex = device:getFillUnitFillType(ftPartition)
+				dbgprint("getFillLevel: ftIndex = "..tostring(ftIndex), 4)
+				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
+				dbgprint("getFillLevel: ftCategory = "..tostring(ftCategory), 4)
+				if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
+					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
+					fillLevel.pct = device:getFillUnitFillLevelPercentage(ftPartition)
+					fillLevel.abs = device:getFillUnitFillLevel(ftPartition)
+					fillLevel.max = device:getFillUnitCapacity(ftPartition)
+					dbgprint_r(fillLevel, 4, 0)
+				end	
+			end
+		else
+			local fillUnits = device:getFillUnits()
+			for i,_ in pairs(fillUnits) do
+				local ftIndex = device:getFillUnitFillType(i)
+				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
+				if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
+					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
+					fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
+					fillLevel.abs = fillLevel.abs + device:getFillUnitFillLevel(i)
+					fillLevel.max = fillLevel.max + device:getFillUnitCapacity(i)
+				end
+			end
+		end
+		
+	end
+	return fillLevel
+end
+
+-- returns fillLevel {pct, abs, max}
+-- param vehicle - vehicle reference
+-- param ftIndex - index of fillVolume: 1 - root/first trailer/implement, 2 - first/second trailer/implement, 3 - root/first and first/second trailer or implement
+-- param ftType  - fillType
+
+local function getFillLevelStatus(vehicle, ftIndex, ftPartition, ftType)
+	dbgprint("getFillLevelStatus", 4)
+	local spec = vehicle.spec_DashboardLive
+	local fillLevel = {abs = nil, pct = nil, max = nil}
+	
+	if ftType == nil then ftType = "ALL" end
+	
+	if ftType ~= "ALL" and g_fillTypeManager.nameToIndex[ftType] == nil and g_fillTypeManager.nameToCategoryIndex[ftType] == nil then
+		Logging.xmlWarning(vehicle.xmlFile, "Given fillType "..tostring(ftType).." not known!")
+		return fillLevel
+	end
+	
+	-- root vehicle	or first implement (depends on "joint")
+	if ftIndex == 0 then
+		dbgprint("getFillLevelStatus : root vehicle or first implement", 4)
+		fillLevel = getFillLevel(vehicle, ftPartition, ftType)
+	end
+	
+	-- next implement
+	if ftIndex == 1 then	
+		local allImplements = vehicle:getAttachedImplements()
+		dbgprint("getFillLevelStatus : next implement", 4)
+		for _, implement in pairs(allImplements) do
+			fillLevel = getFillLevel(implement.object, ftPartition, ftType)
+			if fillLevel.abs ~= nil then -- first come, first serve
+				return fillLevel
+			end
+		end
+	end
+
+	--dbgrenderTable(fillLevel, 1 + 5 * ftIndex, 3)
+	return fillLevel
+end
+
 local function getAttachedStatus(vehicle, element, mode, default)
 	
 	if element.dblAttacherJointIndices == nil then
@@ -678,7 +804,31 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	resultValue = specRM ~= nil and specRM.ridgeMarkerState or 0
             	
             elseif mode == "fillLevel" then
-            	
+            	local o, t, p = element.dblOption, element.dblTrailer, element.dblPartition
+
+				if t == nil or t == 0 then t = 1 end -- t defaults to 1, for backward compatibility set t=1 if T==0, too
+
+				local maxValue, pctValue, absValue
+				local fillLevel = getFillLevelStatus(implement.object, t-1, p)
+				dbgprint_r(fillLevel, 4, 2)
+				
+				if fillLevel.abs == nil then 
+					maxValue, absValue, pctValue = 0, 0, 0
+				else
+					maxValue, absValue, pctValue = fillLevel.max, fillLevel.abs, fillLevel.pct
+				end
+
+				dbgrender("maxValue: "..tostring(maxValue), 1 + t * 4, 3)
+				dbgrender("absValue: "..tostring(absValue), 2 + t * 4, 3)
+				dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
+
+				if o == "percent" then
+					return pctValue * 100
+				elseif o == "max" then
+					return maxValue
+				else
+					return absValue
+				end
             	
             elseif mode == "connected" then
             	resultValue = true
@@ -705,140 +855,6 @@ local function getAttachedStatus(vehicle, element, mode, default)
     end
     dbgprint("ReturnValue: "..tostring(result), 4)
     return result
-end
-
--- recursive search through all attached vehicles including rootVehicle
--- usage: call getIndexOfActiveImplement(rootVehicle)
-
-local function getIndexOfActiveImplement(rootVehicle, level)
-	
-	local level = level or 1
-	local returnVal = 0
-	local returnSign = 1
-	
-	if not rootVehicle:getIsActiveForInput() and rootVehicle.spec_attacherJoints ~= nil and rootVehicle.spec_attacherJoints.attacherJoints ~= nil then
-	
-		for _,impl in pairs(rootVehicle.spec_attacherJoints.attachedImplements) do
-			
-			-- called from rootVehicle
-			if level == 1 then
-				local jointDescIndex = impl.jointDescIndex
-				local jointDesc = rootVehicle.spec_attacherJoints.attacherJoints[jointDescIndex]
-				local wx, wy, wz = getWorldTranslation(jointDesc.jointTransform)
-				local _, _, lz = worldToLocal(rootVehicle.steeringAxleNode, wx, wy, wz)
-				if lz > 0 then 
-					returnSign = 1
-				else 
-					returnSign = -1
-				end 
-			end
-			
-			if impl.object:getIsActiveForInput() then
-				returnVal = level
-			else
-				returnVal = getIndexOfActiveImplement(impl.object, level+1)
-			end
-			-- found active implement? --> exit recursion
-			if returnVal ~= 0 then break end
-		
-		end		
-	end
-
-	return returnVal * returnSign
-end
-
-	
-local function getFillLevel(device, ftPartition, ftType)
-	dbgprint("getFillLevel: "..tostring(device:getName()), 4)
-	local fillLevel = {abs = nil, pct = nil, max = nil}
-	
-	if device.spec_fillUnit ~= nil then -- only if device has got a fillUnit
-		
-		if ftPartition ~= 0 then
-			local fillUnit = device:getFillUnitByIndex(ftPartition)
-			dbgprint("getFillLevel: fillUnit = "..tostring(fillUnit), 4)
-			if fillUnit ~= nil then
-				local ftIndex = device:getFillUnitFillType(ftPartition)
-				dbgprint("getFillLevel: ftIndex = "..tostring(ftIndex), 4)
-				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
-				dbgprint("getFillLevel: ftCategory = "..tostring(ftCategory), 4)
-				if ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] or ftType == "ALL" then
-					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
-					fillLevel.pct = device:getFillUnitFillLevelPercentage(ftPartition)
-					fillLevel.abs = device:getFillUnitFillLevel(ftPartition)
-					fillLevel.max = device:getFillUnitCapacity(ftPartition)
-					dbgprint_r(fillLevel, 4, 0)
-				end	
-			end
-		else
-			local fillUnits = device:getFillUnits()
-			for i,_ in pairs(fillUnits) do
-				local ftIndex = device:getFillUnitFillType(i)
-				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
-				if ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] or ftType == "ALL" then
-					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
-					fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
-					fillLevel.abs = fillLevel.abs + device:getFillUnitFillLevel(i)
-					fillLevel.max = fillLevel.max + device:getFillUnitCapacity(i)
-				end
-			end
-		end
-		
-	end
-	return fillLevel
-end
-
--- returns fillLevel {pct, abs, max}
--- param vehicle - vehicle reference
--- param ftIndex - index of fillVolume: 1 - root/first trailer/implement, 2 - first/second trailer/implement, 3 - root/first and first/second trailer or implement
--- param ftType  - fillType
-
-local function getFillLevelStatus(vehicle, ftIndex, ftPartition, ftType)
-	dbgprint("getFillLevelStatus", 4)
-	local spec = vehicle.spec_DashboardLive
-	local fillLevel = {abs = nil, pct = nil, max = nil}
-	
-	if ftType == nil then ftType = "ALL" end
-	
-	if ftType ~= "ALL" and g_fillTypeManager.nameToIndex[ftType] == nil and g_fillTypeManager.nameToCategoryIndex[ftType] == nil then
-		Logging.xmlWarning(vehicle.xmlFile, "Given fillType "..tostring(ftType).." not known!")
-		return fillLevel
-	end
-	
-	-- root vehicle	
-	if ftIndex == 0 then
-		dbgprint("getFillLevelStatus : root vehicle", 4)
-		fillLevel = getFillLevel(vehicle, ftType)
-	end
-	
-	-- if no attacherJoint exists we are ready here
-	if vehicle.spec_attacherJoints == nil then return fillLevel end
-	
-	-- implements 
-	
-	-- first volume
-	local allImplements = vehicle:getAttachedImplements()
-	if ftIndex == 1 then	
-		dbgprint("getFillLevelStatus : first attached vehicle", 4)
-		for _, implement in pairs(allImplements) do
-			fillLevel = getFillLevel(implement.object, ftType)
-		end
-	end
-
-	-- second volume
-	if ftIndex == 2 then
-		dbgprint("getFillLevelStatus : second attached vehicle", 4)
-		for _, implement in pairs(allImplements) do
-			if implement.object.spec_attacherJoints ~= nil then
-				local allSubImplements = implement.object:getAttachedImplements()
-				for _, subImplement in pairs(allSubImplements) do
-					fillLevel = getFillLevel(subImplement.object, ftType)
-				end
-			end
-		end
-	end
-	--dbgrenderTable(fillLevel, 1 + 5 * ftIndex, 3)
-	return fillLevel
 end
 
 -- GROUPS
@@ -1068,12 +1084,7 @@ end
 function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
     dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
---[[
-	if dashboard.dblCommand == nil then 
-    	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'base'")
-    	return false
-    end
---]]
+
 	if dashboard.dblCommand == nil then 
 		dashboard.dblCommand = ""
 		dbgprint("getDBLAttributesBase : cmd is empty", 2)
@@ -1088,6 +1099,17 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	
 	dashboard.dblOption = xmlFile:getValue(key .. "#option") -- nil or 'default'
 	dbgprint("getDBLAttributesBase : option: "..tostring(dashboard.dblOption), 2)
+	
+	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer", 0) -- trailer
+	dbgprint("getDBLAttributesBase : trailer: "..tostring(dashboard.dblTrailer), 2)
+	
+	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", 0) -- trailer partition
+	dbgprint("getDBLAttributesBase : partition: "..tostring(dashboard.dblPartition), 2)
+	
+	if dashboard.dblCommand == "fillLevel" and dashboard.dblOption == "percent" then
+    	dashboard.minFunc = 0
+    	dashboard.maxFunc = 1
+	end
 	
 	return true
 end
@@ -1238,7 +1260,11 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				return false
 			end
 			return specWM.state == tonumber(s)
-	
+		
+		-- fillLevel	
+		elseif c == "fillLevel" then
+			return getAttachedStatus(self, dashboard, "fillLevel")
+			
 		-- ridgeMarker
 		elseif c == "ridgeMarker" then
 			if s == "" or tonumber(s) == nil then

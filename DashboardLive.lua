@@ -823,10 +823,13 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
 
 				if o == "percent" then
-					return pctValue * 100
+					element.valueFactor = 100
+					return pctValue
 				elseif o == "max" then
+					element.valueFactor = 1
 					return maxValue
 				else
+					element.valueFactor = 1
 					return absValue
 				end
             	
@@ -1282,6 +1285,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 	return false
 end
 	
+--[[
 function DashboardLive.getDashboardLiveFillLevel(self, dashboard)
 	dbgprint("getDashboardLiveFillLevel : trailer, partition, option: "..tostring(dashboard.dblTrailer)..", "..tostring(dashboard.dblPartition)..", "..tostring(dashboard.dblOption), 4)
 
@@ -1311,6 +1315,7 @@ function DashboardLive.getDashboardLiveFillLevel(self, dashboard)
 	
 	return false
 end
+--]]
 
 function DashboardLive.getDashboardLiveVCA(self, dashboard)
 	dbgprint("getDashboardLiveVCA : dblCommand: "..tostring(dashboard.dblCommand), 4)

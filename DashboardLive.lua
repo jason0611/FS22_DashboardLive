@@ -21,7 +21,7 @@ source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
 -- DashboardLive Editor
 DashboardLive.xTrans, DashboardLive.yTrans, DashboardLive.zTrans = 0, 0, 0
 DashboardLive.xRot, DashboardLive.yRot, DashboardLive.zRot = 0, 0, 0
-DashboardLive.editScale = 1
+DashboardLive.xScl, DashboardLive.yScl, DashboardLive.zScl = 1, 1, 1
 DashboardLive.editIndex = 1
 DashboardLive.editNode = ""
 DashboardLive.editSymbol = nil
@@ -384,8 +384,14 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YL', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
 			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZR', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
 			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZL', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
-			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_SCALEIN', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
-			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_SCALEOUT', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
+			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_SI', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
+			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_SO', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
+			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XSI', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
+			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XSO', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
+			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YSI', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
+			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YSO', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
+			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZSI', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
+			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZSO', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
 			_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PRINTOUT', self, DashboardLive.PRINTSYMBOL, false, true, false, true, nil)				
 		end	
 		
@@ -446,50 +452,61 @@ function DashboardLive:MOVESYMBOL(actionName, keyStatus)
 
 	if actionName == "DBL_XUP" then
 		DashboardLive.xTrans = DashboardLive.xTrans - 0.0001
-		dbgprint("xTrans: "..tostring(DashboardLive.xTrans), 2)
 	elseif actionName == "DBL_XDN" then
 		DashboardLive.xTrans = DashboardLive.xTrans + 0.0001
-		dbgprint("xTrans: "..tostring(DashboardLive.xTrans), 2)
 	elseif actionName == "DBL_YUP" then
 		DashboardLive.yTrans = DashboardLive.yTrans + 0.0001
-		dbgprint("yTrans: "..tostring(DashboardLive.yTrans), 2)
 	elseif actionName == "DBL_YDN" then
 		DashboardLive.yTrans = DashboardLive.yTrans - 0.0001
-		dbgprint("yTrans: "..tostring(DashboardLive.yTrans), 2)
 	elseif actionName == "DBL_ZUP" then
 		DashboardLive.zTrans = DashboardLive.zTrans + 0.0001
-		dbgprint("zTrans: "..tostring(DashboardLive.zTrans), 2)
 	elseif actionName == "DBL_ZDN" then
 		DashboardLive.zTrans = DashboardLive.zTrans - 0.0001
-		dbgprint("zTrans: "..tostring(DashboardLive.zTrans), 2)
 	elseif actionName == "DBL_XR" then
 		DashboardLive.xRot = DashboardLive.xRot + 1
-		dbgprint("xRot: "..tostring(DashboardLive.xRot), 2)
 	elseif actionName == "DBL_XL" then
 		DashboardLive.xRot = DashboardLive.xRot - 1
-		dbgprint("xRot: "..tostring(DashboardLive.xRot), 2)
 	elseif actionName == "DBL_YR" then
 		DashboardLive.yRot = DashboardLive.yRot + 1
-		dbgprint("yRot: "..tostring(DashboardLive.yRot), 2)
 	elseif actionName == "DBL_YL" then
 		DashboardLive.yRot = DashboardLive.yRot - 1
-		dbgprint("yRot: "..tostring(DashboardLive.yRot), 2)
 	elseif actionName == "DBL_ZR" then
 		DashboardLive.zRot = DashboardLive.zRot + 1
-		dbgprint("zRot: "..tostring(DashboardLive.zRot), 2)
 	elseif actionName == "DBL_ZL" then
 		DashboardLive.zRot = DashboardLive.zRot - 1
-		dbgprint("zRot: "..tostring(DashboardLive.zRot), 2)
-	elseif actionName == "DBL_SCALEIN" then
-		DashboardLive.editScale = DashboardLive.editScale + 0.001
-		dbgprint("scale: "..tostring(DashboardLive.editScale), 2)
-	elseif actionName == "DBL_SCALEOUT" then
-		DashboardLive.editScale = DashboardLive.editScale - 0.001
-		dbgprint("scale: "..tostring(DashboardLive.editScale), 2)
+	elseif actionName == "DBL_SI" then
+		DashboardLive.xScl = DashboardLive.xScl + 0.001
+		DashboardLive.yScl = DashboardLive.yScl + 0.001
+		DashboardLive.zScl = DashboardLive.zScl + 0.001
+	elseif actionName == "DBL_SO" then
+		DashboardLive.xScl = DashboardLive.xScl - 0.001
+		DashboardLive.yScl = DashboardLive.yScl - 0.001
+		DashboardLive.zScl = DashboardLive.zScl - 0.001
+	elseif actionName == "DBL_XSI" then
+		DashboardLive.xScl = DashboardLive.xScl + 0.001
+	elseif actionName == "DBL_XSO" then
+		DashboardLive.xScl = DashboardLive.xScl - 0.001
+	elseif actionName == "DBL_YSI" then
+		DashboardLive.yScl = DashboardLive.yScl + 0.001
+	elseif actionName == "DBL_YSO" then
+		DashboardLive.yScl = DashboardLive.yScl - 0.001
+	elseif actionName == "DBL_ZSI" then
+		DashboardLive.zScl = DashboardLive.zScl + 0.001
+	elseif actionName == "DBL_ZSO" then
+		DashboardLive.zScl = DashboardLive.zScl - 0.001
 	end
+	dbgprint("xTrans: "..tostring(DashboardLive.xTrans), 2)
+	dbgprint("yTrans: "..tostring(DashboardLive.yTrans), 2)
+	dbgprint("zTrans: "..tostring(DashboardLive.zTrans), 2)
+	dbgprint("xRot: "..tostring(DashboardLive.xRot), 2)
+	dbgprint("yRot: "..tostring(DashboardLive.yRot), 2)
+	dbgprint("zRot: "..tostring(DashboardLive.zRot), 2)
+	dbgprint("scale x: "..tostring(DashboardLive.xScl), 2)
+	dbgprint("scale y: "..tostring(DashboardLive.yScl), 2)
+	dbgprint("scale z: "..tostring(DashboardLive.zScl), 2)
 	setTranslation(DashboardLive.editSymbol, DashboardLive.xTrans, DashboardLive.yTrans, DashboardLive.zTrans)
 	setRotation(DashboardLive.editSymbol, math.rad(DashboardLive.xRot), math.rad(DashboardLive.yRot), math.rad(DashboardLive.zRot))
-	setScale(DashboardLive.editSymbol, DashboardLive.editScale, DashboardLive.editScale, DashboardLive.editScale)
+	setScale(DashboardLive.editSymbol, DashboardLive.xScl, DashboardLive.yScl, DashboardLive.zScl)
 end
 
 function DashboardLive:PRINTSYMBOL(actionName, keyStatus)
@@ -508,12 +525,14 @@ function DashboardLive:PRINTSYMBOL(actionName, keyStatus)
 	print("x_rot = "..tostring(DashboardLive.xRot))
 	print("y_rot = "..tostring(DashboardLive.yRot))
 	print("z_rot = "..tostring(DashboardLive.zRot))
-	print("scale = "..tostring(DashboardLive.editScale))
+	print("x_scale = "..tostring(DashboardLive.xScl))
+	print("y_scale = "..tostring(DashboardLive.yScl))
+	print("z_scale = "..tostring(DashboardLive.zScl))
 	if xmlPath == nil then return end
 	print("==============================")
 	print("<vanillaDashboard name=\""..tostring(self:getName()).."\" fileName=\""..tostring(xmlPath).."\" >")
 	print("	<nodes>")
-	print("		<node name=\"<set a name here>\" node=\""..DashboardLive.editNode.."\" symbol=\""..DashboardLive.editSymbolIndex.."\" moveTo=\""..tostring(DashboardLive.xTrans).." "..tostring(DashboardLive.yTrans).." "..tostring(DashboardLive.zTrans).."\" rotate=\""..tostring(DashboardLive.xRot).." "..tostring(DashboardLive.yRot).." "..tostring(DashboardLive.zRot).."\" scale=\""..tostring(DashboardLive.editScale).."\"/>")
+	print("		<node name=\"<set a name here>\" node=\""..DashboardLive.editNode.."\" symbol=\""..DashboardLive.editSymbolIndex.."\" moveTo=\""..tostring(DashboardLive.xTrans).." "..tostring(DashboardLive.yTrans).." "..tostring(DashboardLive.zTrans).."\" rotate=\""..tostring(DashboardLive.xRot).." "..tostring(DashboardLive.yRot).." "..tostring(DashboardLive.zRot).."\" scale=\""..tostring(DashboardLive.xScl).." "..tostring(DashboardLive.yScl).." "..tostring(DashboardLive.zScl).."\"/>")
 	print("	</nodes>")
 	print("</vanillaDashboard>")
 	print("==============================")

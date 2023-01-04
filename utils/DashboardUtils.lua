@@ -70,9 +70,14 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 						else
 							Logging.xmlWarning(xmlFile, "No node translation given, setting to 0 0 0")
 						end
-					
-						local scale = xmlFile:getFloat(xmlNodePath .. "#scale")
-						if scale == nil then scale = 1 end
+						
+						local sx, sy, sz = 1, 1, 1
+						local scale = xmlFile:getVector(xmlNodePath .. "#scale")
+						if scale ~= nil then 
+							sx, sy, sz = unpack(scale)
+						else
+							Logging.xmlWarning(xmlFile, "No node scale given, setting to 1 1 1")
+						end
 					
 						dbgprint("nodeName: "..tostring(nodeName), 2)
 						dbgprint("node: "..tostring(node), 2)
@@ -85,7 +90,7 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 		
 						setTranslation(symbol, nx, ny, nz)
 						setRotation(symbol, math.rad(rx), math.rad(ry), math.rad(rz))
-						setScale(symbol, scale, scale, scale)
+						setScale(symbol, sx, sy, sz)
 		
 						link(linkNode, symbol)
 						g_i3DManager:releaseSharedI3DFile(i3d, false)
@@ -119,7 +124,7 @@ function DashboardUtils.createEditorNode(vehicle, node, symbolIndex)
 		
 	setTranslation(symbol, DashboardLive.xTrans, DashboardLive.yTrans, DashboardLive.zTrans)
 	setRotation(symbol, math.rad(DashboardLive.xRot), math.rad(DashboardLive.yRot), math.rad(DashboardLive.zRot))
-	setScale(symbol, DashboardLive.editScale, DashboardLive.editScale, DashboardLive.editScale)
+	setScale(symbol, DashboardLive.xScl, DashboardLive.yScl, DashboardLive.zScl)
 		
 	link(linkNode, symbol)
 	

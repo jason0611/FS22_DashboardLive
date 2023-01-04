@@ -3,8 +3,8 @@
 	<!-- Vanilla -->
 	<vanillaDashboard name="SKE50electric" fileName="data/vehicles/rigitrac/ske50/ske50.xml">
 		<nodes>
-			<node name="vcaPark" node="0>0|9|6|8" symbol="0|1" moveTo="-0.0001 0.009 -0.0044" rotate="-129 0 180" scale="2"/>
-			<node name="pto1" node="0>0|9|6|8" symbol="0|125" moveTo="0.0688 0.003 -0.0085" rotate="-61 0 0" scale="2.514"/>
+			<node name="vcaPark" node="0>0|9|6|8" symbol="0|1" moveTo="-0.0001 0.009 -0.0044" rotate="-129 0 180" scale="2 2 2"/>
+			<node name="pto1" node="0>0|9|6|8" symbol="0|125" moveTo="0.0688 0.003 -0.0085" rotate="-61 0 0" scale="2.514 2.514 2.514"/>
 		</nodes>
 		<dashboardLive>
 			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|9|6|8|0" groups="MOTOR_ACTIVE" />
@@ -15,11 +15,11 @@
 	</vanillaDashboard>
 	<vanillaDashboard name="TGS 18.500 4x4" fileName="data/vehicles/man/tgs18500/tgs18500.xml">
 		<nodes>
-			<node name="vcaPark" node="0>0|6|0|5|11" symbol="0|1" moveTo="0.0361 -0.0066 0.0002" rotate="91 0 0" scale="1.445"/>
-			<node name="pto1" node="0>0|6|0|5|11" symbol="0|125" moveTo="0.0162 -0.0308 0.0003" rotate="91 0 0" scale="1.4"/>
-			<node name="trailer" node="0>0|6|0|5|11" symbol="0|83" moveTo="0.0428 -0.0307 -0.0001" rotate="86 0 0" scale="1.181"/>
-			<node name="lowered" node="0>0|6|0|5|11" symbol="0|53" moveTo="0.0339 -0.0305 0.0004" rotate="86 0 0" scale="1"/>
-			<node name="tipping" node="0>0|6|0|5|11" symbol="0|65" moveTo="0.0252 -0.0305 0.0004" rotate="75 0 0" scale="1"/>
+			<node name="vcaPark" node="0>0|6|0|5|11" symbol="0|1" moveTo="0.0361 -0.0066 0.0002" rotate="91 0 0" scale="1.445 1.445 1.445"/>
+			<node name="pto1" node="0>0|6|0|5|11" symbol="0|125" moveTo="0.0162 -0.0308 0.0003" rotate="91 0 0" scale="1.4 1.4 1.4"/>
+			<node name="trailer" node="0>0|6|0|5|11" symbol="0|83" moveTo="0.0428 -0.0307 -0.0001" rotate="86 0 0" scale="1.181 1.181 1.181"/>
+			<node name="lowered" node="0>0|6|0|5|11" symbol="0|53" moveTo="0.0339 -0.0305 0.0004" rotate="86 0 0" scale="1 1 1"/>
+			<node name="tipping" node="0>0|6|0|5|11" symbol="0|65" moveTo="0.0252 -0.0305 0.0004" rotate="75 0 0" scale="1 1 1"/>
 		</nodes>
 		<dashboardLive>
 			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|2" groups="MOTOR_ACTIVE" />
@@ -36,7 +36,7 @@
 	</vanillaDashboard>
 	<vanillaDashboard name="Fastrac 4220" fileName="data/vehicles/jcb/fastrac4220/fastrac4220.xml" >
 		<nodes>
-			<node name="AWD" node="0>0|12|6" symbol="0|76" moveTo="-0.0301 0 0.0202" rotate="1 -180 -3" scale="2.9069999999998"/>
+			<node name="AWD" node="0>0|12|6" symbol="0|76" moveTo="-0.0301 0 0.0202" rotate="1 -180 -3" scale="2.907 2.907 2.907"/>
 		</nodes>
 		<dashboardLive>
 			<dashboard valueType="vca" cmd="diff_front" displayType="VISIBILITY" node="0>0|12|6|0" groups="MOTOR_ACTIVE" />
@@ -45,14 +45,14 @@
 	</vanillaDashboard>
 	<vanillaDashboard name="1000 Vario" fileName="data/vehicles/fendt/vario1000/vario1000.xml">
 		<nodes>
-			<node name="baseFup" 		node="0>0|6|1|1" symbol="0|65" moveTo="-0.489 0.761 0.356" rotate="-100.136 49.998 175.941" scale="3"/>
-			<node name="baseFdown" 		node="0>0|6|1|1" symbol="0|54" moveTo="-0.489 0.761 0.356" rotate="-100.136 49.998 175.941" scale="3"/>
-			<node name="baseRup" 		node="0>0|6|1|1" symbol="0|65" moveTo="-0.599 0.769 0.22" rotate="-100.136 49.998 175.941" scale="3"/>
-			<node name="baseRdown" 		node="0>0|6|1|1" symbol="0|54" moveTo="-0.599 0.769 0.22" rotate="-100.136 49.998 175.941" scale="3"/>
-			<node name="baseRpto" 		node="0>0|6|1|1" symbol="0|125" moveTo="-0.609 0.77 0.209" rotate="-100.293 49.974 175.735" scale="3"/>
-			<node name="baseFpto" 		node="0>0|6|1|1" symbol="0|125" moveTo="-0.498 0.762 0.341" rotate="-100.293 49.974 175.735" scale="3"/>
-			<node name="blind01" 		node="0>0|6|1|1" symbol="1|0" moveTo="-0.603 0.735 0.209" rotate="-100.662 49.865 175.513" scale="0.8"/>
-			<node name="diff_center" 	node="0>0|6|1|1" symbol="0|109" moveTo="-0.602 0.735 0.208" rotate="-100.662 49.865 175.513" scale="4"/>
+			<node name="baseFup" 		node="0>0|6|1|1" symbol="0|65" moveTo="-0.489 0.761 0.356" rotate="-100.136 49.998 175.941" scale="3 3 3"/>
+			<node name="baseFdown" 		node="0>0|6|1|1" symbol="0|54" moveTo="-0.489 0.761 0.356" rotate="-100.136 49.998 175.941" scale="3 3 3"/>
+			<node name="baseRup" 		node="0>0|6|1|1" symbol="0|65" moveTo="-0.599 0.769 0.22" rotate="-100.136 49.998 175.941" scale="3 3 3"/>
+			<node name="baseRdown" 		node="0>0|6|1|1" symbol="0|54" moveTo="-0.599 0.769 0.22" rotate="-100.136 49.998 175.941" scale="3 3 3"/>
+			<node name="baseRpto" 		node="0>0|6|1|1" symbol="0|125" moveTo="-0.609 0.77 0.209" rotate="-100.293 49.974 175.735" scale="3 3 3"/>
+			<node name="baseFpto" 		node="0>0|6|1|1" symbol="0|125" moveTo="-0.498 0.762 0.341" rotate="-100.293 49.974 175.735" scale="3 3 3"/>
+			<node name="blind01" 		node="0>0|6|1|1" symbol="1|0" moveTo="-0.603 0.735 0.209" rotate="-100.662 49.865 175.513" scale="0.8 0.8 0.8"/>
+			<node name="diff_center" 	node="0>0|6|1|1" symbol="0|109" moveTo="-0.602 0.735 0.208" rotate="-100.662 49.865 175.513" scale="4 4 4"/>
 		</nodes>
 		<dashboardLive>
 			<dashboard valueType="base" cmd="lifted" 	joints="2 5"	displayType="VISIBILITY" 	node="0>0|6|1|1|6" groups="MOTOR_ACTIVE" />

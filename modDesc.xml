@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="67">
 	<author>Glowins Modschmiede</author>
-	<version>0.3.6.0</version>
+	<version>0.3.7.0</version>
 	<title>
 		<en>Dashboard Live</en>
     </title>
@@ -35,8 +35,14 @@
 		<action name="DBL_YL" 			category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZR" 			category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZL" 			category="VEHICLE" ignoreComboMask="false" />
-		<action name="DBL_SCALEIN" 		category="VEHICLE" ignoreComboMask="false" />
-		<action name="DBL_SCALEOUT"		category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_XSI" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_XSO" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_YSI" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_YSO" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_ZSI" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_ZSO" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_SI" 			category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_SO"			category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_PRINTOUT" 	category="VEHICLE" ignoreComboMask="false" />
 	</actions>
 	<l10n>

@@ -64,6 +64,8 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#partition", "trailer partition")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#option", "Option")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#max", "Maximum")
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
 	
 	DashboardLive.vanillaSchema = XMLSchema.new("vanillaIntegration")
@@ -162,17 +164,6 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : ModIntegration <base>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
-        
-        --[[ 
-        -- fillLevel
-        dashboardData = {	
-        					valueTypeToLoad = "fillLevel",
-                        	valueObject = self,
-                        	valueFunc = DashboardLive.getDashboardLiveFillLevel,
-                            additionalAttributesFunc = DashboardLive.getDBLAttributesFillLevel
-                        }
-        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
-        --]]
         
         -- fillType
         dashboardData = {	
@@ -803,7 +794,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgprint(implement.object:getFullName().." foldable: "..tostring(resultValue), 4)
 				
 			elseif mode == "folded" then
-				resultValue = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded() and implement.object.spec_foldable.foldAnimTime == 0 or false
+				resultValue = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded() and implement.object.spec_foldable.foldAnimTime == 1 or false
             	dbgprint(implement.object:getFullName().." folded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolded" then
@@ -1131,42 +1122,42 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	if dashboard.dblCommand == "fillLevel" and dashboard.dblOption == "percent" then
     	dashboard.minFunc = 0
     	dashboard.maxFunc = 1
+    else
+    	local min = xmlFile:getValue(key .. "#min")
+    	if min ~= nil then dashboard.minFunc = min end
+    	local max = xmlFile:getValue(key .. "#max")
+    	if max ~= nil then dashboard.minFunc = max end
+    	local factor = xmlFile:getValue(key .. "#factor")
+    	if factor ~= nil then dashboard.valueFactor = factor end
 	end
 	
 	return true
 end
--- fillLevel
-function DashboardLive.getDBLAttributesFillLevel(self, xmlFile, key, dashboard)
-	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer", 0) -- trailer
-	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", 0) -- trailer partition
-	dbgprint("getDBLAttributesFillLevel : trailer: "..type(dashboard.dblTrailer), 2)
-	dbgprint("getDBLAttributesFillLevel : partition: "..type(dashboard.dblPartition), 2)
-	dashboard.dblOption = xmlFile:getValue(key .. "#option", "") -- empty=absolut or "percent"
-    dbgprint("getDBLAttributesFillLevel : option: "..tostring(dashboard.dblOption), 2)
-    if dashboard.dblOption == "percent" then
-    	dashboard.minFunc = 0
-    	dashboard.maxFunc = 1
-	end
-	return true
-end
+
 -- fillType
 function DashboardLive.getDBLAttributesFillType(self, xmlFile, key, dashboard)
 	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- trailer
+	dbgprint("getDBLAttributesFillType : trailer: "..tostring(dashboard.dblTrailer), 2)
+	
 	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", "1") -- trailer partition
-	dbgprint("getDBLAttributesFillType : trailer: "..tostring(dashboard.dblRidgeMarker), 2)
+	dbgprint("getDBLAttributesFillType : partition: "..tostring(dashboard.dblPartition), 2)
+	
 	if dashboard.dblTrailer == nil then 
     	Logging.xmlWarning(self.xmlFile, "No '#trailer' given for valueType 'fillType'")
     	return false
     end
+    
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "") -- empty or wanted fillType
     dbgprint("getDBLAttributesFillType : option: "..tostring(dashboard.dblCommand), 2)
 
 	return true
 end
+
 --vca
 function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
 	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
     dbgprint("getDBLAttributesVCA : cmd: "..tostring(dashboard.dblCommand), 2)
+    
     if dashboard.dblCommand == nil then 
     	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'vca'")
     	return false
@@ -1174,6 +1165,7 @@ function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
 
 	return true
 end
+
 --HLM
 function DashboardLive.getDBLAttributesHLM(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option")
@@ -1181,6 +1173,7 @@ function DashboardLive.getDBLAttributesHLM(self, xmlFile, key, dashboard)
 
     return true
 end
+
 --  gps
 function DashboardLive.getDBLAttributesGPS(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "on") -- 'on' or 'active'
@@ -1188,12 +1181,14 @@ function DashboardLive.getDBLAttributesGPS(self, xmlFile, key, dashboard)
 
 	return true
 end
+
 function DashboardLive.getDBLAttributesGPSNumbers(self, xmlFile, key, dashboard)
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1")
     dbgprint("getDBLAttributesNumbers : factor: "..tostring(dashboard.dblFactor), 2)
 
 	return true
 end
+
 -- ps
 function DashboardLive.getDBLAttributesPS(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "mode")
@@ -1202,6 +1197,7 @@ function DashboardLive.getDBLAttributesPS(self, xmlFile, key, dashboard)
 
 	return true
 end
+
 -- selector
 function DashboardLive.getDBLAttributesSelection(self, xmlFile, key, dashboard)
 	dashboard.dblSelection = xmlFile:getValue(key .. "#selection")
@@ -1221,6 +1217,7 @@ function DashboardLive.getDBLAttributesSelection(self, xmlFile, key, dashboard)
 	
 	return true
 end
+
 -- print
 function DashboardLive.getDBLAttributesPrint(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "")
@@ -1237,104 +1234,80 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		local spec = self.spec_DashboardLive
 		local specWM = self.spec_workMode
 		local specRM = self.spec_ridgeMarker
-		local c, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption
+		local cmds, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption
+		local cmd = string.split(cmds, " ")
+		local returnValue = false
 		
-		-- joint states
-		if c == "disconnected" then
-			return getAttachedStatus(self, dashboard, "disconnected")
+		for _, c in ipairs(cmd) do
+			-- joint states
+			if c == "disconnected" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "disconnected")
 			
-		elseif c == "connected" then
-			return getAttachedStatus(self, dashboard, "connected")
+			elseif c == "connected" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "connected")
 	
-		elseif c == "lifted" then
-			return getAttachedStatus(self, dashboard, "raised", o == "default")
+			elseif c == "lifted" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "raised", o == "default")
 	
-		elseif c == "lowered" then
-			return getAttachedStatus(self, dashboard, "lowered", o == "default")
+			elseif c == "lowered" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowered", o == "default")
 
-		elseif c == "lowerable" then
-			return getAttachedStatus(self, dashboard, "lowerable", o == "default")
+			elseif c == "lowerable" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowerable", o == "default")
 
-		elseif c == "pto" then
-			return getAttachedStatus(self, dashboard, "pto", o == "default")
+			elseif c == "pto" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "pto", o == "default")
 
-		elseif c == "foldable" then
-			return getAttachedStatus(self, dashboard, "foldable", o == "default")
+			elseif c == "foldable" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "foldable", o == "default")
 
-		elseif c == "folded" then
-			return getAttachedStatus(self, dashboard, "folded", o == "default")
+			elseif c == "folded" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "folded", o == "default")
 
-		elseif c == "unfolded" then
-			return getAttachedStatus(self, dashboard, "unfolded", o == "default")
+			elseif c == "unfolded" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolded", o == "default")
 			
-		elseif c == "folding" then
-			return getAttachedStatus(self, dashboard, "folding", o == "default")
+			elseif c == "folding" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "folding", o == "default")
 			
-		elseif c == "unfolding" then
-			return getAttachedStatus(self, dashboard, "unfolding", o == "default")
+			elseif c == "unfolding" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolding", o == "default")
 			
-		elseif c == "tipping" then
-			return getAttachedStatus(self, dashboard, "tipping", o == "default")
+			elseif c == "tipping" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "tipping", o == "default")
 
-		elseif specWM ~= nil and c == "swath" then
-			if s == "" or tonumber(s) == nil then
-				Logging.xmlWarning(vehicle.xmlFile, "No swath state number given for DashboardLive swath command")
-				return false
+			elseif specWM ~= nil and c == "swath" then
+				if s == "" or tonumber(s) == nil then
+					Logging.xmlWarning(vehicle.xmlFile, "No swath state number given for DashboardLive swath command")
+					return false
+				end
+				returnValue = returnValue or specWM.state == tonumber(s)
 			end
-			return specWM.state == tonumber(s)
+		end
+		
+		if returnValue then return returnValue end
 		
 		-- fillLevel	
-		elseif c == "fillLevel" then
+		if cmds == "fillLevel" then
 			return getAttachedStatus(self, dashboard, "fillLevel")
-			
+		
 		-- ridgeMarker
-		elseif c == "ridgeMarker" then
+		elseif cmds == "ridgeMarker" then
 			if s == "" or tonumber(s) == nil then
 				Logging.xmlWarning(self.xmlFile, "No ridgeMarker state given for DashboardLive ridgeMarker command")
 				return 0
 			end
 			return getAttachedStatus(self, dashboard, "ridgeMarker") == tonumber(s)
-		
+		end
+
 		-- empty command is allowed here to add symbols (EMITTER) in off-state, too
-		elseif c == "" then
+		if cmds == "" then
 			return true
 		end
 	end
 	
 	return false
 end
-	
---[[
-function DashboardLive.getDashboardLiveFillLevel(self, dashboard)
-	dbgprint("getDashboardLiveFillLevel : trailer, partition, option: "..tostring(dashboard.dblTrailer)..", "..tostring(dashboard.dblPartition)..", "..tostring(dashboard.dblOption), 4)
-
-	local spec = self.spec_DashboardLive
-	local o, t, p = dashboard.dblOption, dashboard.dblTrailer, dashboard.dblPartition
-
-	if t ~= nil then
-		local maxValue, pctValue, absValue
-		local fillLevel = getFillLevelStatus(self, t, p)
-		dbgprint_r(fillLevel, 4, 2)
-		if fillLevel.abs == nil then 
-			maxValue, absValue, pctValue = 0, 0, 0
-		else
-			maxValue, absValue, pctValue = fillLevel.max, fillLevel.abs, fillLevel.pct
-		end
-
-		dbgrender("maxValue: "..tostring(maxValue), 1 + t * 4, 3)
-		dbgrender("absValue: "..tostring(absValue), 2 + t * 4, 3)
-		dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
-
-		if o == "percent" then
-			return pctValue * 100
-		else
-			return absValue
-		end
-	end
-	
-	return false
-end
---]]
 
 function DashboardLive.getDashboardLiveVCA(self, dashboard)
 	dbgprint("getDashboardLiveVCA : dblCommand: "..tostring(dashboard.dblCommand), 4)

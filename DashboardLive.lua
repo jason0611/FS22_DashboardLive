@@ -1097,6 +1097,14 @@ end
 -- readAttributes
 -- base
 function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
+
+	local min = xmlFile:getValue(key .. "#min")
+	local max = xmlFile:getValue(key .. "#max")
+	local factor = xmlFile:getValue(key .. "#factor")
+	if min ~= nil then dashboard.dblMin = min end
+    if max ~= nil then dashboard.dblMax = max end
+    if factor ~= nil then dashboard.dblFactor = factor end
+	
 	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
     dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
 
@@ -1122,15 +1130,8 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dbgprint("getDBLAttributesBase : partition: "..tostring(dashboard.dblPartition), 2)
 	
 	if dashboard.dblCommand == "fillLevel" and dashboard.dblOption == "percent" then
-    	dashboard.minFunc = 0
-    	dashboard.maxFunc = 1
-    else
-    	local min = xmlFile:getValue(key .. "#min")
-    	if min ~= nil then dashboard.minFunc = min end
-    	local max = xmlFile:getValue(key .. "#max")
-    	if max ~= nil then dashboard.minFunc = max end
-    	local factor = xmlFile:getValue(key .. "#factor")
-    	if factor ~= nil then dashboard.valueFactor = factor end
+    	dashboard.dblMin = 0
+    	dashboard.dblMax = 100
 	end
 	
 	return true
@@ -1178,6 +1179,14 @@ end
 
 --  gps
 function DashboardLive.getDBLAttributesGPS(self, xmlFile, key, dashboard)
+
+	local min = xmlFile:getValue(key .. "#min")
+	local max = xmlFile:getValue(key .. "#max")
+	local factor = xmlFile:getValue(key .. "#factor")
+	if min ~= nil then dashboard.dblMin = min end
+    if max ~= nil then dashboard.dblMax = max end
+    if factor ~= nil then dashboard.dblFactor = factor end
+    
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "on") -- 'on' or 'active'
     dbgprint("getDBLAttributesGPS : option: "..tostring(dashboard.dblOption), 2)
 
@@ -1185,6 +1194,14 @@ function DashboardLive.getDBLAttributesGPS(self, xmlFile, key, dashboard)
 end
 
 function DashboardLive.getDBLAttributesGPSNumbers(self, xmlFile, key, dashboard)
+	
+	local min = xmlFile:getValue(key .. "#min")
+	local max = xmlFile:getValue(key .. "#max")
+	local factor = xmlFile:getValue(key .. "#factor")
+	if min ~= nil then dashboard.dblMin = min end
+    if max ~= nil then dashboard.dblMax = max end
+    if factor ~= nil then dashboard.dblFactor = factor end
+    
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1")
     dbgprint("getDBLAttributesNumbers : factor: "..tostring(dashboard.dblFactor), 2)
 
@@ -1193,6 +1210,14 @@ end
 
 -- ps
 function DashboardLive.getDBLAttributesPS(self, xmlFile, key, dashboard)
+
+	local min = xmlFile:getValue(key .. "#min")
+	local max = xmlFile:getValue(key .. "#max")
+	local factor = xmlFile:getValue(key .. "#factor")
+	if min ~= nil then dashboard.dblMin = min end
+    if max ~= nil then dashboard.dblMax = max end
+    if factor ~= nil then dashboard.dblFactor = factor end
+    
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "mode")
 	dashboard.dblState = xmlFile:getValue(key .. "#state", "")
     dbgprint("getDBLAttributesPS : option: "..tostring(dashboard.dblOption).." / state: "..tostring(dashboard.dblState), 2)
@@ -1233,7 +1258,6 @@ end
 function DashboardLive.getDashboardLiveBase(self, dashboard)
 	dbgprint("getDashboardLiveBase : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	if dashboard.dblCommand ~= nil then
-		local spec = self.spec_DashboardLive
 		local specWM = self.spec_workMode
 		local specRM = self.spec_ridgeMarker
 		local cmds, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption
@@ -1287,25 +1311,35 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			end
 		end
 		
-		if returnValue then return returnValue end
-		
 		-- fillLevel	
 		if cmds == "fillLevel" then
-			return getAttachedStatus(self, dashboard, "fillLevel")
+			returnValue = getAttachedStatus(self, dashboard, "fillLevel")
 		
 		-- ridgeMarker
 		elseif cmds == "ridgeMarker" then
 			if s == "" or tonumber(s) == nil then
 				Logging.xmlWarning(self.xmlFile, "No ridgeMarker state given for DashboardLive ridgeMarker command")
-				return 0
+				returnValue = false
 			end
-			return getAttachedStatus(self, dashboard, "ridgeMarker") == tonumber(s)
+			returnValue = getAttachedStatus(self, dashboard, "ridgeMarker") == tonumber(s)
 		end
 
 		-- empty command is allowed here to add symbols (EMITTER) in off-state, too
 		if cmds == "" then
-			return true
+			returnValue = true
 		end
+		
+		if dashboard.dblFactor ~= nil and type(returnValue) == "number" then
+			returnValue = returnValue * dashboard.dblFactor
+		end
+		if dashboard.dblMin ~= nil and type(returnValue) == "number" then
+			returnValue = math.max(returnValue, dashboard.dblMin)
+		end
+		if dashboard.dblMax ~= nil and type(returnValue) == "number" then
+			returnValue = math.min(returnValue, dashboard.dblMax)
+		end
+		
+		return returnValue
 	end
 	
 	return false
@@ -1406,29 +1440,43 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	dbgprint("getDashboardLiveGPS : dblOption: "..tostring(dashboard.dblOption), 4)
 	local spec = self.spec_DashboardLive
 	local specGS = self.spec_globalPositioningSystem
+	local returnValue = 0
 	
 	local factor = dashboard.dblFactor or 1
 	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil then
-		return math.abs(specGS.guidanceData.currentLane) * factor
-	else
-		return 0
+		returnValue = math.abs(specGS.guidanceData.currentLane) * factor
 	end
+	if dashboard.dblMin ~= nil and type(returnValue) == "number" then
+		returnValue = math.max(returnValue, dashboard.dblMin)
+	end
+	if dashboard.dblMax ~= nil and type(returnValue) == "number" then
+		returnValue = math.min(returnValue, dashboard.dblMax)
+	end
+	
+	return returnValue
 end
 
 function DashboardLive.getDashboardLiveGPSWidth(self, dashboard)
 	dbgprint("getDashboardLiveGPSWidth : dblOption: "..tostring(dashboard.dblOption), 4)
 	local spec = self.spec_DashboardLive
 	local specGS = self.spec_globalPositioningSystem
-	
+	local returnVaue = 0
 	local factor = dashboard.dblFactor or 1
 	if spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0 then 
-		return self.spec_vca.snapDistance * factor
+		returnValue = self.spec_vca.snapDistance * factor
 	end
 	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.width ~= nil then
-		return specGS.guidanceData.width * factor
-	else
-		return 0
+		returnValue = specGS.guidanceData.width * factor
 	end
+	
+	if dashboard.dblMin ~= nil and type(returnValue) == "number" then
+		returnValue = math.max(returnValue, dashboard.dblMin)
+	end
+	if dashboard.dblMax ~= nil and type(returnValue) == "number" then
+		returnValue = math.min(returnValue, dashboard.dblMax)
+	end
+	
+	return returnValue
 end
 		
 function DashboardLive.getDashboardLivePS(self, dashboard)
@@ -1436,43 +1484,54 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 	local o, s = dashboard.dblOption, dashboard.dblState
 	local specPS = findSpecialization(self, "spec_proSeedTramLines")
 	local specSE = findSpecialization(self, "spec_proSeedSowingExtension")
+	local returnValue = false
+	
 	if specPS ~= nil and specSE ~= nil then
 		if o == "mode" then
 			if tonumber(s) ~= nil then
-				return specPS.tramLineMode == tonumber(s)
+				returnValue = specPS.tramLineMode == tonumber(s)
 			elseif FS22_proSeed ~= nil and FS22_proSeed.ProSeedTramLines ~= nil then
 				local mode = specPS.tramLineMode
 				local text = FS22_proSeed.ProSeedTramLines.TRAMLINE_MODE_TO_KEY[mode]
-				return trim(g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text)), 7)
+				returnValue = trim(g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text)), 7)
 			end
 		elseif o == "distance" then
-			return specPS.tramLineDistance
+			returnValue = specPS.tramLineDistance
 		elseif o == "laneDrive" then
-			return specPS.currentLane
+			returnValue = specPS.currentLane
 		elseif o == "laneFull" then
-			return specPS.tramLinePeriodicSequence 
+			returnValue = specPS.tramLinePeriodicSequence 
 		elseif o == "tram" then
-			return specPS.createTramLines
+			returnValue = specPS.createTramLines
 		elseif o == "fert" then
-			return specSE.allowFertilizer
+			returnValue = specSE.allowFertilizer
 		elseif o == "areawork" then
-			return specSE.sessionHectares
+			returnValue = specSE.sessionHectares
 		elseif o == "areafield" then
-			return specSE.totalHectares
+			returnValue = specSE.totalHectares
 		elseif o == "timeuse" then
-			return specSE.hectarePerHour
+			returnValue = specSE.hectarePerHour
 		elseif o == "seeduse" then
-			return specSE.seedUsage
+			returnValue = specSE.seedUsage
 		elseif o == "segment" then
 			local state = tonumber(s) or 0
-			return specPS.shutoffMode == state
+			returnValue = specPS.shutoffMode == state
 		elseif o == "tramtype" then
-			return specPS.createPreMarkedTramLines
+			returnValue = specPS.createPreMarkedTramLines
 		elseif o == "audio" then
-			return specSE.allowSound
+			returnValue = specSE.allowSound
 		end	
+		if dashboard.dblFactor ~= nil and type(returnValue) == "number" then
+			returnValue = returnValue * dashboard.dblFactor
+		end
+		if dashboard.dblMin ~= nil and type(returnValue) == "number" then
+			returnValue = math.max(returnValue, dashboard.dblMin)
+		end
+		if dashboard.dblMax ~= nil and type(returnValue) == "number" then
+			returnValue = math.min(returnValue, dashboard.dblMax)
+		end
 	end
-	return false
+	return returnValue
 end
 
 function DashboardLive.getDashboardLiveSelection(self, dashboard)

@@ -789,7 +789,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
 				
 			elseif mode == "pto" then
-				return findPTOStatus(implement.object)
+				resultValue = findPTOStatus(implement.object)
 				
             elseif mode == "foldable" then
 				resultValue = foldable or false
@@ -804,9 +804,26 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolding" or mode == "folding" then
-            	resultValue = foldable and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 or false
+            	local unfolded = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
+            	resultValue = foldable and not unfolded and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 or false
                	dbgprint(implement.object:getFullName().." unfolding: "..tostring(resultValue), 4)
                	
+            elseif mode == "unfoldingState" then
+            	if foldable and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 then 
+            		resultValue = 1 - implement.object.spec_foldable.foldAnimTime
+            	else
+            		resultValue = false
+            	end
+               	dbgprint(implement.object:getFullName().." unfoldingState: "..tostring(resultValue), 4)
+             
+            elseif mode == "foldingState" then
+            	if foldable and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 then 
+            		resultValue = implement.object.spec_foldable.foldAnimTime
+            	else
+            		resultValue = false
+            	end
+               	dbgprint(implement.object:getFullName().." foldingState: "..tostring(resultValue), 4)
+               	  	
             elseif mode == "tipping" then
             	local specTR = findSpecialization(implement.object, "spec_trailer")
             	resultValue = specTR ~= nil and specTR:getTipState() > 0
@@ -854,9 +871,9 @@ local function getAttachedStatus(vehicle, element, mode, default)
             end
             
             if andMode and not firstRun then
-            	result = result and resultValue
+            	result = resultValue and result
             elseif orMode then
-            	result = result or resultValue
+            	result = resultValue or result
             else 
             	result = resultValue
             	firstRun = false
@@ -1322,6 +1339,10 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = false
 			end
 			returnValue = getAttachedStatus(self, dashboard, "ridgeMarker") == tonumber(s)
+		elseif cmds == "foldingState" then
+				returnValue = getAttachedStatus(self, dashboard, "foldingState")
+		elseif cmds == "unfoldingState" then
+				returnValue = getAttachedStatus(self, dashboard, "unfoldingState")
 		end
 
 		-- empty command is allowed here to add symbols (EMITTER) in off-state, too

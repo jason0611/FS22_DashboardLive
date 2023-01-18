@@ -758,9 +758,10 @@ local function getAttachedStatus(vehicle, element, mode, default)
 	end
 	local result = default or false
 	local noImplement = true
+	local jointExists = false
 	
-	local andMode = element.options == "all"
-	local orMode = element.options == "any"
+	local andMode = element.dblOption == "all" --element.dblOption ~= nil and string.find(element.dblOption, "all") ~= nil
+	local orMode = element.dblOption == "any" --element.dblOption ~= nil and string.find(element.dblOption, "any") ~= nil
 	local firstRun = true
 	
     for _, jointIndex in ipairs(joints) do
@@ -772,7 +773,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	else
     		implement = vehicle:getImplementFromAttacherJointIndex(tonumber(jointIndex)) 
     	end
-    	dbgprint("implement: "..tostring(implement), 4)
+    	jointExists = vehicle:getAttacherJointByJointDescIndex(tonumber(jointIndex)) ~= nil
+    	dbgprint("jointExists: "..tostring(jointExists).." / implement: "..tostring(implement), 4)
     	--dbgprint_r(implement, 4, 1)
     	if implement ~= nil then
     		local foldable = implement.object.spec_foldable ~= nil and implement.object.spec_foldable.foldingParts ~= nil and #implement.object.spec_foldable.foldingParts > 0
@@ -851,10 +853,10 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgrender("absValue: "..tostring(absValue), 2 + t * 4, 3)
 				dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
 
-				if o == "percent" then
+				if string.find(o, "percent") then
 					element.valueFactor = 100
 					return pctValue
-				elseif o == "max" then
+				elseif string.find(o, "max") then
 					element.valueFactor = 1
 					return maxValue
 				else
@@ -883,7 +885,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
     end
     if mode == "disconnected" then
         dbgprint("Disconnected!", 4)
-        return noImplement
+        return noImplement and jointExists
     end
     dbgprint("ReturnValue: "..tostring(result), 4)
     return result

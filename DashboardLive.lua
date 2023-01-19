@@ -167,7 +167,7 @@ function DashboardLive:onLoad(savegame)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
         
-        -- fillType
+--[[	-- fillType
         dashboardData = {	
         					valueTypeToLoad = "fillType",
                         	valueObject = self,
@@ -175,6 +175,8 @@ function DashboardLive:onLoad(savegame)
                             additionalAttributesFunc = DashboardLive.getDBLAttributesFillType
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+--]]
+
         -- vca
         dashboardData = {	
         					valueTypeToLoad = "vca",
@@ -853,15 +855,15 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgrender("absValue: "..tostring(absValue), 2 + t * 4, 3)
 				dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
 
-				if string.find(o, "percent") then
+				if o ~= nil and string.find(o, "percent") then
 					element.valueFactor = 100
-					return pctValue
-				elseif string.find(o, "max") then
+					resultValue = pctValue
+				elseif o ~= nil and string.find(o, "max") then
 					element.valueFactor = 1
-					return maxValue
+					resultValue = maxValue
 				else
 					element.valueFactor = 1
-					return absValue
+					resultValue = absValue
 				end
             	
             elseif mode == "connected" then
@@ -1156,7 +1158,7 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	return true
 end
 
--- fillType
+--[[ -- fillType
 function DashboardLive.getDBLAttributesFillType(self, xmlFile, key, dashboard)
 	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- trailer
 	dbgprint("getDBLAttributesFillType : trailer: "..tostring(dashboard.dblTrailer), 2)
@@ -1174,6 +1176,7 @@ function DashboardLive.getDBLAttributesFillType(self, xmlFile, key, dashboard)
 
 	return true
 end
+--]]
 
 --vca
 function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)

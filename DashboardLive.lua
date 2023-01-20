@@ -167,16 +167,6 @@ function DashboardLive:onLoad(savegame)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
         
---[[	-- fillType
-        dashboardData = {	
-        					valueTypeToLoad = "fillType",
-                        	valueObject = self,
-                        	valueFunc = DashboardLive.getDashboardLiveFillLevel,
-                            additionalAttributesFunc = DashboardLive.getDBLAttributesFillType
-                        }
-        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
---]]
-
         -- vca
         dashboardData = {	
         					valueTypeToLoad = "vca",
@@ -859,10 +849,10 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					element.valueFactor = 100
 					resultValue = pctValue
 				elseif o ~= nil and string.find(o, "max") then
-					element.valueFactor = 1
+					--element.valueFactor = 1
 					resultValue = maxValue
 				else
-					element.valueFactor = 1
+					--element.valueFactor = 1
 					resultValue = absValue
 				end
             	
@@ -1113,7 +1103,7 @@ end
 
 -- ELEMENTS
 
--- base fillLevel fillType vca hlm gps gps_lane gps_width proseed selector
+-- base fillType vca hlm gps gps_lane gps_width proseed selector
 
 -- readAttributes
 -- base
@@ -1151,32 +1141,12 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dbgprint("getDBLAttributesBase : partition: "..tostring(dashboard.dblPartition), 2)
 	
 	if dashboard.dblCommand == "fillLevel" and dashboard.dblOption == "percent" then
-    	dashboard.dblMin = 0
-    	dashboard.dblMax = 100
+    	dashboard.dblMin = dashboard.dblMin or 0
+    	dashboard.dblMax = dashboard.dblMax or 100
 	end
 	
 	return true
 end
-
---[[ -- fillType
-function DashboardLive.getDBLAttributesFillType(self, xmlFile, key, dashboard)
-	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- trailer
-	dbgprint("getDBLAttributesFillType : trailer: "..tostring(dashboard.dblTrailer), 2)
-	
-	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", "1") -- trailer partition
-	dbgprint("getDBLAttributesFillType : partition: "..tostring(dashboard.dblPartition), 2)
-	
-	if dashboard.dblTrailer == nil then 
-    	Logging.xmlWarning(self.xmlFile, "No '#trailer' given for valueType 'fillType'")
-    	return false
-    end
-    
-	dashboard.dblOption = xmlFile:getValue(key .. "#option", "") -- empty or wanted fillType
-    dbgprint("getDBLAttributesFillType : option: "..tostring(dashboard.dblCommand), 2)
-
-	return true
-end
---]]
 
 --vca
 function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
@@ -1335,7 +1305,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		
 		-- fillLevel	
 		if cmds == "fillLevel" then
-			returnValue = getAttachedStatus(self, dashboard, "fillLevel")
+			returnValue = getAttachedStatus(self, dashboard, "fillLevel", 0)
 		
 		-- ridgeMarker
 		elseif cmds == "ridgeMarker" then

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="67">
 	<author>Glowins Modschmiede</author>
-	<version>0.4.3.0</version>
+	<version>0.4.4.0</version>
 	<title>
 		<en>Dashboard Live</en>
     </title>
@@ -60,6 +60,92 @@
         </text>
         <text name="input_DBL_ZOOM_PERM">
             <en>Zoom</en>
+            <de>Zoom</de>
+        </text>
+        
+        <text name="input_DBL_XUP">
+        	<en>DBL: Editor Mode: X+</en>
+            <de>DBL: Editor Modus: X+</de>
+        </text>
+		<text name="input_DBL_XDN">
+			<en>DBL: Editor Mode: X-</en>
+            <de>DBL: Editor Modus: X-</de>
+        </text>
+		<text name="input_DBL_YUP">
+			<en>DBL: Editor Mode: Y+</en>
+            <de>DBL: Editor Modus: Y+</de>
+        </text>
+		<text name="input_DBL_YDN">
+			<en>DBL: Editor Mode: Y-</en>
+            <de>DBL: Editor Modus: Y-</de>
+        </text>
+		<text name="input_DBL_ZUP">
+			<en>DBL: Editor Mode: Z+</en>
+            <de>DBL: Editor Modus: Z+</de>
+        </text>
+		<text name="input_DBL_ZDN">
+			<en>DBL: Editor Mode: Z-</en>
+            <de>DBL: Editor Modus: Z-</de>
+        </text>
+		<text name="input_DBL_XR">
+			<en>DBL: Editor Mode: Turn right x-axis</en>
+            <de>DBL: Editor Modus: Rechtsdrehung um x-Achse</de>
+        </text>
+		<text name="input_DBL_XL">
+			<en>DBL: Editor Mode: Turn left x-axis</en>
+            <de>DBL: Editor Modus: Linksdrehung um x-Achse</de>
+        </text>
+		<text name="input_DBL_YR">
+			<en>DBL: Editor Mode: Turn right y-axis</en>
+            <de>DBL: Editor Modus: Rechtsdrehung um y-Achse</de>
+        </text>
+		<text name="input_DBL_YL">
+			<en>DBL: Editor Mode: Turn left y-axis</en>
+            <de>DBL: Editor Modus: Linksdrehung um y-Achse</de>
+        </text>
+		<text name="input_DBL_ZR">
+			<en>DBL: Editor Mode: Turn right z-axis</en>
+            <de>DBL: Editor Modus: Rechtsdrehung um z-Achse</de>
+        </text>
+		<text name="input_DBL_ZL">
+			<en>DBL: Editor Mode: Turn left z-axis</en>
+            <de>DBL: Editor Modus: Linksdrehung um z-Achse</de>
+        </text>
+		<text name="input_DBL_XSI">
+			<en>DBL: Editor Mode: Scale up x-axis</en>
+            <de>DBL: Editor Modus: x-Achse hoch skalieren</de>
+        </text>
+		<text name="input_DBL_XSO">
+			<en>DBL: Editor Mode: Scale down x-axis</en>
+            <de>DBL: Editor Modus: x-Achse runter skalieren</de>
+        </text>
+		<text name="input_DBL_YSI">
+			<en>DBL: Editor Mode: Scale up y-axis</en>
+            <de>DBL: Editor Modus: y-Achse hoch skalieren</de>
+        </text>
+		<text name="input_DBL_YSO">
+			<en>DBL: Editor Mode: Scale down y-axis</en>
+            <de>DBL: Editor Modus: y-Achse runter skalieren</de>
+        </text>
+		<text name="input_DBL_ZSI">
+			<en>DBL: Editor Mode: Scale up z-axis</en>
+            <de>DBL: Editor Modus: z-Achse hoch skalieren</de>
+        </text>
+		<text name="input_DBL_ZSO">
+			<en>DBL: Editor Mode: Scale down z-axis</en>
+            <de>DBL: Editor Modus: z-Achse runter skalieren</de>
+        </text>
+		<text name="input_DBL_SI">
+		<en>DBL: Editor Mode: Scale up all</en>
+            <de>DBL: Editor Modus: Gleichmäßig hoch skalieren</de>
+        </text>
+		<text name="input_DBL_SO">
+			<en>DBL: Editor Mode: Scale down all</en>
+            <de>DBL: Editor Modus: Gleichmäßig runter skalieren</de>
+        </text>
+		<text name="input_DBL_PRINTOUT">
+			<en>DBL: Editor Mode: Print out to log</en>
+            <de>DBL: Editor Modus: Ausgabe ins Log</de>
         </text>
 	</l10n>
 </modDesc>

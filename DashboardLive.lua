@@ -788,7 +788,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "lowerable" then
 				resultValue = (implement.object.getAllowsLowering ~= nil and implement.object:getAllowsLowering()) or implement.object.spec_pickup ~= nil or false
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
-				
+			
 			elseif mode == "pto" then
 				resultValue = findPTOStatus(implement.object)
 				
@@ -1313,7 +1313,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		-- fillLevel	
 		if cmds == "fillLevel" then
 			returnValue = getAttachedStatus(self, dashboard, "fillLevel", 0)
-		
+			
 		-- ridgeMarker
 		elseif cmds == "ridgeMarker" then
 			if s == "" or tonumber(s) == nil then
@@ -1321,14 +1321,24 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = false
 			end
 			returnValue = getAttachedStatus(self, dashboard, "ridgeMarker") == tonumber(s)
+		
+		-- foldingState
 		elseif cmds == "foldingState" then
-				returnValue = getAttachedStatus(self, dashboard, "foldingState")
+				returnValue = getAttachedStatus(self, dashboard, "foldingState", 0)
 		elseif cmds == "unfoldingState" then
-				returnValue = getAttachedStatus(self, dashboard, "unfoldingState")
-		end
-
+				returnValue = getAttachedStatus(self, dashboard, "unfoldingState", 0)
+		
+		-- lowering state
+		elseif cmds == "liftState" and self.spec_attacherJoints ~= nil and tonumber(dashboard.dblAttacherJointIndices) ~= nil then
+			local attacherJoint = self.spec_attacherJoints.attacherJoints[tonumber(dashboard.dblAttacherJointIndices)]
+			if attacherJoint ~= nil and attacherJoint.moveAlpha ~= nil then
+				returnValue = 1 - attacherJoint.moveAlpha
+			else
+				returnValue = 0
+			end
+		
 		-- empty command is allowed here to add symbols (EMITTER) in off-state, too
-		if cmds == "" then
+		elseif cmds == "" then
 			returnValue = true
 		end
 		

@@ -735,6 +735,36 @@ local function getFillLevelStatus(vehicle, ftIndex, ftPartition, ftType)
 	return fillLevel
 end
 
+local function recursiveCheck(implement, checkFunc, search, getCheckedImplement)
+	if implement.object == nil or checkFunc == nil then return false end
+	
+	local checkResult = checkFunc(implement.object, "notFound")
+	if checkResult == "notFound" and implement.object.spec_attacherJoints ~= nil and search then
+		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
+		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
+			checkResult = recursiveCheck(attachedImplements[1], checkFunc)
+		end
+		if getCheckedImplement then
+			return checkResult, attachedImplements[1]
+		end
+	end
+	return checkResult
+end
+	
+local function isFoldable(implement, search, getFoldableImplement)
+	local foldable = implement.object ~= nil and implement.object.spec_foldable ~= nil and implement.object.spec_foldable.foldingParts ~= nil and #implement.object.spec_foldable.foldingParts > 0
+	if not foldable and implement.object.spec_attacherJoints ~= nil and search then
+		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
+		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
+			foldable = isFoldable(attachedImplements[1])
+		end
+		if getFoldableImplement then 
+			return foldable, attachedImplements[1]
+		end
+	end
+	return foldable
+end
+
 local function getAttachedStatus(vehicle, element, mode, default)
 	
 	if element.dblAttacherJointIndices == nil then
@@ -776,40 +806,48 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	dbgprint("jointExists: "..tostring(jointExists).." / implement: "..tostring(implement), 4)
     	--dbgprint_r(implement, 4, 1)
     	if implement ~= nil then
-    		local foldable = implement.object.spec_foldable ~= nil and implement.object.spec_foldable.foldingParts ~= nil and #implement.object.spec_foldable.foldingParts > 0
             if mode == "raised" then
-            	resultValue = implement.object.getIsLowered ~= nil and not implement.object:getIsLowered() or false
+            	resultValue = not recursiveCheck(implement, implement.object.getIsLowered, true)
             	dbgprint(implement.object:getFullName().." raised: "..tostring(resultValue), 4)
             	
             elseif mode == "lowered" then
-            	resultValue = implement.object.getIsLowered ~= nil and implement.object:getIsLowered() or false
+            	resultValue = recursiveCheck(implement, implement.object.getIsLowered, true)
             	dbgprint(implement.object:getFullName().." lowered: "..tostring(resultValue), 4)
             	
             elseif mode == "lowerable" then
-				resultValue = (implement.object.getAllowsLowering ~= nil and implement.object:getAllowsLowering()) or implement.object.spec_pickup ~= nil or false
+				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true) or implement.object.spec_pickup ~= nil or false
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
 			
 			elseif mode == "pto" then
 				resultValue = findPTOStatus(implement.object)
 				
             elseif mode == "foldable" then
+            	local foldable = isFoldable(implement, true)
 				resultValue = foldable or false
 				dbgprint(implement.object:getFullName().." foldable: "..tostring(resultValue), 4)
 				
 			elseif mode == "folded" then
+				local foldable, subImplement = isFoldable(implement, true, true)
+				local implement = subImplement or implement
 				resultValue = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded() and implement.object.spec_foldable.foldAnimTime == 1 or false
             	dbgprint(implement.object:getFullName().." folded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolded" then
+            	local foldable, subImplement = isFoldable(implement, true, true)
+				local implement = subImplement or implement
             	resultValue = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolding" or mode == "folding" then
+            	local foldable, subImplement = isFoldable(implement, true, true)
+				local implement = subImplement or implement
             	local unfolded = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
             	resultValue = foldable and not unfolded and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 or false
                	dbgprint(implement.object:getFullName().." unfolding: "..tostring(resultValue), 4)
                	
             elseif mode == "unfoldingState" then
+            	local foldable, subImplement = isFoldable(implement, true, true)
+				local implement = subImplement or implement
             	if foldable and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 then 
             		resultValue = 1 - implement.object.spec_foldable.foldAnimTime
             	else
@@ -818,6 +856,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
                	dbgprint(implement.object:getFullName().." unfoldingState: "..tostring(resultValue), 4)
              
             elseif mode == "foldingState" then
+            	local foldable, subImplement = isFoldable(implement, true, true)
+				local implement = subImplement or implement
             	if foldable and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 then 
             		resultValue = implement.object.spec_foldable.foldAnimTime
             	else

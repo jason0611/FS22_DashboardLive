@@ -1,0 +1,40 @@
+Fahrzeug xml Einträge
+
+<dashboard>
+		<groups>
+			<!-- DBL -->
+			<!-- Pages -->
+            		<group name="PAGE1" dbl="page" page="1"/>
+            		<group name="PAGE2" dbl="page" page="2"/>
+			<!-- Front -->
+			<!-- 3-Point-Attacher -->
+			<group name="DBL_3P_F_CONNECT" attacherJointIndices="2 5" />
+			<group name="DBL_3P_F_LOWERABLE" op="and" dbl="base_lowerable" dblAtacherJointIndices="2" />
+			
+			<!-- Back -->
+			<group name="DBL_B_CONNECT" attacherJointIndices="1 3 4" />
+			<!-- 3-Point-Attacher -->
+			<group name="DBL_3P_B_CONNECT" attacherJointIndices="1" />
+			<group name="DBL_3P_B_LOWERABLE" op="and" dbl="base_lowerable" dblAttacherJointIndices="1" />
+			<!-- Trailer Attacher -->
+			<group name="DBL_TL_B_CONNECT" op="and" attacherJointIndices="3" />
+			<group name="DBL_TL_B_LOWERABLE" op="and" dbl="base_lowerable" attacherJointIndices="3" />
+			<!-- K100 Attacher-->
+			<group name="DBL_TZ_B_CONNECT" dblAttacherJointIndices="4" />
+			
+			<!-- Guidance Steering -->
+			<group name="DBL_GPS_ON" op="and" dbl="gps_on" />
+			
+		</groups>
+	
+		<default>
+			<!-- DBL -->
+			<!-- Diese Zeilen sorgen dafür das die Nodes bei inactivem Motor nicht angezeigt werden -->
+			<dashboard displayType="VISIBILITY" node="I_Park1" groups="MOTOR_ACTIVE" />
+		</default>
+
+		<dashboardLive>
+			<!-- Park -->
+			<dashboard valueType="vca" cmd="park" displayType="EMITTER" 	node="I_Park1" emitColor="RED" groups="MOTOR_ACTIVE"/> 
+		</dashboardLive>
+</dashboard>

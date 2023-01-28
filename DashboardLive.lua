@@ -821,6 +821,13 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "pto" then
 				resultValue = findPTOStatus(implement.object)
 				
+			elseif mode == "ptoRpm" and vehicle.spec_motorized ~= nil and vehicle.spec_motorized.motor ~= nil then
+				if findPTOStatus(implement.object) then
+					resultValue = vehicle.spec_motorized.motor:getLastModulatedMotorRpm()
+				else
+					resultValue = 0
+				end
+				
             elseif mode == "foldable" then
             	local foldable = isFoldable(implement, true)
 				resultValue = foldable or false
@@ -1299,7 +1306,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 	if dashboard.dblCommand ~= nil then
 		local specWM = self.spec_workMode
 		local specRM = self.spec_ridgeMarker
-		local cmds, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption
+		local cmds, j, s, o, t = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption, dashboard.dblTrailer
 		local cmd = string.split(cmds, " ")
 		local returnValue = false
 		
@@ -1312,31 +1319,35 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "connected")
 	
 			elseif c == "lifted" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "raised", o == "default")
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "raised", o == "default", t)
 	
 			elseif c == "lowered" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowered", o == "default")
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowered", o == "default", t)
 
 			elseif c == "lowerable" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowerable", o == "default")
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowerable", o == "default", t)
 
 			elseif c == "pto" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "pto", o == "default")
+				
+			elseif c == "ptoRpm" then
+				if not dashboard.dblFactor then dashboard.dblFactor = 0.625 end
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "ptoRpm", o == "default")
 
 			elseif c == "foldable" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "foldable", o == "default")
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "foldable", o == "default", t)
 
 			elseif c == "folded" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "folded", o == "default")
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "folded", o == "default", t)
 
 			elseif c == "unfolded" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolded", o == "default")
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolded", o == "default", t)
 			
 			elseif c == "folding" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "folding", o == "default")
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "folding", o == "default", t)
 			
 			elseif c == "unfolding" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolding", o == "default")
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolding", o == "default", t)
 			
 			elseif c == "tipping" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "tipping", o == "default")
@@ -1377,6 +1388,14 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = 0
 			end
 		
+		-- heading
+		elseif cmds == "heading" then
+			local x1, y1, z1 = localToWorld(self.rootNode, 0, 0, 0)
+			local x2, y2, z2 = localToWorld(self.rootNode, 0, 0, 1)
+			local dx, dz = x2 - x1, z2 - z1
+			local heading = math.floor(180 - (180 / math.pi) * math.atan2(dx, dz))
+			returnValue = heading
+			
 		-- empty command is allowed here to add symbols (EMITTER) in off-state, too
 		elseif cmds == "" then
 			returnValue = true

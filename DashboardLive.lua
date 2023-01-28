@@ -738,8 +738,8 @@ end
 local function recursiveCheck(implement, checkFunc, search, getCheckedImplement)
 	if implement.object == nil or checkFunc == nil then return false end
 	
-	local checkResult = checkFunc(implement.object, "notFound")
-	if checkResult == "notFound" and implement.object.spec_attacherJoints ~= nil and search then
+	local checkResult = checkFunc(implement.object, false)
+	if not checkResult and implement.object.spec_attacherJoints ~= nil and search then
 		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
 		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
 			checkResult = recursiveCheck(attachedImplements[1], checkFunc)
@@ -815,7 +815,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	dbgprint(implement.object:getFullName().." lowered: "..tostring(resultValue), 4)
             	
             elseif mode == "lowerable" then
-				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true) or implement.object.spec_pickup ~= nil or false
+				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true) --or implement.object.spec_pickup ~= nil or false
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
 			
 			elseif mode == "pto" then

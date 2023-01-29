@@ -1556,7 +1556,7 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 	local o, s = dashboard.dblOption, dashboard.dblState
 	local specPS = findSpecialization(self, "spec_proSeedTramLines")
 	local specSE = findSpecialization(self, "spec_proSeedSowingExtension")
-	local returnValue = false
+	local returnValue = " "
 	
 	if specPS ~= nil and specSE ~= nil then
 		if o == "mode" then
@@ -1572,7 +1572,9 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 		elseif o == "laneDrive" then
 			returnValue = specPS.currentLane
 		elseif o == "laneFull" then
-			returnValue = specPS.tramLinePeriodicSequence 
+			local maxLine = specPS.tramLinePeriodicSequence
+			if maxLine == 2 and specPS.tramLineDistanceMultiplier == 1 then maxLine = 1 end
+			returnValue = maxLine
 		elseif o == "tram" then
 			returnValue = specPS.createTramLines
 		elseif o == "fert" then

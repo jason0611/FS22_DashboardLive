@@ -1604,6 +1604,8 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 		if dashboard.dblMax ~= nil and type(returnValue) == "number" then
 			returnValue = math.min(returnValue, dashboard.dblMax)
 		end
+	elseif o == "tram" or o == "fert" or o == "segment" or o == "tramtype" or o == "audio" then
+		returnValue = false
 	end
 	return returnValue
 end

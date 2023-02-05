@@ -83,7 +83,7 @@ Eine Einbauhilfe ist enthalten, außerdem wird es Video-Tutorials geben.
 		</de>	
  	</description>	
     <multiplayer supported="true"/>
-	<iconFilename>modIcon.dds</iconFilename>
+	<iconFilename>icon_DashboardLive.dds</iconFilename>
 	<extraSourceFiles>
     	<sourceFile filename="RegisterDashboardLive.lua" />
     </extraSourceFiles>

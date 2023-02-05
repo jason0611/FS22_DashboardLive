@@ -8,19 +8,39 @@
     <description>
 		<en>
 <![CDATA[
-Dashboard Live (DBL for short) allows you to display all kinds of information in your board computers and/or dashboards in all kinds of tractors, no matter what brand. 
+Dashboard Live (short: DBL) allows you to display all kinds of information in your board computers and/or dashboards in all kinds of tractors, no matter what brand. 
+A zoom function is included for better viewing of displays. In MultiPlayer game, DBL synchronises engine temperature, fuel and air consumption from the server to the clients.
 
 What can be displayed?
 
+Basic game:
 - Status of the front and rear linkage
-- PTO's
-- GPS (Guidance Steering as well as VCA GPS)
-- VCA Diff, all-wheel, speed hold
-- Proseed
-- fill levels
-- and much more
+- Status of trailed implements and trailers
+- Fill levels
+- Compass heading
+- PTOs
+- Display of the currently active implement
 
-Important: Dashboard Live must be build into the vehicles in advance in order to use the functions and displays.
+VehicleControlAddon:
+- VCA Diff
+- All Wheel
+- Hold speed
+- GPS status
+
+Guidance Steering
+- GPS status
+- Working width
+- GPS Track
+
+Headland Management:
+- Status
+- Field/proseed mode
+
+ProSeed:
+- All displays of the ProSeed HUD
+
+Important: Dashboard Live has to be build into vehicles in advance to integrate functions and displays.
+A rough installation guide is included and there will also be video tutorials.
 ]]>
 		</en>
 		<de>
@@ -73,6 +93,7 @@ Eine Einbauhilfe ist enthalten, außerdem wird es Video-Tutorials geben.
 		<action name="DBL_ZOOM"   		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZOOM_PERM"	category="VEHICLE" ignoreComboMask="false" />
 		
+		<!-- Editor Mode only -->
 		<action name="DBL_XUP" 			category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_XDN" 			category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_YUP" 			category="VEHICLE" ignoreComboMask="false" />
@@ -95,6 +116,20 @@ Eine Einbauhilfe ist enthalten, außerdem wird es Video-Tutorials geben.
 		<action name="DBL_SO"			category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_PRINTOUT" 	category="VEHICLE" ignoreComboMask="false" />
 	</actions>
+	<inputBinding>	
+		<actionBinding action="DBL_PAGEUP">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_ralt KEY_right" neutralInput="0" index="1" />
+		</actionBinding>
+		<actionBinding action="DBL_PAGEDN">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_ralt KEY_left " neutralInput="0" index="1" />
+		</actionBinding>
+		<actionBinding action="DBL_ZOOM">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_space" neutralInput="0" index="1" />
+		</actionBinding>
+		<actionBinding action="DBL_ZOOM_PERM">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_rshift KEY_space" neutralInput="0" index="1" />
+		</actionBinding>
+	</inputBinding>
 	<l10n>
 		<text name="input_DBL_PAGEUP">
             <en>Page up</en>

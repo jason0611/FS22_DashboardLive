@@ -1,19 +1,43 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="72">
 	<author>Glowins Modschmiede</author>
-	<version>0.9.2.0</version> <!--Release Candidate 2-->
+	<version>0.9.9.0</version> <!--Release Candidate-->
 	<title>
 		<en>Dashboard Live</en>
     </title>
     <description>
 		<en>
 <![CDATA[
+Dashboard Live (DBL for short) allows you to display all kinds of information in your board computers and/or dashboards in all kinds of tractors, no matter what brand. 
 
+What can be displayed?
+
+- Status of the front and rear linkage
+- PTO's
+- GPS (Guidance Steering as well as VCA GPS)
+- VCA Diff, all-wheel, speed hold
+- Proseed
+- fill levels
+- and much more
+
+Important: Dashboard Live must be build into the vehicles in advance in order to use the functions and displays.
 ]]>
 		</en>
 		<de>
 <![CDATA[
+Dashboard Live (kurz DBL) ermöglicht das Anzeigen aller möglichen Informationen in euren Boardcomputern und/oder Amaturen in allen möglichen Traktoren, völlig egal welcher Marke. 
 
+Was kann alles angezeigt werden?
+
+- Status des Front- und Heckkrafthebers
+- PTO´s
+- GPS (Guidance Steering sowie VCA-GPS)
+- VCA Diff, Allrad, Geschwindigkeit halten
+- Proseed
+- Füllstände
+- und vieles mehr
+
+Wichtig: Dashboard Live muss vorab in die Fahrzeuge eingebaut werden, um die Funktionen und Anzeigen nutzen zu können.
 ]]>
 		</de>	
  	</description>	

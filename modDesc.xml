@@ -26,18 +26,39 @@ Important: Dashboard Live must be build into the vehicles in advance in order to
 		<de>
 <![CDATA[
 Dashboard Live (kurz DBL) ermöglicht das Anzeigen aller möglichen Informationen in euren Boardcomputern und/oder Amaturen in allen möglichen Traktoren, völlig egal welcher Marke. 
+Um Anzeigen besser einsehen zu können ist eine Zoom-Funktion enthalten. Im MultiPlayer-Spiel synchronisiert DBL die Motortemperatur, den Treibstoff- und en Luftverbrauch vom Server zu den Clients.
 
 Was kann alles angezeigt werden?
 
+Basisspiel:
 - Status des Front- und Heckkrafthebers
-- PTO´s
-- GPS (Guidance Steering sowie VCA-GPS)
-- VCA Diff, Allrad, Geschwindigkeit halten
-- Proseed
+- Status angehängter Geräte und Trailer
 - Füllstände
-- und vieles mehr
+- Kompasskurs
+- PTOs
+- Anzeige des gerade aktiven Geräts
+
+VehicleControlAddon:
+- VCA Diff
+- Allrad
+- Geschwindigkeit halten
+- GPS-Status
+
+Guidance Steering
+- GPS-Status
+- Arbeitsbreite
+- GPS-Spur
+
+Headland Management:
+- Status
+- Feld-/Vorgewendemodus
+
+Proseed:
+- Alle Anzeigen des ProSeed-HUD
+
 
 Wichtig: Dashboard Live muss vorab in die Fahrzeuge eingebaut werden, um die Funktionen und Anzeigen nutzen zu können.
+Eine Einbauhilfe ist enthalten, außerdem wird es Video-Tutorials geben.
 ]]>
 		</de>	
  	</description>	

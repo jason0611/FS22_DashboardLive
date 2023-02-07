@@ -221,7 +221,7 @@ Eine Einbauhilfe ist enthalten, außerdem wird es Video-Tutorials geben.
             <de>DBL: Editor Modus: z-Achse runter skalieren</de>
         </text>
 		<text name="input_DBL_SI">
-		<en>DBL: Editor Mode: Scale up all</en>
+			<en>DBL: Editor Mode: Scale up all</en>
             <de>DBL: Editor Modus: Gleichmäßig hoch skalieren</de>
         </text>
 		<text name="input_DBL_SO">

@@ -41,12 +41,14 @@ ProSeed:
 
 Important: Dashboard Live has to be build into vehicles in advance to integrate functions and displays.
 A rough installation guide is included and there will also be video tutorials.
+
+Further ideas or requests are welcome at <a href="https://github.com/jason0611/FS22_DashboardLive">GitHub: FS22_DashboardLive</a>.
 ]]>
 		</en>
 		<de>
 <![CDATA[
 Dashboard Live (kurz DBL) ermöglicht das Anzeigen aller möglichen Informationen in euren Boardcomputern und/oder Amaturen in allen möglichen Traktoren, völlig egal welcher Marke. 
-Um Anzeigen besser einsehen zu können ist eine Zoom-Funktion enthalten. Im MultiPlayer-Spiel synchronisiert DBL die Motortemperatur, den Treibstoff- und en Luftverbrauch vom Server zu den Clients.
+Um Anzeigen besser einsehen zu können ist eine Zoom-Funktion enthalten. Im MultiPlayer-Spiel synchronisiert DBL die Motortemperatur, den Treibstoff- und den Luftverbrauch vom Server zu den Clients.
 
 Was kann alles angezeigt werden?
 
@@ -79,6 +81,8 @@ Proseed:
 
 Wichtig: Dashboard Live muss vorab in die Fahrzeuge eingebaut werden, um die Funktionen und Anzeigen nutzen zu können.
 Eine Einbauhilfe ist enthalten, außerdem wird es Video-Tutorials geben.
+
+Weitere Ideen oder Wünsche werden gerne unter <a href="https://github.com/jason0611/FS22_DashboardLive">GitHub: FS22_DashboardLive</a> entgegengenommen
 ]]>
 		</de>	
  	</description>	

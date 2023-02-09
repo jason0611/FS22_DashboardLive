@@ -9,7 +9,14 @@
 		<en>
 <![CDATA[
 Dashboard Live (short: DBL) allows you to display all kinds of information in your board computers and/or dashboards in all kinds of tractors, no matter what brand. 
-A zoom function is included for better viewing of displays. In MultiPlayer game, DBL synchronises engine temperature, fuel and air consumption from the server to the clients.
+
+A zoom function is included for better viewing of displays: 
+- Left shift key + space bar: Short zoom
+- Both shift keys + space bar: Permanent zoom on/off 
+
+If supported in the vehicle, the right Alt key and left/right arrow can be used to scroll through displays.
+
+In MultiPlayer game, DBL synchronises engine temperature, fuel and air consumption from the server to the clients.
 
 What can be displayed?
 
@@ -22,10 +29,14 @@ Basic game:
 - Display of the currently active implement
 
 VehicleControlAddon:
-- VCA Diff
-- All Wheel
+- Status of the differential locks
+- Status of the all-wheel drive
 - Hold speed
 - GPS status
+
+Enhanced Vehicle:
+- Status of the differential locks
+- Status of the all-wheel drive
 
 Guidance Steering
 - GPS status
@@ -39,8 +50,10 @@ Headland Management:
 ProSeed:
 - All displays of the ProSeed HUD
 
-Important: Dashboard Live has to be build into vehicles in advance to integrate functions and displays.
-A rough installation guide is included and there will also be video tutorials.
+All supported mods are optional.
+
+Important: Dashboard Live has to be build into vehicles first, to integrate functions and displays.
+A rough installation guide is included and there will also be video tutorials available soon.
 
 Further ideas or requests are welcome at <a href="https://github.com/jason0611/FS22_DashboardLive">GitHub: FS22_DashboardLive</a>.
 ]]>
@@ -48,7 +61,14 @@ Further ideas or requests are welcome at <a href="https://github.com/jason0611/F
 		<de>
 <![CDATA[
 Dashboard Live (kurz DBL) ermöglicht das Anzeigen aller möglichen Informationen in euren Boardcomputern und/oder Amaturen in allen möglichen Traktoren, völlig egal welcher Marke. 
-Um Anzeigen besser einsehen zu können ist eine Zoom-Funktion enthalten. Im MultiPlayer-Spiel synchronisiert DBL die Motortemperatur, den Treibstoff- und den Luftverbrauch vom Server zu den Clients.
+
+Um Anzeigen besser einsehen zu können ist eine Zoom-Funktion enthalten: 
+- Linke Shift-Taste + Leertaste: Kurzer Zoom
+- Beide Shift-Tasten + Leertaste: Dauerhafter Zoom an/aus
+
+Wenn im Fahrzeug unterstützt, kann mit der rechten Alt-Taste und Pfeil links/rechts in Displays geblättert werden.
+
+Im MultiPlayer-Spiel synchronisiert DBL die Motortemperatur, den Treibstoff- und den Luftverbrauch vom Server zu den Clients.
 
 Was kann alles angezeigt werden?
 
@@ -61,12 +81,16 @@ Basisspiel:
 - Anzeige des gerade aktiven Geräts
 
 VehicleControlAddon:
-- VCA Diff
-- Allrad
+- Status der Differentialsperren
+- Status des Allradantriebs
 - Geschwindigkeit halten
 - GPS-Status
 
-Guidance Steering
+Enhanced Vehicle:
+- Status der Differentialsperren
+- Status des Allradantriebs
+
+Guidance Steering:
 - GPS-Status
 - Arbeitsbreite
 - GPS-Spur
@@ -78,9 +102,10 @@ Headland Management:
 Proseed:
 - Alle Anzeigen des ProSeed-HUD
 
+Alle unterstützten Mods sind optional.
 
 Wichtig: Dashboard Live muss vorab in die Fahrzeuge eingebaut werden, um die Funktionen und Anzeigen nutzen zu können.
-Eine Einbauhilfe ist enthalten, außerdem wird es Video-Tutorials geben.
+Eine Einbauhilfe ist enthalten, außerdem wird es in Kürze Video-Tutorials geben.
 
 Weitere Ideen oder Wünsche werden gerne unter <a href="https://github.com/jason0611/FS22_DashboardLive">GitHub: FS22_DashboardLive</a> entgegengenommen
 ]]>

@@ -15,7 +15,7 @@ What can be displayed?
 
 Basic game:
 - Status of the front and rear linkage
-- Status of trailed implements and trailers
+- Status of attached implements and trailers
 - Fill levels
 - Compass heading
 - PTOs
@@ -34,7 +34,7 @@ Guidance Steering
 
 Headland Management:
 - Status
-- Field/proseed mode
+- Field/Headland mode
 
 ProSeed:
 - All displays of the ProSeed HUD

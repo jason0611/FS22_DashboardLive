@@ -95,6 +95,7 @@ function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onReadUpdateStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteUpdateStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onDraw", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onPostAttachImplement", DashboardLive)
 end
 
@@ -140,6 +141,17 @@ function DashboardLive:onLoad(savegame)
 	spec.lastFuelUsage = 0
 	spec.lastDefUsage = 0
 	spec.lastAirUsage = 0
+	
+	-- camera data
+	spec.cam = {}
+	spec.cam.nodeName = "dbl_cam"
+	local camNode = I3DUtil.indexToObject(self.components, spec.cam.nodeName, self.i3dMappings)
+	
+	if camNode ~= nil then 
+		local overlayId = createRenderOverlay(camNode, getScreenAspectRatio(), 512, 512, true, 255, 16711680)
+		spec.cam.overlay = overlayId
+		spec.cam.node = camNode
+	end
 	
 	-- Integrate vanilla dashboards
 	if DashboardLive.vanillaIntegrationXMLFile ~= nil then
@@ -1665,6 +1677,11 @@ function DashboardLive:onUpdate(dt)
 		dbgrenderTable(spec, 1, 3)
 	end
 		
+	-- camera
+	if spec.cam.overlay ~= nil then 
+		updateRenderOverlay(spec.cam.overlay)
+	end
+	
 	-- zoom
 	local spec = self.spec_DashboardLive
 	if (spec.zoomPressed or spec.zoomPerm) and not spec.zoomed then
@@ -1705,3 +1722,36 @@ function DashboardLive:onUpdate(dt)
 		mspec.lastAirUsage = spec.lastAirUsage
 	end
 end
+
+function DashboardLive:onDraw(dt)
+	local spec = self.spec_DashboardLive
+	if spec.cam ~= nil then
+	
+		local dashboardCamNodeName = "dbl_camPlane"
+		local dashboardCamNode = I3DUtil.indexToObject(self.components, dashboardCamNodeName, self.i3dMappings)
+		local cameraNode = self:getActiveCamera().cameraNode
+	
+		local wX, wY, wZ = getWorldTranslation(dashboardCamNode);
+		local cX, cY, cZ = getWorldTranslation(cameraNode);
+		local x, y, z = project(wX, wY, wZ)
+		
+		local dist = MathUtil.vector3Length(wX-cX, wY-cY, wZ-cZ); 
+		local size = 1 / dist;
+	
+		--if x > -1 and x < 2 and y > -1 and y < 2 and z <= 1 then
+			--setTextAlignment(RenderText.ALIGN_CENTER);
+			--setTextBold(false);
+			--setTextColor(r, g, b, 1.0);
+			--renderText(projectX, projectY, textSize, text);
+			--setTextAlignment(RenderText.ALIGN_LEFT);
+	
+			--setReflectionMapObjectMasks(dashboardCamNode, 32896, 2147483648, true)
+			--table.insert(self.spec_enterable.mirrors, {node=dashboardCamNode, prio=1, cosAngle=1, parentNode=getParent(dashboardCamNode)})
+			--link(dashboardCamNode, spec.cam.overlay)
+			--renderOverlay(spec.cam.overlay, x, y, 0.21*size, 0.17*size)
+			setOverlayRotation(spec.cam.overlay, math.pi*1/8, (0.166*size/2), (0.66*size/2))
+			renderOverlay(spec.cam.overlay, x, y, 0.166*size, 0.166*size)
+		--end
+	end
+end
+

@@ -11,3 +11,5 @@ If supported in the vehicle, the right Alt key and left/right arrow can be used 
 In MultiPlayer game, DBL synchronises engine temperature, fuel and air consumption from the server to the clients.
 
 **Please report bugs and problems as issues. For ideas and wishes please open a discussion.**
+
+Here you will find the most actual documentation of DBL: https://github.com/jason0611/FS22_DashboardLive/blob/master/doc/DashboardLive.pdf

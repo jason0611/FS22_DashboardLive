@@ -1,6 +1,6 @@
 # FS22_DashboardLive
 
-Dashboard Live (short: DBL) allows you to display all kinds of information in your board computers and/or dashboards in all kinds of tractors, no matter what brand. 
+Dashboard Live (short: DBL) has to be built into your vehicles and then allows you to display all kinds of information in your board computers and/or dashboards in all kinds of tractors, no matter what brand. 
 
 A zoom function is included for better viewing of displays: 
 - Left shift key + space bar: Short zoom

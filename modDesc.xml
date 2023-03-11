@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="72">
 	<author>Glowins Modschmiede</author>
-	<version>1.0.0.0</version>
+	<version>1.0.0.1</version>
+	<contributors>AgrarPlay und LUWZ, Farming Duds, Myiamoto86</contributors>
 	<title>
 		<en>Dashboard Live</en>
     </title>
@@ -109,7 +110,59 @@ Eine Einbauhilfe ist enthalten, außerdem wird es in Kürze Video-Tutorials gebe
 
 Weitere Ideen oder Wünsche werden gerne unter <a href="https://github.com/jason0611/FS22_DashboardLive">GitHub: FS22_DashboardLive</a> entgegengenommen
 ]]>
-		</de>	
+		</de>
+		<br>
+<![CDATA[
+Painel ao vivo (abreviação: DBL) permite que você exiba todos os tipos de informações em seus computadores de bordo e/ou painéis em todos os tipos de tratores, não importa a marca.
+
+Uma função de zoom está incluída para melhor visualização dos monitores:
+- Tecla shift esquerda + barra de espaço: zoom curto
+- Ambas as teclas shift + barra de espaço: zoom permanente ativado/desativado
+
+Se houver suporte no veículo, a tecla Alt direita e a seta esquerda/direita podem ser usadas para rolar pelas telas.
+
+No jogo MultiPlayer, o DBL sincroniza a temperatura do motor, combustível e consumo de ar do servidor para os clientes.
+
+O que pode ser exibido?
+
+jogo básico:
+- Estado do hidráulico dianteiro e traseiro
+- Status dos implementos e reboques acoplados
+- Níveis de preenchimento
+- Direção da bússola
+- PTOs
+- Exibição do implemento atualmente ativo
+
+Controle de veículo Addon:
+- Estado dos bloqueios do diferencial
+- Status da tração nas quatro rodas
+- Mantenha a velocidade
+- estado do GPS
+
+Veículo aprimorado:
+- Estado dos bloqueios do diferencial
+- Status da tração nas quatro rodas
+
+Direção de Orientação
+- estado do GPS
+- Largura de trabalho
+- Rastreamento GPS
+
+Gestão de Cabeceiras:
+- Status
+- Modo de campo/cabeceira
+
+ProSeed:
+- Todas as exibições do ProSeed HUD
+
+Todos os mods suportados são opcionais.
+
+Importante: O Dashboard Live deve ser instalado primeiro nos veículos, para integrar funções e displays.
+Um guia de instalação aproximado está incluído e também haverá tutoriais em vídeo disponíveis em breve.
+
+Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jason0611/FS22_DashboardLive">GitHub: FS22_DashboardLive</a>.
+]]>
+		</br>	
  	</description>	
     <multiplayer supported="true"/>
 	<iconFilename>icon_DashboardLive.dds</iconFilename>
@@ -163,103 +216,128 @@ Weitere Ideen oder Wünsche werden gerne unter <a href="https://github.com/jason
 		<text name="input_DBL_PAGEUP">
             <en>Page up</en>
             <de>Seite vor</de>
+			<br>Página para cima</br>
         </text>
         <text name="input_DBL_PAGEDN">
             <en>Page down</en>
             <de>Seite zurück</de>
+			<br>Página para baixo</br>
         </text>
         <text name="input_DBL_ZOOM">
             <en>Quick Zoom</en>
             <de>Kurzer Zoom</de>
+			<br>Zoom rápido</br>
         </text>
         <text name="input_DBL_ZOOM_PERM">
             <en>Zoom</en>
             <de>Zoom</de>
+			<br>Zoom fixo</br>
         </text>
         
         <text name="input_DBL_XUP">
         	<en>DBL: Editor Mode: X+</en>
             <de>DBL: Editor Modus: X+</de>
+			<br>DBL: Modo Editor: X+</br>
         </text>
 		<text name="input_DBL_XDN">
 			<en>DBL: Editor Mode: X-</en>
             <de>DBL: Editor Modus: X-</de>
+			<br>DBL: Modo Editor: X-</br>
         </text>
 		<text name="input_DBL_YUP">
 			<en>DBL: Editor Mode: Y+</en>
             <de>DBL: Editor Modus: Y+</de>
+			<br>DBL: Modo Editor: Y+</br>
         </text>
 		<text name="input_DBL_YDN">
 			<en>DBL: Editor Mode: Y-</en>
             <de>DBL: Editor Modus: Y-</de>
+			<br>DBL: Modo Editor: Y-</br>
         </text>
 		<text name="input_DBL_ZUP">
 			<en>DBL: Editor Mode: Z+</en>
             <de>DBL: Editor Modus: Z+</de>
+			<br>DBL: Modo Editor: Z+</br>
         </text>
 		<text name="input_DBL_ZDN">
 			<en>DBL: Editor Mode: Z-</en>
             <de>DBL: Editor Modus: Z-</de>
+			<br>DBL: Modo Editor: Z-</br>
         </text>
 		<text name="input_DBL_XR">
 			<en>DBL: Editor Mode: Turn right x-axis</en>
             <de>DBL: Editor Modus: Rechtsdrehung um x-Achse</de>
+			<br>DBL: Modo Editor: Vire à direita eixo x</br>
         </text>
 		<text name="input_DBL_XL">
 			<en>DBL: Editor Mode: Turn left x-axis</en>
             <de>DBL: Editor Modus: Linksdrehung um x-Achse</de>
+			<br>DBL: Modo Editor: Vire à esquerda eixo x</br>
         </text>
 		<text name="input_DBL_YR">
 			<en>DBL: Editor Mode: Turn right y-axis</en>
             <de>DBL: Editor Modus: Rechtsdrehung um y-Achse</de>
+			<br>DBL: Modo Editor: Vire à direita eixo y</br>
         </text>
 		<text name="input_DBL_YL">
 			<en>DBL: Editor Mode: Turn left y-axis</en>
             <de>DBL: Editor Modus: Linksdrehung um y-Achse</de>
+			<br>DBL: Modo Editor: Vire à esquerda eixo y</br>
         </text>
 		<text name="input_DBL_ZR">
 			<en>DBL: Editor Mode: Turn right z-axis</en>
             <de>DBL: Editor Modus: Rechtsdrehung um z-Achse</de>
+			<br>DBL: Modo Editor: Vire à direita eixo z</br>
         </text>
 		<text name="input_DBL_ZL">
 			<en>DBL: Editor Mode: Turn left z-axis</en>
             <de>DBL: Editor Modus: Linksdrehung um z-Achse</de>
+			<br>DBL: Modo Editor: Vire à esquerda eixo z</br>
         </text>
 		<text name="input_DBL_XSI">
 			<en>DBL: Editor Mode: Scale up x-axis</en>
             <de>DBL: Editor Modus: x-Achse hoch skalieren</de>
+			<br>DBL: Modo Editor: Aumenta escala eixo x</br>
         </text>
 		<text name="input_DBL_XSO">
 			<en>DBL: Editor Mode: Scale down x-axis</en>
             <de>DBL: Editor Modus: x-Achse runter skalieren</de>
+			<br>DBL: Modo Editor: Diminui escala eixo x</br>
         </text>
 		<text name="input_DBL_YSI">
 			<en>DBL: Editor Mode: Scale up y-axis</en>
             <de>DBL: Editor Modus: y-Achse hoch skalieren</de>
+			<br>DBL: Modo Editor: Aumenta escala eixo y</br>
         </text>
 		<text name="input_DBL_YSO">
 			<en>DBL: Editor Mode: Scale down y-axis</en>
             <de>DBL: Editor Modus: y-Achse runter skalieren</de>
+			<br>DBL: Modo Editor: Diminui escala eixo y</br>
         </text>
 		<text name="input_DBL_ZSI">
 			<en>DBL: Editor Mode: Scale up z-axis</en>
             <de>DBL: Editor Modus: z-Achse hoch skalieren</de>
+			<br>DBL: Modo Editor: Aumenta escala eixo z</br>
         </text>
 		<text name="input_DBL_ZSO">
 			<en>DBL: Editor Mode: Scale down z-axis</en>
             <de>DBL: Editor Modus: z-Achse runter skalieren</de>
+			<br>DBL: Modo Editor: Diminui escala eixo z</br>
         </text>
 		<text name="input_DBL_SI">
 			<en>DBL: Editor Mode: Scale up all</en>
             <de>DBL: Editor Modus: Gleichmäßig hoch skalieren</de>
+			<br>DBL: Modo Editor: Aumenta todas escalas</br>
         </text>
 		<text name="input_DBL_SO">
 			<en>DBL: Editor Mode: Scale down all</en>
             <de>DBL: Editor Modus: Gleichmäßig runter skalieren</de>
+			<br>DBL: Modo Editor: Diminui todas escalas</br>
         </text>
 		<text name="input_DBL_PRINTOUT">
 			<en>DBL: Editor Mode: Print out to log</en>
             <de>DBL: Editor Modus: Ausgabe ins Log</de>
+			<br>DBL: Modo Editor: Imprimir no registro</br>
         </text>
 	</l10n>
 </modDesc>

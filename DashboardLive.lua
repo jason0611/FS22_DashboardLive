@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -567,14 +567,15 @@ local function trim(text, textLength)
 	end
 end
 
-local function findSpecialization(device, specName)
-	if device ~= nil and device[specName] ~= nil then
+local function findSpecialization(device, specName, iteration, iterationStep)
+	iterationStep = iterationStep or 0 -- initialization
+	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
 		return device[specName]
-	elseif device.getAttachedImplements ~= nil then
+	elseif (iteration == nil or iterationStep < iteration) and device.getAttachedImplements ~= nil then
 		local implements = device:getAttachedImplements()
 		for _,implement in pairs(implements) do
 			local device = implement.object
-			local spec = findSpecialization(device, specName)
+			local spec = findSpecialization(device, specName, iteration, iterationStep + 1)
 			if spec ~= nil then 
 				return spec 
 			end
@@ -876,14 +877,28 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	local specTR = findSpecialization(implement.object, "spec_trailer")
             	resultValue = specTR ~= nil and specTR:getTipState() > 0
             	
+            elseif mode == "tippingState" then
+            	local specTR = findSpecialization(implement.object, "spec_trailer")
+            	if specTR ~= nil then
+            		resultValue = specTR:getTipState()
+            	else
+            		resultValue = 0
+            	end
+            	
+            elseif mode == "tipSide" then
+            	local t, s = element.dblTrailer, element.dblState
+            	local specTR = findSpecialization(implement.object, "spec_trailer", t)            	
+            	if specTR ~= nil then dbgprint(tostring(specTR.preferedTipSideIndex), 2) end
+            	returnValue = specTR ~= nil and specTR.preferedTipSideIndex == s
+            
             elseif mode == "ridgeMarker" then
             	local specRM = findSpecialization(implement.object, "spec_ridgeMarker")
             	resultValue = specRM ~= nil and specRM.ridgeMarkerState or 0
-            	
+            
             elseif mode == "fillLevel" then
             	local o, t, p = element.dblOption, element.dblTrailer, element.dblPartition
 
-				if t == nil or t == 0 then t = 1 end -- t defaults to 1, for backward compatibility set t=1 if T==0, too
+				if t == nil or t == 0 then t = 1 end -- t defaults to 1, for backward compatibility set t=1 if t==0, too
 
 				local maxValue, pctValue, absValue
 				local fillLevel = getFillLevelStatus(implement.object, t-1, p)
@@ -1182,7 +1197,7 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
     dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
 	dbgprint("getDBLAttributesBase : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
 
-	dashboard.dblState = xmlFile:getValue(key .. "#state") -- swath state, ridgemarker state
+	dashboard.dblState = xmlFile:getValue(key .. "#state") -- swath state, ridgemarker state, tipSide, ...
 	dbgprint("getDBLAttributesBase : state: "..tostring(dashboard.dblState), 2)
 	
 	dashboard.dblOption = xmlFile:getValue(key .. "#option") -- nil or 'default'
@@ -1375,9 +1390,9 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		
 		-- foldingState
 		elseif cmds == "foldingState" then
-				returnValue = getAttachedStatus(self, dashboard, "foldingState", 0)
+			returnValue = getAttachedStatus(self, dashboard, "foldingState", 0)
 		elseif cmds == "unfoldingState" then
-				returnValue = getAttachedStatus(self, dashboard, "unfoldingState", 0)
+			returnValue = getAttachedStatus(self, dashboard, "unfoldingState", 0)
 		
 		-- lowering state
 		elseif cmds == "liftState" and self.spec_attacherJoints ~= nil and tonumber(dashboard.dblAttacherJointIndices) ~= nil then
@@ -1387,6 +1402,9 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			else
 				returnValue = 0
 			end
+			
+		elseif cmds == "tipSide" then
+			returnValue = getAttachedStatus(self, dashboard, "tipSide", 0)
 		
 		-- heading
 		elseif cmds == "heading" then

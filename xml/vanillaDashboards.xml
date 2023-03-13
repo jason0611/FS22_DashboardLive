@@ -43,6 +43,84 @@
 			<dashboard valueType="vca" cmd="diff_front" displayType="EMITTER" node="0>0|12|6|0" emitColor="GREEN" intensity="0.8" groups="MOTOR_ACTIVE" />
 		</dashboardLive>
 	</vanillaDashboard>
+	<vanillaDashboard name="724 Vario" fileName="data/vehicles/fendt/vario700/vario700.xml" >
+		<nodes>
+			<node name="baseFPTO" node="steeringBaseDashboards" symbol="0|125" moveTo="0.047125 0.845808 -0.324042" rotate="0 180 0" scale="1.5 1.4 2.1"/>
+			<node name="baseRPTO" node="0>0|6|0|3|3" symbol="0|125" moveTo="-0.015725 0.845808 -0.324042" rotate="0 180 0" scale="1.5 1.4 2.1"/>
+		
+			<!-- seat monitor - dashbiardDisplay03-->
+			<!-- lets add a node to the dashbiardDisplay03, place everything in it to allow easy x/y/z movement -->
+			<node name="dashboardDisplay03Overlay" node="dashboardDisplay03" symbol="0|255" moveTo="0.003 -0.135 -0.068" rotate="0 0 -90" scale="1 1 1"/> <!-- 0>0|6|1|1|4|0 -->
+			<node name="baseFPTO1" 	node="0>0|6|1|1|4|0|0" symbol="0|125" moveTo="-0.085 0.001 0.091" rotate="0 180 0" scale="2 2 2.8"/> 
+			<node name="baseRPTO1" 	node="0>0|6|1|1|4|0|0" symbol="0|125" moveTo="-0.258 0.001 0.091" rotate="0 180 0" scale="2 2 2.8"/>  
+			<node name="baseFup" 	node="0>0|6|1|1|4|0|0" symbol="0|65" moveTo="-0.072 0.001 0.093" rotate="0 180 0" scale="3 3 3"/>
+			<node name="baseFdown" 	node="0>0|6|1|1|4|0|0" symbol="0|54" moveTo="-0.072 0.001 0.093" rotate="0 180 0" scale="3 3 3"/>
+			<node name="baseRup" 	node="0>0|6|1|1|4|0|0" symbol="0|65" moveTo="-0.245 0.001 0.093" rotate="0 180 0" scale="3 3 3"/>
+			<node name="baseRdown" 	node="0>0|6|1|1|4|0|0" symbol="0|54" moveTo="-0.245 0.001 0.093" rotate="0 180 0" scale="3 3 3"/>
+			<node name="blind01" 		node="0>0|6|1|1|4|0|0" symbol="1|1"   moveTo="-0.2513 0.001 0.0595" rotate="0 180 0" scale="1.08 0.8 0.84"/>
+			<node name="diff_center" 	node="0>0|6|1|1|4|0|0" symbol="0|109" moveTo="-0.250 0.002 0.0605" rotate="0 180 0" scale="4 4 4"/>
+			<node name="blind_FillLevelAbs" 		node="0>0|6|1|1|4|0|0" symbol="1|1"   moveTo="-0.114 0.001 0.087" rotate="0 180 0" scale="1.58 0.8 0.44"/>
+			<node name="txtFillLevelAbs" 			node="0>0|6|1|1|4|0|0" symbol="0|255" moveTo="-0.132 0.002 0.084" rotate="-90 180 0" scale="1 1 1"/>
+			<node name="blind_FillLevelPct" 		node="0>0|6|1|1|4|0|0" symbol="1|1"   moveTo="-0.156 0.001 0.092" rotate="0 180 0" scale="1.58 0.8 0.84"/>
+			<node name="txtFillLevelPct" 			node="0>0|6|1|1|4|0|0" symbol="0|255" moveTo="-0.174 0.002 0.088" rotate="-90 180 0" scale="1 1 1"/>
+
+			<!-- second monitor - dashboardDisplay02 -->
+			<node name="dashboardDisplay02Overlay"	 node="dashboardDisplay02" symbol="0|255" moveTo="-0.131 -0.082 0.001" rotate="90 0 -90" scale="1 1 1"/> <!-- 0>0|6|8|0 -->
+			<node name="GPSActive" 					node="0>0|6|8|0|0" symbol="1|1" moveTo="-0.123 0.00 -0.087" rotate="0 0.192 0" 	scale="1.201 1 0.028"/> 
+			<node name="GPSLaneBlind" 				node="0>0|6|8|0|0" symbol="1|1" moveTo="-0.0897 0.00 -0.087" rotate="0 0 0" 		scale="0.157 1 0.285"/> 
+			<node name="txtGPSLane" 				node="cabinDashboards" symbol="0|255" moveTo="-0.585 1.4255 -0.779" rotate="-175.178 81.771 178.753" scale="1 1 1"/> <!-- 0>0|6|8|2|5 -->
+		
+		</nodes>
+		<dashboardLive>
+			<dashboard valueType="base" cmd="pto" 		joints="2 5"	displayType="VISIBILITY" 	node="0>0|6|0|3|3|17" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" 		joints="2 5"	displayType="EMITTER"	  	node="0>0|6|0|3|3|17" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" 		joints="1 3 4"	displayType="VISIBILITY" 	node="0>0|6|0|3|3|18" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" 		joints="1 3 4"	displayType="EMITTER"	  	node="0>0|6|0|3|3|18" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+					
+		
+			<dashboard valueType="base" 								displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0"   groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" 		joints="2 5"	displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0|0" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" 		joints="2 5"	displayType="EMITTER"	  	node="0>0|6|1|1|4|0|0|0" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" 		joints="1 3 4"	displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0|1" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" 		joints="1 3 4"	displayType="EMITTER"	  	node="0>0|6|1|1|4|0|0|1" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+
+			<dashboard valueType="base" cmd="lifted" 	joints="2 5"	displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0|2" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lifted" 	joints="2 5"	displayType="EMITTER"	  	node="0>0|6|1|1|4|0|0|2" emitColor="FENDT_NEWGREEN1" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" 	joints="2 5"	displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0|3" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" 	joints="2 5"	displayType="EMITTER"	  	node="0>0|6|1|1|4|0|0|3" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lifted" 	joints="1 3 4"	displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0|4" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lifted" 	joints="1 3 4"	displayType="EMITTER"	  	node="0>0|6|1|1|4|0|0|4" emitColor="FENDT_NEWGREEN1" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" 	joints="1 3 4"	displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0|5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" 	joints="1 3 4"	displayType="EMITTER"	  	node="0>0|6|1|1|4|0|0|5" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+
+			<dashboard valueType="base" 								displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0|6" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" 								displayType="EMITTER" 		node="0>0|6|1|1|4|0|0|6" emitColor="FENDT_NEWGREEN1" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" 			 					displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0|7" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="diff_awd" 					displayType="EMITTER"	  	node="0>0|6|1|1|4|0|0|7" baseColor="BLACK" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+
+			<!-- for the park break we simply replace the existing one -->
+			<dashboard valueType="vca" cmd="park"						displayType="VISIBILITY"	node="startingDecals"	groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park"						displayType="EMITTER"		node="startingDecals"	emitColor="RED"	intensity="0.8" groups="MOTOR_ACTIVE" />
+
+			<dashboard valueType="base" 								displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0|8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" 								displayType="EMITTER" 		node="0>0|6|1|1|4|0|0|8" emitColor="FENDT_NEWGREEN1" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" 	cmd="fillLevel"							partition="1" 		joints="1 3 4"			displayType="TEXT" 			node="0>0|6|1|1|4|0|0|9" 			groups="MOTOR_ACTIVE"		trailer="1"			textColor="0 0 0 1"		textSize="0.006"	textMask="000000l"	font="GENERIC"	textAlignment="RIGHT"/>
+
+			<dashboard valueType="base" 								displayType="VISIBILITY" 	node="0>0|6|1|1|4|0|0|10" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" 								displayType="EMITTER" 		node="0>0|6|1|1|4|0|0|10" emitColor="FENDT_NEWGREEN1" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" 	cmd="fillLevel"		option="percent"	partition="1" 		joints="1 3 4"			displayType="TEXT" 			node="0>0|6|1|1|4|0|0|11" 			groups="MOTOR_ACTIVE"		trailer="1"			textColor="0 0 0 1"		textSize="0.010"	textMask="000%"	font="GENERIC"	textAlignment="RIGHT"/>
+		
+			
+			<dashboard valueType="gps" 	option="active"					displayType="VISIBILITY" 	node="0>0|6|8|0|0|0"   									groups="MOTOR_ACTIVE" />	
+			<dashboard valueType="gps" 	option="active"					displayType="EMITTER" 		node="0>0|6|8|0|0|0"  	emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />	
+		
+			<dashboard 	valueType="base"								displayType="VISIBILITY" 	node="0>0|6|8|0|0|1"   									groups="MOTOR_ACTIVE" />	
+			<dashboard 	valueType="base"			 					displayType="EMITTER" 		node="0>0|6|8|0|0|1"  	emitColor="FENDT_BLUE1" intensity="0.8" groups="MOTOR_ACTIVE" />	
+
+			<!-- gpsLane dooes not work in vanilla / mod dashboards, as valueType is not added in DashboardLive:onLoad -->
+			<dashboard valueType="gpsLane" 								displayType="TEXT" 			node="0>0|6|8|2|5" 			groups="MOTOR_ACTIVE"				textColor="1 0 0 1"		textSize="0.002"	textMask="000"	font="GENERIC"	textAlignment="CENTER" />
+		</dashboardLive>
+	</vanillaDashboard>
 	<vanillaDashboard name="1000 Vario" fileName="data/vehicles/fendt/vario1000/vario1000.xml">
 		<nodes>
 			<node name="baseFup" 		node="0>0|6|1|1" symbol="0|65" moveTo="-0.489 0.761 0.356" rotate="-100.136 49.998 175.941" scale="3 3 3"/>

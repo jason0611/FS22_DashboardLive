@@ -823,7 +823,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	
             elseif mode == "lowered" then
             	resultValue = recursiveCheck(implement, implement.object.getIsLowered, true, false, element.dblTrailer)
-            	dbgprint(implement.object:getFullName().." lowered: "..tostring(resultValue), 2)
+            	dbgprint(implement.object:getFullName().." lowered: "..tostring(resultValue), 4)
             	
             elseif mode == "lowerable" then
 				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true, false, element.dblTrailer) --or implement.object.spec_pickup ~= nil or false

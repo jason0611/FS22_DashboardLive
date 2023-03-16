@@ -866,7 +866,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "unfoldingState" then
             	local foldable, subImplement = isFoldable(implement, true, true)
 				local implement = subImplement or implement
-            	if foldable and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 then 
+            	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
             		resultValue = 1 - implement.object.spec_foldable.foldAnimTime
             	else
             		resultValue = false
@@ -876,7 +876,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "foldingState" then
             	local foldable, subImplement = isFoldable(implement, true, true)
 				local implement = subImplement or implement
-            	if foldable and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 then 
+            	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
             		resultValue = implement.object.spec_foldable.foldAnimTime
             	else
             		resultValue = false
@@ -1435,12 +1435,12 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = heading
 			elseif cmds == "headingText2" then
 				local headingTexts = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
-				local index = math.floor(((heading+22.5) % 360) * 8 / 360) + 1
+				local index = math.floor(((heading + 22.5) % 360) * 8 / 360) + 1
 				dbgprint("heading: "..tostring(heading).." / index: "..tostring(index), 2)
 				returnValue = headingTexts[index]
 			else
 				local headingTexts = {"N", "E", "S", "W"}
-				local index = math.floor(((heading+45) % 360) * 4 / 360) + 1
+				local index = math.floor(((heading + 45) % 360) * 4 / 360) + 1
 				returnValue = headingTexts[index]
 			end
 

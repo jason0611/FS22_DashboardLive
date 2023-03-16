@@ -1426,13 +1426,24 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
             end
 		
 		-- heading
-		elseif cmds == "heading" then
+		elseif cmds == "heading" or cmds == "headingText1" or cmds == "headingText2" then
 			local x1, y1, z1 = localToWorld(self.rootNode, 0, 0, 0)
 			local x2, y2, z2 = localToWorld(self.rootNode, 0, 0, 1)
 			local dx, dz = x2 - x1, z2 - z1
 			local heading = math.floor(180 - (180 / math.pi) * math.atan2(dx, dz))
-			returnValue = heading
-			
+			if cmds == "heading" then
+				returnValue = heading
+			elseif cmds == "headingText2" then
+				local headingTexts = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
+				local index = math.floor(((heading+22.5) % 360) * 8 / 360) + 1
+				dbgprint("heading: "..tostring(heading).." / index: "..tostring(index), 2)
+				returnValue = headingTexts[index]
+			else
+				local headingTexts = {"N", "E", "S", "W"}
+				local index = math.floor(((heading+45) % 360) * 4 / 360) + 1
+				returnValue = headingTexts[index]
+			end
+
 		-- field number
 		elseif cmds == "fieldNumber" then
 			local fieldNum = 0

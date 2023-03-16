@@ -747,7 +747,7 @@ local function recursiveCheck(implement, checkFunc, search, getCheckedImplement,
 	end
 	
 	iterationStep = iterationStep or 1 -- only implements (trailer >=1) are adressed
-	dbgprint("iteration: "..tostring(iteration), 2)
+	dbgprint("iteration: "..tostring(iteration), 4)
 	
 	local checkResult = checkFunc(implement.object, false)
 	if not checkResult and implement.object.spec_attacherJoints ~= nil and search and (iteration == nil or iterationStep < iteration) then

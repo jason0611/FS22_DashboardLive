@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -60,6 +60,7 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#selection")
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#selectionGroup")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#state", "state")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#stateText", "stateText")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#trailer", "trailer number")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#partition", "trailer partition")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#option", "Option")
@@ -567,14 +568,15 @@ local function trim(text, textLength)
 	end
 end
 
-local function findSpecialization(device, specName)
-	if device ~= nil and device[specName] ~= nil then
+local function findSpecialization(device, specName, iteration, iterationStep)
+	iterationStep = iterationStep or 0 -- initialization
+	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
 		return device[specName]
-	elseif device.getAttachedImplements ~= nil then
+	elseif (iteration == nil or iterationStep < iteration) and device.getAttachedImplements ~= nil then
 		local implements = device:getAttachedImplements()
 		for _,implement in pairs(implements) do
 			local device = implement.object
-			local spec = findSpecialization(device, specName)
+			local spec = findSpecialization(device, specName, iteration, iterationStep + 1)
 			if spec ~= nil then 
 				return spec 
 			end
@@ -584,13 +586,14 @@ local function findSpecialization(device, specName)
 	end
 end
 
-local function findSpecializationImplement(device, specName)
-	if device ~= nil and device[specName] ~= nil then
+local function findSpecializationImplement(device, specName, iteration, iterationStep)
+	iterationStep = iterationStep or 0 -- initialization
+	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
 		return device
-	elseif device.getAttachedImplements ~= nil then
+	elseif (iteration == nil or iterationStep < iteration) and device.getAttachedImplements ~= nil then
 		local implements = device:getAttachedImplements()
 		for _,implement in pairs(implements) do
-			local device = findSpecializationImplement(implement.object, specName)
+			local device = findSpecializationImplement(implement.object, specName, iteration, iterationStep)
 			if device ~= nil then 
 				return device 
 			end
@@ -735,14 +738,22 @@ local function getFillLevelStatus(vehicle, ftIndex, ftPartition, ftType)
 	return fillLevel
 end
 
-local function recursiveCheck(implement, checkFunc, search, getCheckedImplement)
+local function recursiveCheck(implement, checkFunc, search, getCheckedImplement, iteration, iterationStep)
 	if implement.object == nil or checkFunc == nil then return false end
 	
+	if type(search)=="number" then 
+		iteration = search
+		search = true
+	end
+	
+	iterationStep = iterationStep or 1 -- only implements (trailer >=1) are adressed
+	dbgprint("iteration: "..tostring(iteration), 4)
+	
 	local checkResult = checkFunc(implement.object, false)
-	if not checkResult and implement.object.spec_attacherJoints ~= nil and search then
+	if not checkResult and implement.object.spec_attacherJoints ~= nil and search and (iteration == nil or iterationStep < iteration) then
 		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
 		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
-			checkResult = recursiveCheck(attachedImplements[1], checkFunc)
+			checkResult = recursiveCheck(attachedImplements[1], checkFunc, search, getCheckedImplement, iteration, iterationStep + 1)
 		end
 		if getCheckedImplement then
 			return checkResult, attachedImplements[1]
@@ -807,15 +818,15 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	--dbgprint_r(implement, 4, 1)
     	if implement ~= nil then
             if mode == "raised" then
-            	resultValue = not recursiveCheck(implement, implement.object.getIsLowered, true)
+            	resultValue = not recursiveCheck(implement, implement.object.getIsLowered, true, false, element.dblTrailer)
             	dbgprint(implement.object:getFullName().." raised: "..tostring(resultValue), 4)
             	
             elseif mode == "lowered" then
-            	resultValue = recursiveCheck(implement, implement.object.getIsLowered, true)
+            	resultValue = recursiveCheck(implement, implement.object.getIsLowered, true, false, element.dblTrailer)
             	dbgprint(implement.object:getFullName().." lowered: "..tostring(resultValue), 4)
             	
             elseif mode == "lowerable" then
-				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true) --or implement.object.spec_pickup ~= nil or false
+				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true, false, element.dblTrailer) --or implement.object.spec_pickup ~= nil or false
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
 			
 			elseif mode == "pto" then
@@ -855,7 +866,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "unfoldingState" then
             	local foldable, subImplement = isFoldable(implement, true, true)
 				local implement = subImplement or implement
-            	if foldable and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 then 
+            	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
             		resultValue = 1 - implement.object.spec_foldable.foldAnimTime
             	else
             		resultValue = false
@@ -865,7 +876,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "foldingState" then
             	local foldable, subImplement = isFoldable(implement, true, true)
 				local implement = subImplement or implement
-            	if foldable and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 then 
+            	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
             		resultValue = implement.object.spec_foldable.foldAnimTime
             	else
             		resultValue = false
@@ -876,14 +887,22 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	local specTR = findSpecialization(implement.object, "spec_trailer")
             	resultValue = specTR ~= nil and specTR:getTipState() > 0
             	
+            elseif mode == "tippingState" then
+            	local specTR = findSpecialization(implement.object, "spec_trailer")
+            	if specTR ~= nil then
+            		resultValue = specTR:getTipState()
+            	else
+            		resultValue = 0
+            	end
+            
             elseif mode == "ridgeMarker" then
             	local specRM = findSpecialization(implement.object, "spec_ridgeMarker")
             	resultValue = specRM ~= nil and specRM.ridgeMarkerState or 0
-            	
+            
             elseif mode == "fillLevel" then
             	local o, t, p = element.dblOption, element.dblTrailer, element.dblPartition
 
-				if t == nil or t == 0 then t = 1 end -- t defaults to 1, for backward compatibility set t=1 if T==0, too
+				if t == nil or t == 0 then t = 1 end -- t defaults to 1, for backward compatibility set t=1 if t==0, too
 
 				local maxValue, pctValue, absValue
 				local fillLevel = getFillLevelStatus(implement.object, t-1, p)
@@ -1182,13 +1201,16 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
     dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
 	dbgprint("getDBLAttributesBase : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
 
-	dashboard.dblState = xmlFile:getValue(key .. "#state") -- swath state, ridgemarker state
+	dashboard.dblState = xmlFile:getValue(key .. "#state") -- swath state, ridgemarker state, ...
 	dbgprint("getDBLAttributesBase : state: "..tostring(dashboard.dblState), 2)
+	
+	dashboard.dblStateText = xmlFile:getValue(key .. "#stateText") -- tipSide
+	dbgprint("getDBLAttributesBase : stateText: "..tostring(dashboard.dblStateText), 2)
 	
 	dashboard.dblOption = xmlFile:getValue(key .. "#option") -- nil or 'default'
 	dbgprint("getDBLAttributesBase : option: "..tostring(dashboard.dblOption), 2)
 	
-	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer", 0) -- trailer
+	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- trailer
 	dbgprint("getDBLAttributesBase : trailer: "..tostring(dashboard.dblTrailer), 2)
 	
 	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", 0) -- trailer partition
@@ -1375,9 +1397,9 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		
 		-- foldingState
 		elseif cmds == "foldingState" then
-				returnValue = getAttachedStatus(self, dashboard, "foldingState", 0)
+			returnValue = getAttachedStatus(self, dashboard, "foldingState", 0)
 		elseif cmds == "unfoldingState" then
-				returnValue = getAttachedStatus(self, dashboard, "unfoldingState", 0)
+			returnValue = getAttachedStatus(self, dashboard, "unfoldingState", 0)
 		
 		-- lowering state
 		elseif cmds == "liftState" and self.spec_attacherJoints ~= nil and tonumber(dashboard.dblAttacherJointIndices) ~= nil then
@@ -1387,14 +1409,61 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			else
 				returnValue = 0
 			end
+			
+		elseif cmds == "tipSide" then
+			local t, s = dashboard.dblTrailer, dashboard.dblStateText
+            local specTR = findSpecialization(self, "spec_trailer", t)            	
+            if s ~= nil and specTR ~= nil then 
+            	local fullState = "info_tipSide"..tostring(s)
+            	local fullStateName = g_i18n.texts[fullState]
+            	local trailerStateNum = specTR.preferedTipSideIndex
+            	local trailerStateName = specTR.tipSides[trailerStateNum].name
+            	dbgprint("tipSide found for trailer: "..tostring(t).." / tipSide: "..tostring(trailerStateName), 4) 
+            	returnValue = fullStateName == trailerStateName
+            else 
+            	dbgprint("tipSide not found for trailer: "..tostring(t), 4)
+            	returnValue = false
+            end
 		
 		-- heading
-		elseif cmds == "heading" then
+		elseif cmds == "heading" or cmds == "headingText1" or cmds == "headingText2" then
 			local x1, y1, z1 = localToWorld(self.rootNode, 0, 0, 0)
 			local x2, y2, z2 = localToWorld(self.rootNode, 0, 0, 1)
 			local dx, dz = x2 - x1, z2 - z1
 			local heading = math.floor(180 - (180 / math.pi) * math.atan2(dx, dz))
-			returnValue = heading
+			if cmds == "heading" then
+				returnValue = heading
+			elseif cmds == "headingText2" then
+				local headingTexts = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
+				local index = math.floor(((heading + 22.5) % 360) * 8 / 360) + 1
+				dbgprint("heading: "..tostring(heading).." / index: "..tostring(index), 2)
+				returnValue = headingTexts[index]
+			else
+				local headingTexts = {"N", "E", "S", "W"}
+				local index = math.floor(((heading + 45) % 360) * 4 / 360) + 1
+				returnValue = headingTexts[index]
+			end
+
+		-- field number
+		elseif cmds == "fieldNumber" then
+			local fieldNum = 0
+			local x, _, z = getWorldTranslation(self.rootNode)
+			local farmland = g_farmlandManager:getFarmlandAtWorldPosition(x, z)
+			-- interpolate field number from number position on minimap
+			local dist = math.huge
+			if farmland ~= nil then
+				local fields = g_fieldManager.farmlandIdFieldMapping[farmland.id]
+				if fields ~= nil then
+					for _, field in pairs(fields) do
+						local rx, rz = field.posX, field.posZ
+						dx, dz = rx - x, rz - z
+						rdist = math.sqrt(dx^2 + dz^2)
+						dist = math.min(dist, rdist)				
+						if rdist == dist then fieldNum = field.fieldId end
+					end
+				end
+			end
+			returnValue = fieldNum
 			
 		-- empty command is allowed here to add symbols (EMITTER) in off-state, too
 		elseif cmds == "" then

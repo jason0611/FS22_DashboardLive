@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="72">
 	<author>Glowins Modschmiede</author>
-	<version>1.0.0.1</version>
+	<!-- <version>1.0.0.0</version> -->
+	<version>B.0.2.1</version>
 	<contributors>AgrarPlay und LUWZ, Farming Duds, Myiamoto86</contributors>
 	<title>
 		<en>Dashboard Live</en>

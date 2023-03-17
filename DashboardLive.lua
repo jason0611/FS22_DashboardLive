@@ -869,7 +869,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
             		resultValue = 1 - implement.object.spec_foldable.foldAnimTime
             	else
-            		resultValue = false
+            		resultValue = 0
             	end
                	dbgprint(implement.object:getFullName().." unfoldingState: "..tostring(resultValue), 4)
              
@@ -879,7 +879,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
             		resultValue = implement.object.spec_foldable.foldAnimTime
             	else
-            		resultValue = false
+            		resultValue = 0
             	end
                	dbgprint(implement.object:getFullName().." foldingState: "..tostring(resultValue), 4)
                	  	

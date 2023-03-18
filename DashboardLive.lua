@@ -51,6 +51,7 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblS")
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblSG")
 	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#dblRM", "Ridgemarker state")
+	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dblOption", "DBL Option")
 	dbgprint("initSpecialization : DashboardLive group options registered", 2)
 	
 	Dashboard.registerDashboardXMLPaths(schema, "vehicle.dashboard.dashboardLive", "base fillLevel fillType vca hlm gps gps_lane gps_width proseed selector")
@@ -834,7 +835,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				
 			elseif mode == "ptoRpm" and vehicle.spec_motorized ~= nil and vehicle.spec_motorized.motor ~= nil then
 				if findPTOStatus(implement.object) then
-					resultValue = vehicle.spec_motorized.motor:getLastModulatedMotorRpm()
+						resultValue = vehicle.spec_motorized.motor:getLastModulatedMotorRpm()
 				else
 					resultValue = 0
 				end
@@ -928,7 +929,47 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					--element.valueFactor = 1
 					resultValue = absValue
 				end
+            -- ph customization
+			elseif mode == "hasSpec" then
+				resultValue = false
+				local options = element.dblOption
+				local option = string.split(options, " ")
+				for _, c in ipairs(option) do
+					local spec = findSpecialization(implement.object, c)
+					resultValue = resultValue or spec ~= nil
+				end
+			
+			elseif mode == "baleSize" then
+
+				local specBaler = findSpecialization(implement.object,"spec_baler")
+				local options = element.dblOption
+				if options == nil then options = "selected" end
+				local baleTypeDef  
+				if specBaler ~= nil and specBaler.currentBaleTypeIndex ~= nil and options == "current" then
+					baleTypeDef = specBaler.baleTypes[specBaler.currentBaleTypeIndex]
+				elseif specBaler ~= nil and specBaler.preSelectedBaleTypeIndex ~= nil and options == "selected" then
+					baleTypeDef = specBaler.baleTypes[specBaler.preSelectedBaleTypeIndex]
+				end
+				if baleTypeDef ~= nil then
+					if baleTypeDef.isRoundBale then
+						dbgprint("DBL baleSize isRoundBale: " .. tostring(baleTypeDef.diameter) .. "("..options..")",3)
+						resultValue = baleTypeDef.diameter * 100
+					else
+						dbgprint("DBL baleSize: " .. tostring(baleTypeDef.length) .. "("..options..")",3)
+						resultValue = baleTypeDef.length * 100
+					end
+				end
+			-- TODO this should not be a base mode ...
+			-- but as the Bale Count system is a Baler specialization, it is easier to add here as we already have the correct implement at this point
+			elseif mode == "baleCount" then -- balyaSayaci (Bale Count System from modHub by GameMasTer)
+				local specBaleCounter = findSpecialization(implement.object,"spec_balyaSayaci")	
+				resultValue = 0
+				if specBaleCounter ~= nil then
+					dbgprint_r(specBaleCounter, 4, 2)
+					resultValue = specBaleCounter.sayimGun	
+				end
             	
+			-- end ph customization
             elseif mode == "connected" then
             	resultValue = true
             	
@@ -975,6 +1016,9 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	
 	group.dblOperator = xmlFile:getValue(key .. "#op", "and")
 	dbgprint("loadDashboardGroupFromXML : dblOperator: "..tostring(group.dblOperator), 2)
+	
+	group.dblOption = xmlFile:getValue(key .. "#dblOption")
+	dbgprint("loadDashboardGroupFromXML : dblOption: "..tostring(group.dblOption), 2)
 	
 	local dblActiveWithoutImplement = xmlFile:getValue(key.. "#dblActiveWithoutImplement", false)
 	if dblActiveWithoutImplement == nil then
@@ -1080,6 +1124,10 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	elseif group.dblCommand == "base_unfolded" then
 		returnValue = getAttachedStatus(self, group, "unfolded", group.dblActiveWithoutImplement)	
 		
+	--ph
+	elseif group.dblCommand == "base_hasSpec" then
+		returnValue = getAttachedStatus(self, group, "hasSpec",false)
+
 	elseif specCS ~= nil and group.dblCommand == "base_steering" then
 		local dblOpt = group.dblOption
 		if dblOpt == "" or tonumber(dblOpt) == nil then
@@ -1387,6 +1435,12 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		if cmds == "fillLevel" then
 			returnValue = getAttachedStatus(self, dashboard, "fillLevel", 0)
 			
+		elseif cmds == "hasSpec" then
+			returnValue = getAttachedStatus(self,dashboard,"hasSpec",false)
+		elseif cmds == "baleSize" then
+			returnValue = getAttachedStatus(self,dashboard,"baleSize",0)
+		elseif cmds == "baleCount" then
+			returnValue = getAttachedStatus(self,dashboard,"baleCount",0)
 		-- ridgeMarker
 		elseif cmds == "ridgeMarker" then
 			if s == "" or tonumber(s) == nil then

@@ -1545,18 +1545,21 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = 0
 			end
 			
-		elseif cmds == "tipSide" then
+		elseif cmds == "tipSide" or cmds == "tipSideText" then
 			local t, s = dashboard.dblTrailer, dashboard.dblStateText
             local specTR = findSpecialization(self, "spec_trailer", t)            	
-            if s ~= nil and specTR ~= nil then 
+            if cmds == "tipSide" and s ~= nil and specTR ~= nil then 
             	local fullState = "info_tipSide"..tostring(s)
             	local fullStateName = g_i18n.texts[fullState]
             	local trailerStateNum = specTR.preferedTipSideIndex
             	local trailerStateName = specTR.tipSides[trailerStateNum].name
             	dbgprint("tipSide found for trailer: "..tostring(t).." / tipSide: "..tostring(trailerStateName), 4) 
             	returnValue = fullStateName == trailerStateName
+            elseif cmds == "tipSideText" and specTR ~= nil then
+            	dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(specTR.tipSides[specTR.preferedTipSideIndex].name), 4) 
+            	returnValue = specTR.tipSides[specTR.preferedTipSideIndex].name
             else 
-            	dbgprint("tipSide not found for trailer: "..tostring(t), 4)
+            	dbgprint(tostring(cmds).." not found for trailer: "..tostring(t), 4)
             	returnValue = false
             end
 		

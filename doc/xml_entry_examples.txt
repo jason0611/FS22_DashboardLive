@@ -24,6 +24,11 @@ Fahrzeug xml Einträge
 			
 			<!-- Guidance Steering -->
 			<group name="DBL_GPS_ON" op="and" dbl="gps_on" />
+
+			<!-- hasSpec -->
+			<group name="DBL_BALER" dbl="base_hasSpec" dblOption="spec_baler" attacherJointIndices="1 3 4" />
+			<!-- multi specializations - hasSpec checks if any of them is present -->
+			<group name="DBL_SOWSPRAY" dbl="base_hasSpec" dblOption="spec_sowingMachine spec_sprayer" attacherJointIndices="1 3 4" />
 			
 		</groups>
 	
@@ -36,5 +41,12 @@ Fahrzeug xml Einträge
 		<dashboardLive>
 			<!-- Park -->
 			<dashboard valueType="vca" cmd="park" displayType="EMITTER" 	node="I_Park1" emitColor="RED" groups="MOTOR_ACTIVE"/> 
+			<!-- hasSpec -->
+			<dashboard valueType="base" cmd="hasSpec" option="spec_sowingMachine" 	joints="1 3 4"	displayType="VISIBILITY" 	node="baseRup"  groups="MOTOR_ACTIVE" />
+			<!-- baleSize, current gives unfinished bale in baler, selected the next selected -->
+			<dashboard valueType="base" 	cmd="baleSize"	option="current"	joints="1 3 4"			displayType="TEXT" 			node="PT_baleSize_current" 		groups="MOTOR_ACTIVE"	textColor="0 0 0 1"		textSize="0.006"	textMask="000"	font="GENERIC"	textAlignment="RIGHT"/>
+            <dashboard valueType="base" 	cmd="baleSize"	option="selected"	joints="1 3 4"			displayType="TEXT" 			node="PT_baleSize_selected" 	groups="MOTOR_ACTIVE"	textColor="0 0 0 1"		textSize="0.006"	textMask="000"	font="GENERIC"	textAlignment="RIGHT"/>
+			<!-- baleCount - to be used with Bale Count System by GameMasTer from modhub -->
+			<dashboard valueType="base" 	cmd="baleCount"	 		joints="1 3 4"			displayType="TEXT" 			node="PT_baleCount" 		groups="MOTOR_ACTIVE"		trailer="1"			textColor="0 0 0 1"		textSize="0.006"	textMask="000"	font="GENERIC"	textAlignment="RIGHT"/>
 		</dashboardLive>
 </dashboard>

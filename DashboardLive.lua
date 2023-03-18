@@ -965,7 +965,6 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				local specBaleCounter = findSpecialization(implement.object,"spec_balyaSayaci")	
 				resultValue = 0
 				if specBaleCounter ~= nil then
-					dbgprint_r(specBaleCounter, 4, 2)
 					resultValue = specBaleCounter.sayimGun	
 				end
             	

@@ -1,8 +1,8 @@
 # FS22_DashboardLive
 
-**Look out: This is a developer version which can and shurely will contain errors, blow up your logfile with debug entries and maybe break your savegame. So use this version at your own risk**
-
 Dashboard Live (short: DBL) has to be built into your vehicles and then allows you to display all kinds of information in your board computers and/or dashboards in all kinds of tractors, no matter what brand. 
+
+**Look out: This is a developer version which can and shurely will contain errors, blow up your logfile with debug entries and maybe break your savegame. So use this version at your own risk**
 
 A zoom function is included for better viewing of displays: 
 - Left shift key + space bar: Short zoom

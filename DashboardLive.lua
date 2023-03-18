@@ -298,6 +298,22 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : ModIntegration <baler>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
+        -- lock steering axle by Ifko|nator (www.lsfarming-mods.com)
+        dashboardData = {	
+        					valueTypeToLoad = "lockSteeringAxle",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveLSA,
+                        	additionalAttributesFunc = DashboardLive.getDBLAttributesLSA
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)  
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <lockSteeringAxle>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <lockSteeringAxle>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
         -- print
         dashboardData = {	
         					valueTypeToLoad = "print",
@@ -610,13 +626,21 @@ end
 
 -- Supporting functions
 
-local function trim(text, textLength)
+local function trim(text, textLength, alignment)
 	local l = string.len(text)
+	dbgprint("trim: alignment = "..tostring(alignment), 4)
 	if l == textLength then
 		return text
 	elseif l < textLength then
 		local diff = textLength - l
-		local newText = string.rep(" ", math.floor(diff/2))..text..string.rep(" ", math.floor(diff/2))
+		local newText	 
+		if alignment == RenderText.ALIGN_LEFT then
+			newText = text..string.rep(" ", math.floor(diff))
+		elseif alignment == RenderText.ALIGN_RIGHT then
+			newText = string.rep(" ", math.floor(diff))..text
+		else
+			newText = string.rep(" ", math.floor(diff/2))..text..string.rep(" ", math.floor(diff/2))
+		end
 		if string.len(newText) < textLength then
 			newText = newText .. " "
 		end
@@ -1445,6 +1469,14 @@ function DashboardLive.getDBLAttributesBaler(self, xmlFile, key, dashboard)
 	return true
 end
 
+-- lock steering axles
+function DashboardLive.getDBLAttributesLSA(self, xmlFile, key, dashboard)
+	
+	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+	dbgprint("getDBLAttributesLSA : command: "..tostring(dashboard.dblCommand), 2)
+	
+	return true
+end
 
 -- print
 function DashboardLive.getDBLAttributesPrint(self, xmlFile, key, dashboard)
@@ -1519,9 +1551,11 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		-- fillLevel	
 		if cmds == "fillLevel" then
 			returnValue = getAttachedStatus(self, dashboard, "fillLevel", 0)
+			
 		-- hasSpec	
 		elseif cmds == "hasSpec" then
 			returnValue = getAttachedStatus(self,dashboard,"hasSpec",false)
+			
 		-- ridgeMarker
 		elseif cmds == "ridgeMarker" then
 			if s == "" or tonumber(s) == nil then
@@ -1545,6 +1579,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = 0
 			end
 			
+		-- tipSide / tipSideText
 		elseif cmds == "tipSide" or cmds == "tipSideText" then
 			local t, s = dashboard.dblTrailer, dashboard.dblStateText
             local specTR = findSpecialization(self, "spec_trailer", t)            	
@@ -1556,13 +1591,20 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
             	dbgprint("tipSide found for trailer: "..tostring(t).." / tipSide: "..tostring(trailerStateName), 4) 
             	returnValue = fullStateName == trailerStateName
             elseif cmds == "tipSideText" and specTR ~= nil then
-            	dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(specTR.tipSides[specTR.preferedTipSideIndex].name), 4) 
-            	returnValue = specTR.tipSides[specTR.preferedTipSideIndex].name
+            	local len = string.len(dashboard.textMask or "00.0")
+            	local alignment = dashboard.textAlignment or RenderText.ALIGN_RIGHT
+            	local tipSideName = specTR.tipSides[specTR.preferedTipSideIndex].name
+            	returnValue = trim(tipSideName, len, alignment)
+            	dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(returnValue), 4) 
             else 
             	dbgprint(tostring(cmds).." not found for trailer: "..tostring(t), 4)
             	returnValue = false
             end
 		
+		-- real clock
+		elseif cmds == "realClock" then
+			returnValue = getDate("%T")
+			
 		-- heading
 		elseif cmds == "heading" or cmds == "headingText1" or cmds == "headingText2" then
 			local x1, y1, z1 = localToWorld(self.rootNode, 0, 0, 0)
@@ -1869,6 +1911,20 @@ function DashboardLive.getDashboardLiveBaler(self, dashboard)
 	elseif c == "wrappedBaleCountTotal" then
 		return getAttachedStatus(self, dashboard, "wrappedBaleCountTotal", 0)
 	end
+end
+
+function DashboardLive.getDashboardLiveLSA(self, dashboard)
+	local specLSA = findSpecialization(self, "spec_lockSteeringAxles")
+	local c = dashboard.dblCommand
+	if specLSA ~= nil and c == "found" then
+		returnValue = specLSA.foundSteeringAxle
+	elseif specLSA ~= nil and c == "locked" then
+		returnValue = specLSA.lockSteeringAxle
+	else
+		returnValue = false
+	end
+	dbgprint("getDashboardLiveLSA: lockSteeringAxles ("..tostring(c).."): "..tostring(returnValue), 4)
+	return returnValue
 end
 
 function DashboardLive.getDashboardLivePrint(self, dashboard)

@@ -84,6 +84,7 @@ function DashboardLive.initSpecialization()
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#max", "Maximum")
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#trailer", "trailer number")
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#partition", "partition number")
+	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#stateText", "stateText")
 	dbgprint("initSpecialization : vanillaSchema element options registered", 2)
 end
 
@@ -225,6 +226,14 @@ function DashboardLive:onLoad(savegame)
                         	additionalAttributesFunc = DashboardLive.getDBLAttributesGPSNumbers
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+		if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <gpsLane>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <gpsLane>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
 		-- gpsWidth
         dashboardData = {	
         					valueTypeToLoad = "gpsWidth",
@@ -233,6 +242,14 @@ function DashboardLive:onLoad(savegame)
                         	additionalAttributesFunc = DashboardLive.getDBLAttributesGPSNumbers
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <gpsWidth>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <gpsWidth>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
 		-- ps
         dashboardData = {	
         					valueTypeToLoad = "proSeed",
@@ -241,6 +258,14 @@ function DashboardLive:onLoad(savegame)
                             additionalAttributesFunc = DashboardLive.getDBLAttributesPS
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <ps>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <ps>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
 		-- selection
         dashboardData = {	
         					valueTypeToLoad = "selection",
@@ -249,6 +274,30 @@ function DashboardLive:onLoad(savegame)
                             additionalAttributesFunc = DashboardLive.getDBLAttributesSelection
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)  
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <selection>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <selection>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
+        -- baler
+        dashboardData = {
+        					valueTypeToLoad = "baler",
+        					valueObject = self,
+        					valueFunc = DashboardLive.getDashboardLiveBaler,
+        					additionalAttributesFunc = DashboardLive.getDBLAttributesBaler
+        				}
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <baler>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <baler>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
         -- print
         dashboardData = {	
         					valueTypeToLoad = "print",
@@ -257,6 +306,14 @@ function DashboardLive:onLoad(savegame)
                             additionalAttributesFunc = DashboardLive.getDBLAttributesPrint
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)  
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <print>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <print>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
     end
 end
 
@@ -818,7 +875,15 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	dbgprint("jointExists: "..tostring(jointExists).." / implement: "..tostring(implement), 4)
     	--dbgprint_r(implement, 4, 1)
     	if implement ~= nil then
-            if mode == "raised" then
+    		if mode == "hasSpec" then
+				resultValue = false
+				local options = element.dblOption
+				local option = string.split(options, " ")
+				for _, c in ipairs(option) do
+					local spec = findSpecialization(implement.object, c)
+					resultValue = resultValue or spec ~= nil
+				end
+            elseif mode == "raised" then
             	resultValue = not recursiveCheck(implement, implement.object.getIsLowered, true, false, element.dblTrailer)
             	dbgprint(implement.object:getFullName().." raised: "..tostring(resultValue), 4)
             	
@@ -930,17 +995,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					resultValue = absValue
 				end
             -- ph customization
-			elseif mode == "hasSpec" then
-				resultValue = false
-				local options = element.dblOption
-				local option = string.split(options, " ")
-				for _, c in ipairs(option) do
-					local spec = findSpecialization(implement.object, c)
-					resultValue = resultValue or spec ~= nil
-				end
-			
 			elseif mode == "baleSize" then
-
 				local specBaler = findSpecialization(implement.object,"spec_baler")
 				local options = element.dblOption
 				if options == nil then options = "selected" end
@@ -952,20 +1007,38 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				end
 				if baleTypeDef ~= nil then
 					if baleTypeDef.isRoundBale then
-						dbgprint("DBL baleSize isRoundBale: " .. tostring(baleTypeDef.diameter) .. "("..options..")",3)
+						dbgprint("DBL baleSize isRoundBale: " .. tostring(baleTypeDef.diameter) .. "("..options..")",4)
 						resultValue = baleTypeDef.diameter * 100
 					else
-						dbgprint("DBL baleSize: " .. tostring(baleTypeDef.length) .. "("..options..")",3)
+						dbgprint("DBL baleSize: " .. tostring(baleTypeDef.length) .. "("..options..")",4)
 						resultValue = baleTypeDef.length * 100
 					end
 				end
-			-- TODO this should not be a base mode ...
-			-- but as the Bale Count system is a Baler specialization, it is easier to add here as we already have the correct implement at this point
-			elseif mode == "baleCount" then -- balyaSayaci (Bale Count System from modHub by GameMasTer)
-				local specBaleCounter = findSpecialization(implement.object,"spec_balyaSayaci")	
+				
+			elseif mode == "baleCountAnz" or mode == "baleCountTotal" then -- baleCounter by Ifko|nator, www.lsfarming-mods.com
+				local specBaleCounter = findSpecialization(implement.object,"spec_baleCounter")	
 				resultValue = 0
-				if specBaleCounter ~= nil then
-					resultValue = specBaleCounter.sayimGun	
+				if specBaleCounter ~= nil then 
+					if mode == "baleCountAnz" then
+						resultValue = specBaleCounter.countToday
+						dbgprint(implement.object:getFullName().." baleCountAnz: "..tostring(resultValue), 4)	
+					else
+						resultValue = specBaleCounter.countTotal
+						dbgprint(implement.object:getFullName().." baleCountTotal: "..tostring(resultValue), 4)
+					end
+				end
+			
+			elseif mode == "wrappedBaleCountAnz" or mode == "wrappedBaleCountTotal" then -- baleCounter by Ifko|nator, www.lsfarming-mods.com
+				local specBaleCounter = findSpecialization(implement.object,"spec_wrappedBaleCounter")	
+				resultValue = 0
+				if specBaleCounter ~= nil then 
+					if mode == "wrappedBaleCountAnz" then
+						resultValue = specBaleCounter.countToday
+						dbgprint(implement.object:getFullName().." wrappedBaleCountAnz: "..tostring(resultValue), 4)	
+					else
+						resultValue = specBaleCounter.countTotal
+						dbgprint(implement.object:getFullName().." wrappedBaleCountTotal: "..tostring(resultValue), 4)
+					end
 				end
             	
 			-- end ph customization
@@ -1360,6 +1433,19 @@ function DashboardLive.getDBLAttributesSelection(self, xmlFile, key, dashboard)
 	return true
 end
 
+-- baler
+function DashboardLive.getDBLAttributesBaler(self, xmlFile, key, dashboard)
+	
+	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+    dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
+    
+	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
+	dbgprint("getDBLAttributesBaler : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
+	
+	return true
+end
+
+
 -- print
 function DashboardLive.getDBLAttributesPrint(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "")
@@ -1433,13 +1519,9 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		-- fillLevel	
 		if cmds == "fillLevel" then
 			returnValue = getAttachedStatus(self, dashboard, "fillLevel", 0)
-			
+		-- hasSpec	
 		elseif cmds == "hasSpec" then
 			returnValue = getAttachedStatus(self,dashboard,"hasSpec",false)
-		elseif cmds == "baleSize" then
-			returnValue = getAttachedStatus(self,dashboard,"baleSize",0)
-		elseif cmds == "baleCount" then
-			returnValue = getAttachedStatus(self,dashboard,"baleCount",0)
 		-- ridgeMarker
 		elseif cmds == "ridgeMarker" then
 			if s == "" or tonumber(s) == nil then
@@ -1767,6 +1849,24 @@ function DashboardLive.getDashboardLiveSelection(self, dashboard)
 	end
 	return false
 end		
+
+function DashboardLive.getDashboardLiveBaler(self, dashboard)
+	dbgprint("getDashboardLiveBaler : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	local spec = self.spec_DashboardLive
+	local c = dashboard.dblCommand
+	
+	if c == "baleSize" then
+		return getAttachedStatus(self, dashboard, "baleSize", 0)
+	elseif c == "baleCountAnz" then
+		return getAttachedStatus(self, dashboard, "baleCountAnz", 0)
+	elseif c == "baleCountTotal" then
+		return getAttachedStatus(self, dashboard, "baleCountTotal", 0)
+	elseif c == "wrappedBaleCountAnz" then
+		return getAttachedStatus(self, dashboard, "wrappedBaleCountAnz", 0)
+	elseif c == "wrappedBaleCountTotal" then
+		return getAttachedStatus(self, dashboard, "wrappedBaleCountTotal", 0)
+	end
+end
 
 function DashboardLive.getDashboardLivePrint(self, dashboard)
 	dbgprint("getDashboardLivePrint : dblOption: "..tostring(dashboard.dblOption), 4)

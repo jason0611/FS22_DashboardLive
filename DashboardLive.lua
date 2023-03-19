@@ -984,6 +984,27 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	else
             		resultValue = 0
             	end
+            	
+			elseif mode == "tipSide" or mode == "tipSideText" then
+				local t, s = element.dblTrailer, element.dblStateText
+				local specTR = findSpecialization(implement.object, "spec_trailer", t)            	
+				if mode == "tipSide" and s ~= nil and specTR ~= nil then 
+					local fullState = "info_tipSide"..tostring(s)
+					local fullStateName = g_i18n.texts[fullState]
+					local trailerStateNum = specTR.preferedTipSideIndex
+					local trailerStateName = specTR.tipSides[trailerStateNum].name
+					dbgprint("tipSide found for trailer: "..tostring(t).." / tipSide: "..tostring(trailerStateName), 4) 
+					resultValue = fullStateName == trailerStateName
+				elseif mode == "tipSideText" and specTR ~= nil then
+					local len = string.len(element.textMask or "00.0")
+					local alignment = element.textAlignment or RenderText.ALIGN_RIGHT
+					local tipSideName = specTR.tipSides[specTR.preferedTipSideIndex].name
+					resultValue = trim(tipSideName, len, alignment)
+					dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(returnValue), 4) 
+				else 
+					dbgprint(tostring(cmds).." not found for trailer: "..tostring(t), 4)
+					resultValue = false
+				end
             
             elseif mode == "ridgeMarker" then
             	local specRM = findSpecialization(implement.object, "spec_ridgeMarker")
@@ -1018,6 +1039,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					--element.valueFactor = 1
 					resultValue = absValue
 				end
+				
             -- ph customization
 			elseif mode == "baleSize" then
 				local specBaler = findSpecialization(implement.object,"spec_baler")
@@ -1052,7 +1074,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					end
 				end
 			
-			elseif mode == "wrappedBaleCountAnz" or mode == "wrappedBaleCountTotal" then -- baleCounter by Ifko|nator, www.lsfarming-mods.com
+			elseif mode == "wrappedBaleCountAnz" or mode == "wrappedBaleCountTotal" then --baleCounter by Ifko|nator, www.lsfarming-mods.com
 				local specBaleCounter = findSpecialization(implement.object,"spec_wrappedBaleCounter")	
 				resultValue = 0
 				if specBaleCounter ~= nil then 
@@ -1064,8 +1086,20 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						dbgprint(implement.object:getFullName().." wrappedBaleCountTotal: "..tostring(resultValue), 4)
 					end
 				end
-            	
 			-- end ph customization
+			
+			elseif mode == "lockSteeringAxle" then --lockSteeringAxles by Ifko|nator, www.lsfarming-mods.com
+				local c = element.dblCommand
+				local specLSA = findSpecialization(implement.object, "spec_lockSteeringAxles")
+				if specLSA ~= nil and c == "found" then
+					resultValue = specLSA.foundSteeringAxle
+				elseif specLSA ~= nil and c == "locked" then
+					resultValue = specLSA.lockSteeringAxle
+				else
+					resultValue = false
+				end
+				dbgprint(implement.object:getFullName().." : lockSteeringAxles ("..tostring(c).."): "..tostring(returnValue), 4)
+
             elseif mode == "connected" then
             	resultValue = true
             	
@@ -1475,6 +1509,9 @@ function DashboardLive.getDBLAttributesLSA(self, xmlFile, key, dashboard)
 	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
 	dbgprint("getDBLAttributesLSA : command: "..tostring(dashboard.dblCommand), 2)
 	
+	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
+	dbgprint("getDBLAttributesBase : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
+	
 	return true
 end
 
@@ -1581,25 +1618,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			
 		-- tipSide / tipSideText
 		elseif cmds == "tipSide" or cmds == "tipSideText" then
-			local t, s = dashboard.dblTrailer, dashboard.dblStateText
-            local specTR = findSpecialization(self, "spec_trailer", t)            	
-            if cmds == "tipSide" and s ~= nil and specTR ~= nil then 
-            	local fullState = "info_tipSide"..tostring(s)
-            	local fullStateName = g_i18n.texts[fullState]
-            	local trailerStateNum = specTR.preferedTipSideIndex
-            	local trailerStateName = specTR.tipSides[trailerStateNum].name
-            	dbgprint("tipSide found for trailer: "..tostring(t).." / tipSide: "..tostring(trailerStateName), 4) 
-            	returnValue = fullStateName == trailerStateName
-            elseif cmds == "tipSideText" and specTR ~= nil then
-            	local len = string.len(dashboard.textMask or "00.0")
-            	local alignment = dashboard.textAlignment or RenderText.ALIGN_RIGHT
-            	local tipSideName = specTR.tipSides[specTR.preferedTipSideIndex].name
-            	returnValue = trim(tipSideName, len, alignment)
-            	dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(returnValue), 4) 
-            else 
-            	dbgprint(tostring(cmds).." not found for trailer: "..tostring(t), 4)
-            	returnValue = false
-            end
+			returnValue = getAttachedStatus(self, dashboard, cmds, 0)
 		
 		-- real clock
 		elseif cmds == "realClock" then
@@ -1914,17 +1933,7 @@ function DashboardLive.getDashboardLiveBaler(self, dashboard)
 end
 
 function DashboardLive.getDashboardLiveLSA(self, dashboard)
-	local specLSA = findSpecialization(self, "spec_lockSteeringAxles")
-	local c = dashboard.dblCommand
-	if specLSA ~= nil and c == "found" then
-		returnValue = specLSA.foundSteeringAxle
-	elseif specLSA ~= nil and c == "locked" then
-		returnValue = specLSA.lockSteeringAxle
-	else
-		returnValue = false
-	end
-	dbgprint("getDashboardLiveLSA: lockSteeringAxles ("..tostring(c).."): "..tostring(returnValue), 4)
-	return returnValue
+	return getAttachedStatus(self, dashboard, "lockSteeringAxle", 0)
 end
 
 function DashboardLive.getDashboardLivePrint(self, dashboard)

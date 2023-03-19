@@ -1593,6 +1593,10 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		elseif cmds == "hasSpec" then
 			returnValue = getAttachedStatus(self,dashboard,"hasSpec",false)
 			
+		-- tippingState
+		elseif cmds == "tippingState" then
+			returnValue = getAttachedStatus(self, dashboard, "tippingState", 0)
+			
 		-- ridgeMarker
 		elseif cmds == "ridgeMarker" then
 			if s == "" or tonumber(s) == nil then

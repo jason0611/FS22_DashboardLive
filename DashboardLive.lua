@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -675,7 +675,7 @@ local function findSpecializationImplement(device, specName, iteration, iteratio
 	elseif (iteration == nil or iterationStep < iteration) and device.getAttachedImplements ~= nil then
 		local implements = device:getAttachedImplements()
 		for _,implement in pairs(implements) do
-			local device = findSpecializationImplement(implement.object, specName, iteration, iterationStep)
+			local device = findSpecializationImplement(implement.object, specName, iteration, iterationStep + 1)
 			if device ~= nil then 
 				return device 
 			end
@@ -882,9 +882,12 @@ local function getAttachedStatus(vehicle, element, mode, default)
 	local noImplement = true
 	local jointExists = false
 	
-	local andMode = element.dblOption == "all" --element.dblOption ~= nil and string.find(element.dblOption, "all") ~= nil
-	local orMode = element.dblOption == "any" --element.dblOption ~= nil and string.find(element.dblOption, "any") ~= nil
+	local andMode = element.dblOption ~= nil and string.find(element.dblOption, "all") ~= nil
+	local orMode = element.dblOption ~= nil and string.find(element.dblOption, "any") ~= nil
 	local firstRun = true
+	
+	local t = element.dblTrailer
+    if t ~= nil then t = t - 1 end
 	
     for _, jointIndex in ipairs(joints) do
     	dbgprint("jointIndex: "..tostring(tonumber(jointIndex)), 4)
@@ -892,31 +895,36 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	if tonumber(jointIndex) == 0 then
     		implement = {}
     		implement.object = vehicle
+    	elseif jointIndex == "S" then
+    		implement = {}
+    		implement.object = vehicle:getSelectedVehicle()
     	else
     		implement = vehicle:getImplementFromAttacherJointIndex(tonumber(jointIndex)) 
     	end
     	jointExists = vehicle:getAttacherJointByJointDescIndex(tonumber(jointIndex)) ~= nil
     	dbgprint("jointExists: "..tostring(jointExists).." / implement: "..tostring(implement), 4)
     	--dbgprint_r(implement, 4, 1)
+    	
     	if implement ~= nil then
     		if mode == "hasSpec" then
 				resultValue = false
 				local options = element.dblOption
 				local option = string.split(options, " ")
 				for _, c in ipairs(option) do
-					local spec = findSpecialization(implement.object, c)
+					local spec = findSpecialization(implement.object, c, t)
 					resultValue = resultValue or spec ~= nil
 				end
+				
             elseif mode == "raised" then
-            	resultValue = not recursiveCheck(implement, implement.object.getIsLowered, true, false, element.dblTrailer)
+            	resultValue = not recursiveCheck(implement, implement.object.getIsLowered, true, false, t)
             	dbgprint(implement.object:getFullName().." raised: "..tostring(resultValue), 4)
             	
             elseif mode == "lowered" then
-            	resultValue = recursiveCheck(implement, implement.object.getIsLowered, true, false, element.dblTrailer)
+            	resultValue = recursiveCheck(implement, implement.object.getIsLowered, true, false, t)
             	dbgprint(implement.object:getFullName().." lowered: "..tostring(resultValue), 4)
             	
             elseif mode == "lowerable" then
-				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true, false, element.dblTrailer) --or implement.object.spec_pickup ~= nil or false
+				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true, false, t)
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
 			
 			elseif mode == "pto" then
@@ -974,20 +982,23 @@ local function getAttachedStatus(vehicle, element, mode, default)
                	dbgprint(implement.object:getFullName().." foldingState: "..tostring(resultValue), 4)
                	  	
             elseif mode == "tipping" then
-            	local specTR = findSpecialization(implement.object, "spec_trailer")
+            	local specTR = findSpecialization(implement.object, "spec_trailer", t)
             	resultValue = specTR ~= nil and specTR:getTipState() > 0
             	
             elseif mode == "tippingState" then
-            	local specTR = findSpecialization(implement.object, "spec_trailer")
-            	if specTR ~= nil and specTR:getTipState() > 0 then
+            	local specImplement = findSpecializationImplement(implement.object, "spec_trailer", t)
+
+            	if specImplement ~= nil and specImplement.spec_trailer:getTipState() > 0 then
+            		local specTR = specImplement.spec_trailer
             		local tipSide = specTR.tipSides[specTR.currentTipSideIndex]
-            		resultValue = implement.object:getAnimationTime(tipSide.animation.name)
+            		resultValue = specImplement:getAnimationTime(tipSide.animation.name)
             	else
             		resultValue = 0
             	end
+            	dbgprint(implement.object:getFullName().." tippingState (trailer "..tostring(t).."): "..tostring(resultValue), 4)
             	
 			elseif mode == "tipSide" or mode == "tipSideText" then
-				local t, s = element.dblTrailer, element.dblStateText
+				local s = element.dblStateText
 				local specTR = findSpecialization(implement.object, "spec_trailer", t)            	
 				if mode == "tipSide" and s ~= nil and specTR ~= nil then 
 					local fullState = "info_tipSide"..tostring(s)
@@ -1003,8 +1014,12 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					resultValue = trim(tipSideName, len, alignment)
 					dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(returnValue), 4) 
 				else 
-					dbgprint(tostring(cmds).." not found for trailer: "..tostring(t), 4)
-					resultValue = false
+					dbgprint(tostring(mode).." not found for trailer: "..tostring(t), 4)
+					if mode == "tipSideText" then
+						resultValue=""
+					else
+						resultValue = false
+					end
 				end
             
             elseif mode == "ridgeMarker" then
@@ -1091,7 +1106,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			
 			elseif mode == "lockSteeringAxle" then --lockSteeringAxles by Ifko|nator, www.lsfarming-mods.com
 				local c = element.dblCommand
-				local specLSA = findSpecialization(implement.object, "spec_lockSteeringAxles")
+				local specLSA = findSpecialization(implement.object, "spec_lockSteeringAxles", t)
 				if specLSA ~= nil and c == "found" then
 					resultValue = specLSA.foundSteeringAxle
 				elseif specLSA ~= nil and c == "locked" then

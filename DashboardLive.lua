@@ -1130,7 +1130,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				else
 					resultValue = false
 				end
-				dbgprint(implement.object:getFullName().." : lockSteeringAxles ("..tostring(c).."): "..tostring(returnValue), 4)
+				dbgprint(implement.object:getFullName().." : lockSteeringAxles ("..tostring(c).."), trailer "..tostring(t)..": "..tostring(resultValue), 4)
 
             elseif mode == "connected" then
             	resultValue = true
@@ -1543,6 +1543,9 @@ function DashboardLive.getDBLAttributesLSA(self, xmlFile, key, dashboard)
 	
 	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
 	dbgprint("getDBLAttributesBase : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
+	
+	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer")
+	dbgprint("getDBLAttributesBase : trailer: "..tostring(dashboard.dblTrailer), 2)
 	
 	return true
 end
@@ -1981,7 +1984,9 @@ function DashboardLive.getDashboardLiveBaler(self, dashboard)
 end
 
 function DashboardLive.getDashboardLiveLSA(self, dashboard)
-	return getAttachedStatus(self, dashboard, "lockSteeringAxle", 0)
+	local returnValue = getAttachedStatus(self, dashboard, "lockSteeringAxle", false)
+	dbgprint("getDashboardLiveLSA : returnValue: "..tostring(returnValue), 4)
+	return returnValue
 end
 
 function DashboardLive.getDashboardLiveCXP(self, dashboard)

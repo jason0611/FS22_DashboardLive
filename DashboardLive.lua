@@ -743,7 +743,7 @@ end
 	
 local function getFillLevel(device, ftPartition, ftType)
 	dbgprint("getFillLevel: "..tostring(device:getName()), 4)
-	local fillLevel = {abs = nil, pct = nil, max = nil}
+	local fillLevel = {abs = nil, pct = nil, max = nil, maxKg = nil, absKg = nil, pctKg = nil}
 	
 	if device.spec_fillUnit ~= nil then -- only if device has got a fillUnit
 		
@@ -760,7 +760,17 @@ local function getFillLevel(device, ftPartition, ftType)
 					fillLevel.pct = device:getFillUnitFillLevelPercentage(ftPartition)
 					fillLevel.abs = device:getFillUnitFillLevel(ftPartition)
 					fillLevel.max = device:getFillUnitCapacity(ftPartition)
-					dbgprint_r(fillLevel, 4, 0)
+					local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
+					if fillTypeDesc ~= nil then
+						fillLevel.absKg = device:getFillUnitFillLevel(ftPartition) * fillTypeDesc.massPerLiter * 1000
+					else
+						-- in case we do not get a fillTypeDesc, lets assume a massPerLiter of 1, not sure if this everhappens.
+						fillLevel.absKg = filllevel.abs
+					end
+
+					fillLevel.maxKg = ((device:getAvailableComponentMass()*1000) + fillLevel.absKg)
+					fillLevel.pctKg = fillLevel.absKg / fillLevel.maxKg
+					
 				end	
 			end
 		else
@@ -769,19 +779,31 @@ local function getFillLevel(device, ftPartition, ftType)
 				local ftIndex = device:getFillUnitFillType(i)
 				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
 				if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
-					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
-					fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
+					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max, fillLevel.absKg = 0, 0, 0, 0 end
+					-- we cannot just sum up percentages... 50% + 50% <> 100%
+					--fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
 					fillLevel.abs = fillLevel.abs + device:getFillUnitFillLevel(i)
 					fillLevel.max = fillLevel.max + device:getFillUnitCapacity(i)
+					-- so lets calculate it on our own. (lua should not have a divide by zero problem...)
+					fillLevel.pct = fillLevel.abs / fillLevel.max
+					local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
+					if fillTypeDesc ~= nil then
+						fillLevel.absKg = fillLevel.absKg + device:getFillUnitFillLevel(i) * fillTypeDesc.massPerLiter * 1000
+					else
+						fillLevel.absKg = filllevel.absKg + device:getFillUnitFillLevel(i)
+					end
 				end
 			end
+			-- Available Mass is only available for the device, not for a partition
+			fillLevel.maxKg = ((device:getAvailableComponentMass()*1000) + fillLevel.absKg)
+			fillLevel.pctKg = fillLevel.absKg / fillLevel.maxKg
 		end
 		
 	end
 	return fillLevel
 end
 
--- returns fillLevel {pct, abs, max}
+-- returns fillLevel {pct, abs, max, absKg}
 -- param vehicle - vehicle reference
 -- param ftIndex - index of fillVolume: 1 - root/first trailer/implement, 2 - first/second trailer/implement, 3 - root/first and first/second trailer or implement
 -- param ftType  - fillType
@@ -1016,19 +1038,22 @@ local function getAttachedStatus(vehicle, element, mode, default)
 
 				if t == nil or t == 0 then t = 1 end -- t defaults to 1, for backward compatibility set t=1 if t==0, too
 
-				local maxValue, pctValue, absValue
+				local maxValue, pctValue, absValue, maxKGValue,absKGValue, pctKGValue
 				local fillLevel = getFillLevelStatus(implement.object, t-1, p)
 				dbgprint_r(fillLevel, 4, 2)
 				
 				if fillLevel.abs == nil then 
-					maxValue, absValue, pctValue = 0, 0, 0
+					maxValue, absValue, pctValue, maxKGValue, absKGValue, pctKGValue = 0, 0, 0, 0, 0, 0
 				else
-					maxValue, absValue, pctValue = fillLevel.max, fillLevel.abs, fillLevel.pct
+					maxValue, absValue, pctValue, maxKGValue, absKGValue, pctKGValue = fillLevel.max, fillLevel.abs, fillLevel.pct, fillLevel.maxKg,fillLevel.absKg, fillLevel.pctKg
 				end
 
 				dbgrender("maxValue: "..tostring(maxValue), 1 + t * 4, 3)
 				dbgrender("absValue: "..tostring(absValue), 2 + t * 4, 3)
 				dbgrender("pctValue: "..tostring(pctValue), 3 + t * 4, 3)
+				dbgrender("absKGValue: "..tostring(fillLevel.absKg), 4 + t * 4, 3)
+				dbgrender("pctKGValue: "..tostring(fillLevel.pctKg), 5 + t * 4, 3)
+				dbgrender("pctKGValue: "..tostring(fillLevel.maxKg), 6 + t * 4, 3)
 
 				if o ~= nil and string.find(o, "percent") then
 					element.valueFactor = 100
@@ -1036,6 +1061,12 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				elseif o ~= nil and string.find(o, "max") then
 					--element.valueFactor = 1
 					resultValue = maxValue
+				elseif o ~= nil and string.find(o,"kg") then
+					resultValue = absKGValue
+				elseif o ~= nil and string.find(o,"percentkg") then
+					resultValue = pctKGValue or 0
+				elseif o ~= nil and string.find(o,"maxkg") then
+					resultValue = maxKGValue or 0
 				else
 					--element.valueFactor = 1
 					resultValue = absValue

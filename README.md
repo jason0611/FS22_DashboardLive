@@ -48,6 +48,7 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 -- Internal improvements
 + trim-function to adapt texts to given length
 - generalization of recursive functions
+- remove case-sensibility from commands
 
 ```
 

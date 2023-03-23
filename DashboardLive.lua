@@ -314,6 +314,22 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : ModIntegration <lockSteeringAxle>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
+         -- combineXP by yumi
+        dashboardData = {	
+        					valueTypeToLoad = "combineXP",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveCXP,
+                        	additionalAttributesFunc = DashboardLive.getDBLAttributesCXP
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)  
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <combineXP>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <combineXP>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
         -- print
         dashboardData = {	
         					valueTypeToLoad = "print",
@@ -1531,6 +1547,18 @@ function DashboardLive.getDBLAttributesLSA(self, xmlFile, key, dashboard)
 	return true
 end
 
+-- combineXP by yumi
+function DashboardLive.getDBLAttributesCXP(self, xmlFile, key, dashboard)
+	
+	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+	dbgprint("getDBLAttributesCXP : command: "..tostring(dashboard.dblCommand), 2)
+	
+	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", 100)
+	dbgprint("getDBLAttributesCXP : factor: "..tostring(dashboard.dblFactor), 2)
+	
+	return true
+end
+
 -- print
 function DashboardLive.getDBLAttributesPrint(self, xmlFile, key, dashboard)
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "")
@@ -1954,6 +1982,31 @@ end
 
 function DashboardLive.getDashboardLiveLSA(self, dashboard)
 	return getAttachedStatus(self, dashboard, "lockSteeringAxle", 0)
+end
+
+function DashboardLive.getDashboardLiveCXP(self, dashboard)
+	dbgprint("getDashboardLiveCXP : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	local specXP = findSpecialization(self, "spec_xpCombine")
+	local c, f = dashboard.dblCommand, dashboard.dblFactor
+	if specXP ~= nil and specXP.mrCombineLimiter ~= nil then
+		local returnValue
+		local mr = specXP.mrCombineLimiter
+		if c == "tonPerHour" then
+			returnValue = mr.tonPerHour
+		elseif c == "engineLoad" then
+			returnValue = mr.engineLoad * mr.loadMultiplier * f
+		elseif c == "yield" then
+			returnValue = mr.yield
+		elseif c == "highMoisture" then
+			returnValue = mr.highMoisture
+		end
+		dbgprint("combineXP returnValue: "..tostring(mr[c]), 4)
+		return returnValue
+	elseif c == "highMoisture" then
+		dbgprint("combineXP returnValue ("..tostring(self:getFullName()).."): false (spec not found)", 4)
+		return false
+	end
+	dbgprint("combineXP returnValue ("..tostring(self:getFullName()).."): none (spec not found)", 4)
 end
 
 function DashboardLive.getDashboardLivePrint(self, dashboard)

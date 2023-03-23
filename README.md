@@ -30,7 +30,7 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + lockSteeringAxle (boolean, needs lockSteeringAxles-Mod by Ifko)
 + realClock (text/number): Real-Life-Time
 + joints="S": Selects active (selected) vehicle
-- combineXP
++ combineXP
 - precisionFarming
 - fillLevel weight
 - ISO-Bus: activate terminal depending on connected implement

@@ -17,14 +17,14 @@ In MultiPlayer game, DBL synchronises engine temperature, fuel and air consumpti
 Here you will find the most actual documentation of DBL: https://github.com/jason0611/FS22_DashboardLive/blob/master/doc/DashboardLive.pdf
 
 ```
--- Feature-Backlog: (+) realized | (-) planned | (?) found no way until now | (%) not possible
+-- Feature-Backlog: (+) realized | (-) planned | (?) found no way until now | (%) impossible
 
 + tippingState (text/number): percent number)
 + tipSide (boolean / text)
 + headingText1 (text): N/E/S/W
 + headingText2 (text): N/NE/E/SE/S/SW/W/NE
 + fieldNumber (text/number)
-+ hasSpec (boolean): test if specialization is present
++ hasSpec (boolean): test if specialization is present (thanks to HiPhi)
 + baleSize (number/text)
 + baleCount (number/text, needs )
 + lockSteeringAxle (boolean, needs lockSteeringAxles-Mod by Ifko)
@@ -32,15 +32,15 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + joints="S": Selects active (selected) vehicle
 + combineXP
 - precisionFarming
-- fillLevel weight
-- ISO-Bus: activate terminal depending on connected implement
-- actual slip
-- pipe state
++ fillLevel weight (thanks to HiPhi)
+- ISO-Bus: activate dedicated terminal depending on connected implement
++ actual slip
++ pipe state
 - pipe overloading
 - cutter turn rate
 - front loader state
-% mini-map integration
-% camera integration
+? mini-map integration
+? camera integration
 
 -- VanillaIntegration-Backlog:
 + Fendt 700 series (thanks to HiPhi)

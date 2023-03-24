@@ -98,6 +98,7 @@ function DashboardLive.registerEventListeners(vehicleType)
 	SpecializationUtil.registerEventListener(vehicleType, "onReadUpdateStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onWriteUpdateStream", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onUpdate", DashboardLive)
+	SpecializationUtil.registerEventListener(vehicleType, "onDraw", DashboardLive)
 	SpecializationUtil.registerEventListener(vehicleType, "onPostAttachImplement", DashboardLive)
 end
 
@@ -167,6 +168,23 @@ function DashboardLive:onLoad(savegame)
         end
         if spec.modIntegration then
         	dbgprint("onLoad : ModIntegration <base>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
+        
+        -- combine
+        dashboardData = {	
+        					valueTypeToLoad = "combine",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveCombine,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesCombine
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <combine>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <combine>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
         
@@ -1469,6 +1487,31 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	return true
 end
 
+-- base
+function DashboardLive.getDBLAttributesCombine(self, xmlFile, key, dashboard)
+
+	local min = xmlFile:getValue(key .. "#min")
+	local max = xmlFile:getValue(key .. "#max")
+	local factor = xmlFile:getValue(key .. "#factor")
+	if min ~= nil then dashboard.dblMin = min end
+    if max ~= nil then dashboard.dblMax = max end
+    if factor ~= nil then dashboard.dblFactor = factor end
+	
+	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+    dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
+
+	dashboard.dblState = xmlFile:getValue(key .. "#state") -- swath state, ridgemarker state, ...
+	dbgprint("getDBLAttributesBase : state: "..tostring(dashboard.dblState), 2)
+	
+	dashboard.dblStateText = xmlFile:getValue(key .. "#stateText") -- tipSide
+	dbgprint("getDBLAttributesBase : stateText: "..tostring(dashboard.dblStateText), 2)
+	
+	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", 1)
+	dbgprint("getDBLAttributesBase : factor: "..tostring(dashboard.dblFactor), 2)
+	
+	return true
+end
+
 --vca
 function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
 	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
@@ -1771,13 +1814,83 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 	return false
 end
 
+function DashboardLive.getDashboardLiveCombine(self, dashboard)
+	dbgprint("getDashboardLiveCombine : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	local spec = self.spec_combine
+	if dashboard.dblCommand ~= nil and spec ~= nil then
+		
+		local c = dashboard.dblCommand
+		local st = dashboard.dblStateText
+		local sn = dashboard.dblState
+		
+		if c == "chopper" then
+			if st == "enabled" then
+				return not spec.isSwathActive
+			elseif st == "active" then
+				return spec.chopperPSenabled
+			end
+			
+		elseif c == "swath" then
+			if st == "enabled" then 
+				return spec.isSwathActive
+			elseif st == "active" then
+				return spec.strawPSenabled
+			end
+			
+		elseif c == "filling" then
+			return spec.isFilling
+		
+		elseif c == "hectars" then
+			return spec.workedHectars
+			
+		elseif c == "cutHeight" then
+			local specCutter = findspecialization(self, "spec_cutter")
+			if specCutter ~= nil then
+				return specCutter.currentCutHeight
+			end
+		
+		elseif c == "pipeState" then
+			local specPipe = self.spec_pipe
+			if specPipe ~= nil and sn ~= nil then
+				return specPipe.currentState == sn
+			end
+			
+		elseif c == "pipeFolding" then
+			local specPipe = self.spec_pipe
+			if specPipe ~= nil then
+				return specPipe.currentState ~= specPipe.targetState
+			end
+		
+		elseif c == "pipeFoldingState" then
+			local specPipe = self.spec_pipe
+			if specPipe ~= nil then
+				local returnValue = specPipe:getAnimationTime(specPipe.animation.name) * dashboard.dblFactor
+				dbgprint("pipeFoldingState: "..tostring(returnValue), 4)
+				return returnValue
+			end		
+			
+		elseif c == "overloading" then
+			local spec_dis = self.spec_dischargeable
+			if spec_dis ~= nil then
+				if sn ~= nil then
+					return spec_dis:getDischargeState() == sn
+				else
+					return spec_dis:getDischargeState() > 0
+				end
+			end
+		end
+	end
+	
+	--return false
+end
+
 function DashboardLive.getDashboardLiveVCA(self, dashboard)
 	dbgprint("getDashboardLiveVCA : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	if dashboard.dblCommand ~= nil then
 		local spec = self.spec_DashboardLive
 		local c = dashboard.dblCommand
 
-		if c == "park" or c == "park" then
+		if c == "park" then
 			if (spec.modVCAFound and self:vcaGetState("handbrake")) or (spec.modEVFound and self.vData.is[13]) then 
 				return true
 			else 
@@ -1801,6 +1914,9 @@ function DashboardLive.getDashboardLiveVCA(self, dashboard)
 	
 		elseif c == "ks" then
 			return spec.modVCAFound and self:vcaGetState("ksIsOn")
+			
+		elseif c == "slip" then
+			return spec.modVCAFound and self.spec_vca.wheelSlip ~= nil and (self.spec_vca.wheelSlip - 1) * 100
 		end
 	end
 	
@@ -2065,7 +2181,7 @@ function DashboardLive:onUpdate(dt)
 		spec.selectorGroup = self.currentSelection.subIndex or 0
 		--dbgprint("Selector value: "..tostring(spec.selectorActive), 2)
 		--dbgprint("Selector group: "..tostring(spec.selectorGroup), 2)
-		dbgrenderTable(spec, 1, 3)
+		--dbgrenderTable(spec, 1, 3)
 	end
 		
 	-- zoom
@@ -2106,5 +2222,17 @@ function DashboardLive:onUpdate(dt)
 		mspec.lastFuelUsage = spec.lastFuelUsage
 		mspec.lastDefUsage = spec.lastDefUsage
 		mspec.lastAirUsage = spec.lastAirUsage
+	end
+end
+
+function DashboardLive:onDraw()
+	if self.spec_combine ~= nil then
+		dbgrender("chopper: "..tostring(self.spec_combine.chopperPSenabled), 23, 3)
+		dbgrender("swath: "..tostring(self.spec_combine.strawPSenabled), 24, 3)
+		dbgrender("filling: "..tostring(self.spec_combine.isFilling), 25, 3)
+	end
+	if self.spec_dischargeable ~= nil then
+		dbgrenderTable(self.spec_dischargeable, 0, 3)
+		dbgrender("dischargeState: "..tostring(self.spec_dischargeable:getDischargeState()), 26, 3)
 	end
 end

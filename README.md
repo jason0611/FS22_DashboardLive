@@ -45,6 +45,10 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 - Generic spec access (functions/values)
 
 -- VanillaIntegration-Backlog:
++ Rigitrac SKE50
++ MAN TGS 18.500 4x4
++ JBC Fastrac 4220
++ Fendt 1000 Vario
 + Fendt 700 series (thanks to HiPhi)
 
 -- Internal improvements

@@ -24,7 +24,6 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + headingText1 (text): N/E/S/W
 + headingText2 (text): N/NE/E/SE/S/SW/W/NE
 + fieldNumber (text/number)
-+ hasSpec (boolean): test if specialization is present (thanks to HiPhi)
 + baleSize (number/text)
 + baleCount (number/text, needs )
 + lockSteeringAxle (boolean, needs lockSteeringAxles-Mod by Ifko)
@@ -33,14 +32,17 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + combineXP
 - precisionFarming
 + fillLevel weight (thanks to HiPhi)
-- ISO-Bus: activate dedicated terminal depending on connected implement
 + actual slip
 + pipe state
-- pipe overloading
++ pipe overloading
 - cutter turn rate
 - front loader state
 ? mini-map integration
 ? camera integration
+- CVT-Addon
++ hasSpec (boolean): test if specialization is present (thanks to HiPhi)
+- ISO-Bus: activate dedicated terminal depending on connected implement
+- Generic spec access (functions/values)
 
 -- VanillaIntegration-Backlog:
 + Fendt 700 series (thanks to HiPhi)
@@ -51,4 +53,3 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 - remove case-sensibility from commands
 
 ```
-

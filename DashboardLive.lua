@@ -971,6 +971,17 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					resultValue = resultValue or spec ~= nil
 				end
 				
+			elseif mode == "hasTypeDesc" then
+				resultValue = false
+				local vehicle = findSpecializationImplement(implement.object, "spec_attachable", t)
+				local options = element.dblOption
+				local option = string.split(options, " ")
+				for _, c in ipairs(option) do
+					local typeDesc = vehicle.typeDesc
+					local typeDescI18n = g_i18n.texts[option]
+					resultValue = resultValue or typeDesc == typeDescI18n
+				end
+				
             elseif mode == "raised" then
             	resultValue = not recursiveCheck(implement, implement.object.getIsLowered, true, false, t)
             	dbgprint(implement.object:getFullName().." raised: "..tostring(resultValue), 4)
@@ -1342,6 +1353,9 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 	--ph
 	elseif group.dblCommand == "base_hasSpec" then
 		returnValue = getAttachedStatus(self, group, "hasSpec",false)
+		
+	elseif group.dblCommand == "base_hasTypeDesc" then
+		returnValue = getAttachedStatus(self, group, "hasTypeDesc",false)
 
 	elseif specCS ~= nil and group.dblCommand == "base_steering" then
 		local dblOpt = group.dblOption
@@ -1717,6 +1731,10 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		-- hasSpec	
 		elseif cmds == "hasSpec" then
 			returnValue = getAttachedStatus(self,dashboard,"hasSpec",false)
+			
+		-- hasTypeDesc
+		elseif cmds == "hasTypeDesc" then
+			returnValue = getAttachedStatus(self,dashboard,"hasTypeDesc",false)
 			
 		-- tippingState
 		elseif cmds == "tippingState" then

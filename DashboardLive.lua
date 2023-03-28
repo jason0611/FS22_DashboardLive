@@ -46,12 +46,8 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblSelection")
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblSelectionGroup")
 	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#dblRidgeMarker", "Ridgemarker state")
-	schema:register(XMLValueType.BOOL, Dashboard.GROUP_XML_KEY .. "#dblAWI", "return 'true' without implement")
-	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblAJI")
-	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblS")
-	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblSG")
-	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#dblRM", "Ridgemarker state")
 	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dblOption", "DBL Option")
+	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dblTrailer", "DBL Trailer")
 	dbgprint("initSpecialization : DashboardLive group options registered", 2)
 	
 	Dashboard.registerDashboardXMLPaths(schema, "vehicle.dashboard.dashboardLive", "base fillLevel fillType vca hlm gps gps_lane gps_width proseed selector")
@@ -1246,38 +1242,22 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	group.dblOption = xmlFile:getValue(key .. "#dblOption")
 	dbgprint("loadDashboardGroupFromXML : dblOption: "..tostring(group.dblOption), 2)
 	
-	local dblActiveWithoutImplement = xmlFile:getValue(key.. "#dblActiveWithoutImplement", false)
-	if dblActiveWithoutImplement == nil then
-		dblActiveWithoutImplement = xmlFile:getValue(key.. "#dblAWI", false)
-	end
-	group.dblActiveWithoutImplement = dblActiveWithoutImplement
+	group.dblTrailer = xmlFile:getValue(key .. "#dblTrailer")
+	dbgprint("loadDashboardGroupFromXML : dblTrailer: "..tostring(group.dblTrailer), 2)
+	
+	group.dblActiveWithoutImplement = xmlFile:getValue(key.. "#dblActiveWithoutImplement", false)
 	dbgprint("loadDashboardGroupFromXML : dblActiveWithoutImplement: "..tostring(group.dblActiveWithoutImplement), 2)
 	
-	local dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAttacherJointIndices")
-	if dblAttacherJointIndices == nil then
-		dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAJI")
-	end
-	group.dblAttacherJointIndices = dblAttacherJointIndices
+	group.dblAttacherJointIndices = xmlFile:getValue(key .. "#dblAttacherJointIndices")
 	dbgprint("loadDashboardGroupFromXML : dblAttacherJointIndices: "..tostring(group.dblAttacherJointIndices), 2)
 	
-	local dblSelection = xmlFile:getValue(key .. "#dblSelection")
-	if dblSelection == nil then
-		dblSelection = xmlFile:getValue(key .. "#dblS")
-	end
-	group.dblSelection = dblSelection
+	group.dblSelection = xmlFile:getValue(key .. "#dblSelection")
 	dbgprint("loadDashboardGroupFromXML : dblSelection: "..tostring(group.dblSelection), 2)
 	
-	local dblSelectionGroup = xmlFile:getValue(key .. "#dblSelectionGroup")
-	if dblSelectionGroup == nil then
-		dblSelectionGroup = xmlFile:getValue(key .. "#dblSG")
-	end
-	group.dblSelectionGroup = dblSelectionGroup
+	group.dblSelectionGroup = xmlFile:getValue(key .. "#dblSelectionGroup")
 	dbgprint("loadDashboardGroupFromXML : dblSelectionGroup: "..tostring(group.dblSelectionGroup), 2)
 	
-	local dblRidgeMarker = xmlFile:getValue(key .. "#dblRidgeMarker")
-	if dblRidgeMarker == nil then
-		dblRidgeMarker = xmlFile:getValue(key .. "#dblRM")
-	end
+	group.dblRidgeMarker = xmlFile:getValue(key .. "#dblRidgeMarker")
 	dbgprint("loadDashboardGroupFromXML : dblRidgeMarker: "..tostring(group.dblRidgeMarker), 2)
     
     return true
@@ -1967,27 +1947,28 @@ function DashboardLive.getDashboardLiveGPS(self, dashboard)
 	local specHLM = self.spec_HeadlandManagement
 	local o = dashboard.dblOption
 	
-	if spec.modGuidanceSteeringFound and specGS ~= nil then
+	if spec.modGuidanceSteeringFound or spec.modVCAFound or spec.modEVFound then
 		if o == "on" then
-			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0) 
+			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
 			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and specHLM.contour ~= 0)
 			return returnValue
 		
 		elseif o == "active" then
-			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
+			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapIsOn")) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
 			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0 and not specHLM.contourSetActive)
 			return returnValue
 	
 		elseif o == "lane+" then
-			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane >= 0	
 			return returnValue
 
 		elseif o == "lane-" then
-			local returnValue = specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane < 0
 			return returnValue
 		end	

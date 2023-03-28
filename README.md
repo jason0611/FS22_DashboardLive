@@ -40,7 +40,8 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 ? mini-map integration
 ? camera integration
 - CVT-Addon
-+ hasSpec (boolean): test if specialization is present (thanks to HiPhi)
++ hasSpec (boolean): test if specialization is present (thanks to HiPhi77)
++ hasTypeDesc (boolean): test if vehicle or implement is of wanted type
 - ISO-Bus: activate dedicated terminal depending on connected implement
 - Generic spec access (functions/values)
 

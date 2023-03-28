@@ -966,17 +966,21 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					local spec = findSpecialization(implement.object, c, t)
 					resultValue = resultValue or spec ~= nil
 				end
+				dbgprint(implement.object:getFullName().." hasSpec "..tostring(options)..": "..tostring(resultValue), 4)
 				
 			elseif mode == "hasTypeDesc" then
 				resultValue = false
 				local vehicle = findSpecializationImplement(implement.object, "spec_attachable", t)
-				local options = element.dblOption
-				local option = string.split(options, " ")
-				for _, c in ipairs(option) do
-					local typeDesc = vehicle.typeDesc
-					local typeDescI18n = g_i18n.texts[option]
-					resultValue = resultValue or typeDesc == typeDescI18n
+				if vehicle ~= nil then
+					local options = element.dblOption
+					local option = string.split(options, " ")
+					for _, c in ipairs(option) do
+						local typeDesc = vehicle.typeDesc or ""
+						local typeDescI18n = g_i18n.texts["typeDesc_"..c]
+						resultValue = resultValue or typeDesc == typeDescI18n
+					end
 				end
+				dbgprint(implement.object:getFullName().." hasTypeDesc "..tostring(options)..": "..tostring(resultValue), 4)
 				
             elseif mode == "raised" then
             	resultValue = not recursiveCheck(implement, implement.object.getIsLowered, true, false, t)

@@ -939,7 +939,10 @@ local function getAttachedStatus(vehicle, element, mode, default)
 	local firstRun = true
 	
 	local t = element.dblTrailer
-    if t ~= nil then t = t - 1 end
+    if t ~= nil then 
+    	t = t - 1
+    	if t < 0 then t = 0 end
+    end
 	
     for _, jointIndex in ipairs(joints) do
     	dbgprint("jointIndex: "..tostring(tonumber(jointIndex)), 4)
@@ -1096,10 +1099,10 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "fillLevel" then
             	local o, t, p = element.dblOption, element.dblTrailer, element.dblPartition
 
-				if t == nil or t == 0 then t = 1 end -- t defaults to 1, for backward compatibility set t=1 if t==0, too
+				if t == nil then t = 0 end
 
 				local maxValue, pctValue, absValue, maxKGValue,absKGValue, pctKGValue
-				local fillLevel = getFillLevelStatus(implement.object, t-1, p)
+				local fillLevel = getFillLevelStatus(implement.object, t, p)
 				dbgprint_r(fillLevel, 4, 2)
 				
 				if fillLevel.abs == nil then 

@@ -1097,8 +1097,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	resultValue = specRM ~= nil and specRM.ridgeMarkerState or 0
             
             elseif mode == "fillLevel" then
-            	local o, t, p = element.dblOption, element.dblTrailer, element.dblPartition
-
+            	local o, p = element.dblOption, element.dblPartition
 				if t == nil then t = 0 end
 
 				local maxValue, pctValue, absValue, maxKGValue,absKGValue, pctKGValue

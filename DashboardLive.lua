@@ -942,8 +942,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 	local noImplement = true
 	local jointExists = false
 	
-	local andMode = element.dblOption ~= nil and string.find(element.dblOption, "all") ~= nil
-	local orMode = element.dblOption ~= nil and string.find(element.dblOption, "any") ~= nil
+	local andMode = element.dblOption ~= nil and string.find(string.lower(element.dblOption), "all") ~= nil
+	local orMode = element.dblOption ~= nil and string.find(string.lower(element.dblOption), "any") ~= nil
 	local firstRun = true
 	
 	local t = element.dblTrailer
@@ -1105,7 +1105,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	resultValue = specRM ~= nil and specRM.ridgeMarkerState or 0
             
             elseif mode == "filllevel" then
-            	local o, p = element.dblOption, element.dblPartition
+            	local o, p = lower(element.dblOption), element.dblPartition
 				if t == nil then t = 0 end
 
 				local maxValue, pctValue, absValue, maxKGValue,absKGValue, pctKGValue
@@ -1150,7 +1150,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				
 			elseif mode == "balesize" or mode == "isroundbale" then
 				local specBaler = findSpecialization(implement.object,"spec_baler")
-				local options = element.dblOption
+				local options = lower(element.dblOption)
 				if options == nil then options = "selected" end
 				local baleTypeDef  
 				if specBaler ~= nil and specBaler.currentBaleTypeIndex ~= nil and options == "current" then
@@ -1256,7 +1256,7 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	group.dblOperator = lower(xmlFile:getValue(key .. "#op", "and"))
 	dbgprint("loadDashboardGroupFromXML : dblOperator: "..tostring(group.dblOperator), 2)
 	
-	group.dblOption = lower(xmlFile:getValue(key .. "#dblOption"))
+	group.dblOption = xmlFile:getValue(key .. "#dblOption")
 	dbgprint("loadDashboardGroupFromXML : dblOption: "..tostring(group.dblOption), 2)
 	
 	group.dblTrailer = xmlFile:getValue(key .. "#dblTrailer")
@@ -1349,10 +1349,10 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		
 	--ph
 	elseif group.dblCommand == "base_hasspec" then
-		returnValue = getAttachedStatus(self, group, "hasSpec",false)
+		returnValue = getAttachedStatus(self, group, "hasspec",false)
 		
 	elseif group.dblCommand == "base_hastypedesc" then
-		returnValue = getAttachedStatus(self, group, "hasTypeDesc",false)
+		returnValue = getAttachedStatus(self, group, "hastypedesc",false)
 
 	elseif specCS ~= nil and group.dblCommand == "base_steering" then
 		local dblOpt = group.dblOption
@@ -1481,7 +1481,7 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dashboard.dblStateText = xmlFile:getValue(key .. "#stateText") -- tipSide
 	dbgprint("getDBLAttributesBase : stateText: "..tostring(dashboard.dblStateText), 2)
 	
-	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option")) -- nil or 'default'
+	dashboard.dblOption = xmlFile:getValue(key .. "#option") -- nil or 'default'
 	dbgprint("getDBLAttributesBase : option: "..tostring(dashboard.dblOption), 2)
 	
 	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- trailer

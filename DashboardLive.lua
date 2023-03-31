@@ -1955,26 +1955,26 @@ function DashboardLive.getDashboardLiveGPS(self, dashboard)
 	
 	if spec.modGuidanceSteeringFound or spec.modVCAFound or spec.modEVFound then
 		if o == "on" then
-			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
 			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and specHLM.contour ~= 0)
 			return returnValue
 		
 		elseif o == "active" then
-			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
+			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapIsOn")) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
 			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0 and not specHLM.contourSetActive)
 			return returnValue
 	
 		elseif o == "lane+" then
-			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane >= 0	
 			return returnValue
 
 		elseif o == "lane-" then
-			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane < 0
 			return returnValue
 		end	

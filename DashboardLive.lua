@@ -1140,7 +1140,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					resultValue = absValue
 				end
 				
-			elseif mode == "baleSize" then
+			elseif mode == "baleSize" or mode == "isRoundBale" then
 				local specBaler = findSpecialization(implement.object,"spec_baler")
 				local options = element.dblOption
 				if options == nil then options = "selected" end
@@ -1151,11 +1151,14 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					baleTypeDef = specBaler.baleTypes[specBaler.preSelectedBaleTypeIndex]
 				end
 				if baleTypeDef ~= nil then
-					if baleTypeDef.isRoundBale then
-						dbgprint("DBL baleSize isRoundBale: " .. tostring(baleTypeDef.diameter) .. "("..options..")",4)
+					if mode == "isRoundBale" then 
+						dbgprint("DBL isRoundBale: " .. tostring(baleTypeDef.isRoundBale),4)
+						resultValue = baleTypeDef.isRoundBale
+					elseif baleTypeDef.isRoundBale then
+						dbgprint("DBL baleSize roundBale: " .. tostring(baleTypeDef.diameter) .. "("..options..")",4)
 						resultValue = baleTypeDef.diameter * 100
 					else
-						dbgprint("DBL baleSize: " .. tostring(baleTypeDef.length) .. "("..options..")",4)
+						dbgprint("DBL baleSize squareBale: " .. tostring(baleTypeDef.length) .. "("..options..")",4)
 						resultValue = baleTypeDef.length * 100
 					end
 				end
@@ -2125,8 +2128,9 @@ function DashboardLive.getDashboardLiveBaler(self, dashboard)
 	dbgprint("getDashboardLiveBaler : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	local spec = self.spec_DashboardLive
 	local c = dashboard.dblCommand
-	
-	if c == "baleSize" then
+	if c == "isRoundBale" then
+		return getAttachedStatus(self, dashboard, "baleIsRound", 0)
+	elseif c == "baleSize" then
 		return getAttachedStatus(self, dashboard, "baleSize", 0)
 	elseif c == "baleCountAnz" then
 		return getAttachedStatus(self, dashboard, "baleCountAnz", 0)

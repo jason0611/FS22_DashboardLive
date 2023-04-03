@@ -1182,6 +1182,18 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						resultValue = specBaleCounter.countTotal
 						dbgprint(implement.object:getFullName().." baleCountTotal: "..tostring(resultValue), 4)
 					end
+				else
+					-- support for Goeweil DLC bale counter
+					specBaleCounter = findSpecialization(implement.object,"spec_pdlc_goeweilPack.baleCounter")
+					if specBaleCounter ~= nil then
+						if mode == "balecountanz" then
+							resultValue = specBaleCounter.sessionCounter
+							dbgprint(implement.object:getFullName().." baleCountAnz: "..tostring(resultValue), 4)	
+						else
+							resultValue = specBaleCounter.lifetimeCounter
+							dbgprint(implement.object:getFullName().." baleCountTotal: "..tostring(resultValue), 4)
+						end
+					end
 				end
 			
 			elseif mode == "wrappedbalecountanz" or mode == "wrappedbalecounttotal" then --baleCounter by Ifko|nator, www.lsfarming-mods.com
@@ -1620,6 +1632,8 @@ function DashboardLive.getDBLAttributesBaler(self, xmlFile, key, dashboard)
     
 	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
 	dbgprint("getDBLAttributesBaler : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
+	
+	dashboard.dblOption = xmlFile:getValue(key .. "#option", "selected") -- 'selected' or 'current'
 	
 	return true
 end

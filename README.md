@@ -35,9 +35,10 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + actual slip
 + pipe state
 + pipe overloading
++ hasSpec (boolean): test if specialization is present (thanks to HiPhi77)
++ hasTypeDesc (boolean): test if vehicle or implement is of wanted type
 - front loader state
 - CVT-Addon
-+ hasSpec (boolean): test if specialization is present (thanks to HiPhi)
 
 == Planned for later ModHub updates ==
 - precisionFarming

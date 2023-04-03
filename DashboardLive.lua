@@ -680,6 +680,14 @@ local function trim(text, textLength, alignment)
 	end
 end
 
+local function lower(text)
+	if text ~= nil then
+		return string.lower(text)
+	else
+		return nil
+	end
+end
+
 local function findSpecialization(device, specName, iteration, iterationStep)
 	iterationStep = iterationStep or 0 -- initialization
 	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
@@ -934,12 +942,15 @@ local function getAttachedStatus(vehicle, element, mode, default)
 	local noImplement = true
 	local jointExists = false
 	
-	local andMode = element.dblOption ~= nil and string.find(element.dblOption, "all") ~= nil
-	local orMode = element.dblOption ~= nil and string.find(element.dblOption, "any") ~= nil
+	local andMode = element.dblOption ~= nil and string.find(string.lower(element.dblOption), "all") ~= nil
+	local orMode = element.dblOption ~= nil and string.find(string.lower(element.dblOption), "any") ~= nil
 	local firstRun = true
 	
 	local t = element.dblTrailer
-    if t ~= nil then t = t - 1 end
+    if t ~= nil then 
+    	t = t - 1
+    	if t < 0 then t = 0 end
+    end
 	
     for _, jointIndex in ipairs(joints) do
     	dbgprint("jointIndex: "..tostring(tonumber(jointIndex)), 4)
@@ -958,7 +969,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	--dbgprint_r(implement, 4, 1)
     	
     	if implement ~= nil then
-    		if mode == "hasSpec" then
+    		if mode == "hasspec" then
 				resultValue = false
 				local options = element.dblOption
 				local option = string.split(options, " ")
@@ -968,7 +979,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				end
 				dbgprint(implement.object:getFullName().." hasSpec "..tostring(options)..": "..tostring(resultValue), 4)
 				
-			elseif mode == "hasTypeDesc" then
+			elseif mode == "hastypedesc" then
 				resultValue = false
 				local vehicle = findSpecializationImplement(implement.object, "spec_attachable", t)
 				if vehicle ~= nil then
@@ -997,7 +1008,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "pto" then
 				resultValue = findPTOStatus(implement.object)
 				
-			elseif mode == "ptoRpm" and vehicle.spec_motorized ~= nil and vehicle.spec_motorized.motor ~= nil then
+			elseif mode == "ptorpm" and vehicle.spec_motorized ~= nil and vehicle.spec_motorized.motor ~= nil then
 				if findPTOStatus(implement.object) then
 						resultValue = vehicle.spec_motorized.motor:getLastModulatedMotorRpm()
 				else
@@ -1028,7 +1039,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	resultValue = foldable and not unfolded and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 or false
                	dbgprint(implement.object:getFullName().." unfolding: "..tostring(resultValue), 4)
                	
-            elseif mode == "unfoldingState" then
+            elseif mode == "unfoldingstate" then
             	local foldable, subImplement = isFoldable(implement, true, true)
 				local implement = subImplement or implement
             	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
@@ -1038,7 +1049,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	end
                	dbgprint(implement.object:getFullName().." unfoldingState: "..tostring(resultValue), 4)
              
-            elseif mode == "foldingState" then
+            elseif mode == "foldingstate" then
             	local foldable, subImplement = isFoldable(implement, true, true)
 				local implement = subImplement or implement
             	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
@@ -1052,7 +1063,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	local specTR = findSpecialization(implement.object, "spec_trailer", t)
             	resultValue = specTR ~= nil and specTR:getTipState() > 0
             	
-            elseif mode == "tippingState" then
+            elseif mode == "tippingstate" then
             	local specImplement = findSpecializationImplement(implement.object, "spec_trailer", t)
 
             	if specImplement ~= nil and specImplement.spec_trailer:getTipState() > 0 then
@@ -1064,17 +1075,17 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	end
             	dbgprint(implement.object:getFullName().." tippingState (trailer "..tostring(t).."): "..tostring(resultValue), 4)
             	
-			elseif mode == "tipSide" or mode == "tipSideText" then
+			elseif mode == "tipside" or mode == "tipsidetext" then
 				local s = element.dblStateText
 				local specTR = findSpecialization(implement.object, "spec_trailer", t)            	
-				if mode == "tipSide" and s ~= nil and specTR ~= nil then 
+				if mode == "tipside" and s ~= nil and specTR ~= nil then 
 					local fullState = "info_tipSide"..tostring(s)
 					local fullStateName = g_i18n.texts[fullState]
 					local trailerStateNum = specTR.preferedTipSideIndex
 					local trailerStateName = specTR.tipSides[trailerStateNum].name
 					dbgprint("tipSide found for trailer: "..tostring(t).." / tipSide: "..tostring(trailerStateName), 4) 
 					resultValue = fullStateName == trailerStateName
-				elseif mode == "tipSideText" and specTR ~= nil then
+				elseif mode == "tipsidetext" and specTR ~= nil then
 					local len = string.len(element.textMask or "00.0")
 					local alignment = element.textAlignment or RenderText.ALIGN_RIGHT
 					local tipSideName = specTR.tipSides[specTR.preferedTipSideIndex].name
@@ -1082,24 +1093,23 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(returnValue), 4) 
 				else 
 					dbgprint(tostring(mode).." not found for trailer: "..tostring(t), 4)
-					if mode == "tipSideText" then
+					if mode == "tipsidetext" then
 						resultValue=""
 					else
 						resultValue = false
 					end
 				end
             
-            elseif mode == "ridgeMarker" then
+            elseif mode == "ridgemarker" then
             	local specRM = findSpecialization(implement.object, "spec_ridgeMarker")
             	resultValue = specRM ~= nil and specRM.ridgeMarkerState or 0
             
-            elseif mode == "fillLevel" then
-            	local o, t, p = element.dblOption, element.dblTrailer, element.dblPartition
-
-				if t == nil or t == 0 then t = 1 end -- t defaults to 1, for backward compatibility set t=1 if t==0, too
+            elseif mode == "filllevel" then
+            	local o, p = lower(element.dblOption), element.dblPartition
+				if t == nil then t = 0 end
 
 				local maxValue, pctValue, absValue, maxKGValue,absKGValue, pctKGValue
-				local fillLevel = getFillLevelStatus(implement.object, t-1, p)
+				local fillLevel = getFillLevelStatus(implement.object, t, p)
 				dbgprint_r(fillLevel, 4, 2)
 				
 				if fillLevel.abs == nil then 
@@ -1138,9 +1148,9 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					resultValue = absValue
 				end
 				
-			elseif mode == "baleSize" then
+			elseif mode == "balesize" or mode == "isroundbale" then
 				local specBaler = findSpecialization(implement.object,"spec_baler")
-				local options = element.dblOption
+				local options = lower(element.dblOption)
 				if options == nil then options = "selected" end
 				local baleTypeDef  
 				if specBaler ~= nil and specBaler.currentBaleTypeIndex ~= nil and options == "current" then
@@ -1149,20 +1159,23 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					baleTypeDef = specBaler.baleTypes[specBaler.preSelectedBaleTypeIndex]
 				end
 				if baleTypeDef ~= nil then
-					if baleTypeDef.isRoundBale then
-						dbgprint("DBL baleSize isRoundBale: " .. tostring(baleTypeDef.diameter) .. "("..options..")",4)
+					if mode == "isroundbale" then 
+						dbgprint("DBL isRoundBale: " .. tostring(baleTypeDef.isRoundBale),4)
+						resultValue = baleTypeDef.isRoundBale
+					elseif baleTypeDef.isRoundBale then
+						dbgprint("DBL baleSize roundBale: " .. tostring(baleTypeDef.diameter) .. "("..options..")",4)
 						resultValue = baleTypeDef.diameter * 100
 					else
-						dbgprint("DBL baleSize: " .. tostring(baleTypeDef.length) .. "("..options..")",4)
+						dbgprint("DBL baleSize squareBale: " .. tostring(baleTypeDef.length) .. "("..options..")",4)
 						resultValue = baleTypeDef.length * 100
 					end
 				end
 				
-			elseif mode == "baleCountAnz" or mode == "baleCountTotal" then -- baleCounter by Ifko|nator, www.lsfarming-mods.com
+			elseif mode == "balecountanz" or mode == "balecounttotal" then -- baleCounter by Ifko|nator, www.lsfarming-mods.com
 				local specBaleCounter = findSpecialization(implement.object,"spec_baleCounter")	
 				resultValue = 0
 				if specBaleCounter ~= nil then 
-					if mode == "baleCountAnz" then
+					if mode == "balecountanz" then
 						resultValue = specBaleCounter.countToday
 						dbgprint(implement.object:getFullName().." baleCountAnz: "..tostring(resultValue), 4)	
 					else
@@ -1171,11 +1184,11 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					end
 				end
 			
-			elseif mode == "wrappedBaleCountAnz" or mode == "wrappedBaleCountTotal" then --baleCounter by Ifko|nator, www.lsfarming-mods.com
+			elseif mode == "wrappedbalecountanz" or mode == "wrappedbalecounttotal" then --baleCounter by Ifko|nator, www.lsfarming-mods.com
 				local specBaleCounter = findSpecialization(implement.object,"spec_wrappedBaleCounter")	
 				resultValue = 0
 				if specBaleCounter ~= nil then 
-					if mode == "wrappedBaleCountAnz" then
+					if mode == "wrappedbalecountanz" then
 						resultValue = specBaleCounter.countToday
 						dbgprint(implement.object:getFullName().." wrappedBaleCountAnz: "..tostring(resultValue), 4)	
 					else
@@ -1184,7 +1197,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					end
 				end
 			
-			elseif mode == "lockSteeringAxle" then --lockSteeringAxles by Ifko|nator, www.lsfarming-mods.com
+			elseif mode == "locksteeringaxle" then --lockSteeringAxles by Ifko|nator, www.lsfarming-mods.com
 				local c = element.dblCommand
 				local specLSA = findSpecialization(implement.object, "spec_lockSteeringAxles", t)
 				if specLSA ~= nil and c == "found" then
@@ -1219,7 +1232,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
         dbgprint("Disconnected!", 4)
         return noImplement and jointExists
     end
-    dbgprint("ReturnValue: "..tostring(result), 4)
+    dbgprint("returnValue: "..tostring(result), 4)
     return result
 end
 
@@ -1232,7 +1245,7 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
     end
     dbgprint("loadDashboardGroupFromXML : group: "..tostring(group.name), 2)
     
-    group.dblCommand = xmlFile:getValue(key .. "#dbl")
+    group.dblCommand = lower(xmlFile:getValue(key .. "#dbl"))
     dbgprint("loadDashboardGroupFromXML : dblCommand: "..tostring(group.dblCommand), 2)
 	
 	if group.dblCommand == "page" then
@@ -1240,7 +1253,7 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 		dbgprint("loadDashboardGroupFromXML : page: "..tostring(group.dblPage), 2)
 	end
 	
-	group.dblOperator = xmlFile:getValue(key .. "#op", "and")
+	group.dblOperator = lower(xmlFile:getValue(key .. "#op", "and"))
 	dbgprint("loadDashboardGroupFromXML : dblOperator: "..tostring(group.dblOperator), 2)
 	
 	group.dblOption = xmlFile:getValue(key .. "#dblOption")
@@ -1299,7 +1312,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		end
 		
 	-- vanilla game selector group
-	elseif group.dblCommand == "base_selectorGroup" then
+	elseif group.dblCommand == "base_selectorgroup" then
 		local dblOpt = group.dblSelectionGroup
 		local groupActive = false
 		if dblOpt ~= "" then
@@ -1335,11 +1348,11 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		returnValue = getAttachedStatus(self, group, "unfolded", group.dblActiveWithoutImplement)	
 		
 	--ph
-	elseif group.dblCommand == "base_hasSpec" then
-		returnValue = getAttachedStatus(self, group, "hasSpec",false)
+	elseif group.dblCommand == "base_hasspec" then
+		returnValue = getAttachedStatus(self, group, "hasspec",false)
 		
-	elseif group.dblCommand == "base_hasTypeDesc" then
-		returnValue = getAttachedStatus(self, group, "hasTypeDesc",false)
+	elseif group.dblCommand == "base_hastypedesc" then
+		returnValue = getAttachedStatus(self, group, "hastypedesc",false)
 
 	elseif specCS ~= nil and group.dblCommand == "base_steering" then
 		local dblOpt = group.dblOption
@@ -1358,7 +1371,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		returnValue = specWM.state == tonumber(dblOpt)
 		
 	-- vanilla game ridgeMarker
-	elseif specRM ~= nil and group.dblCommand == "base_ridgeMarker" then
+	elseif specRM ~= nil and group.dblCommand == "base_ridgemarker" then
 		returnValue = group.dblRidgeMarker == specRM.ridgeMarkerState
 		
 	-- VCA / EV
@@ -1382,7 +1395,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		returnValue = (spec.modVCAFound and self:vcaGetState("diffLockAWD"))
 					or(spec.modEVFound and self.vData.is[3]==1)
 		
-	elseif group.dblCommand == "vca_diff_awdF" then
+	elseif group.dblCommand == "vca_diff_awdf" then
 		returnValue = spec.modVCAFound and self:vcaGetState("diffFrontAdv")
 	
 	-- VCA / keep speed
@@ -1450,7 +1463,7 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
     if max ~= nil then dashboard.dblMax = max end
     if factor ~= nil then dashboard.dblFactor = factor end
 	
-	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd"))
     dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
 
 	if dashboard.dblCommand == nil then 
@@ -1477,7 +1490,7 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", 0) -- trailer partition
 	dbgprint("getDBLAttributesBase : partition: "..tostring(dashboard.dblPartition), 2)
 	
-	if dashboard.dblCommand == "fillLevel" and dashboard.dblOption == "percent" then
+	if dashboard.dblCommand == "filllevel" and dashboard.dblOption == "percent" then
     	dashboard.dblMin = dashboard.dblMin or 0
     	dashboard.dblMax = dashboard.dblMax or 100
 	end
@@ -1495,7 +1508,7 @@ function DashboardLive.getDBLAttributesCombine(self, xmlFile, key, dashboard)
     if max ~= nil then dashboard.dblMax = max end
     if factor ~= nil then dashboard.dblFactor = factor end
 	
-	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd"))
     dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
 
 	dashboard.dblState = xmlFile:getValue(key .. "#state") -- swath state, ridgemarker state, ...
@@ -1512,7 +1525,7 @@ end
 
 --vca
 function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
-	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd"))
     dbgprint("getDBLAttributesVCA : cmd: "..tostring(dashboard.dblCommand), 2)
     
     if dashboard.dblCommand == nil then 
@@ -1525,7 +1538,7 @@ end
 
 --HLM
 function DashboardLive.getDBLAttributesHLM(self, xmlFile, key, dashboard)
-	dashboard.dblOption = xmlFile:getValue(key .. "#option")
+	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option"))
     dbgprint("getDBLAttributesHLM : option: "..tostring(dashboard.dblOption), 2)
 
     return true
@@ -1541,7 +1554,7 @@ function DashboardLive.getDBLAttributesGPS(self, xmlFile, key, dashboard)
     if max ~= nil then dashboard.dblMax = max end
     if factor ~= nil then dashboard.dblFactor = factor end
     
-	dashboard.dblOption = xmlFile:getValue(key .. "#option", "on") -- 'on' or 'active'
+	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option", "on")) -- 'on' or 'active'
     dbgprint("getDBLAttributesGPS : option: "..tostring(dashboard.dblOption), 2)
 
 	return true
@@ -1572,7 +1585,7 @@ function DashboardLive.getDBLAttributesPS(self, xmlFile, key, dashboard)
     if max ~= nil then dashboard.dblMax = max end
     if factor ~= nil then dashboard.dblFactor = factor end
     
-	dashboard.dblOption = xmlFile:getValue(key .. "#option", "mode")
+	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option", "mode"))
 	dashboard.dblState = xmlFile:getValue(key .. "#state", "")
     dbgprint("getDBLAttributesPS : option: "..tostring(dashboard.dblOption).." / state: "..tostring(dashboard.dblState), 2)
 
@@ -1602,7 +1615,7 @@ end
 -- baler
 function DashboardLive.getDBLAttributesBaler(self, xmlFile, key, dashboard)
 	
-	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd"))
     dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
     
 	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
@@ -1614,7 +1627,7 @@ end
 -- lock steering axles
 function DashboardLive.getDBLAttributesLSA(self, xmlFile, key, dashboard)
 	
-	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd"))
 	dbgprint("getDBLAttributesLSA : command: "..tostring(dashboard.dblCommand), 2)
 	
 	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
@@ -1629,7 +1642,7 @@ end
 -- combineXP by yumi
 function DashboardLive.getDBLAttributesCXP(self, xmlFile, key, dashboard)
 	
-	dashboard.dblCommand = xmlFile:getValue(key .. "#cmd")
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd"))
 	dbgprint("getDBLAttributesCXP : command: "..tostring(dashboard.dblCommand), 2)
 	
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", 100)
@@ -1677,9 +1690,9 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			elseif c == "pto" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "pto", o == "default")
 				
-			elseif c == "ptoRpm" then
+			elseif c == "ptorpm" then
 				if not dashboard.dblFactor then dashboard.dblFactor = 0.625 end
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "ptoRpm", o == "default")
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "ptorpm", o == "default")
 
 			elseif c == "foldable" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "foldable", o == "default", t)
@@ -1709,37 +1722,37 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		end
 		
 		-- fillLevel	
-		if cmds == "fillLevel" then
-			returnValue = getAttachedStatus(self, dashboard, "fillLevel", 0)
+		if cmds == "filllevel" then
+			returnValue = getAttachedStatus(self, dashboard, "filllevel", 0)
 			
 		-- hasSpec	
-		elseif cmds == "hasSpec" then
-			returnValue = getAttachedStatus(self,dashboard,"hasSpec",false)
+		elseif cmds == "hasspec" then
+			returnValue = getAttachedStatus(self,dashboard,"hasspec",false)
 			
 		-- hasTypeDesc
-		elseif cmds == "hasTypeDesc" then
-			returnValue = getAttachedStatus(self,dashboard,"hasTypeDesc",false)
+		elseif cmds == "hastypedesc" then
+			returnValue = getAttachedStatus(self,dashboard,"hastypedesc",false)
 			
 		-- tippingState
-		elseif cmds == "tippingState" then
-			returnValue = getAttachedStatus(self, dashboard, "tippingState", 0)
+		elseif cmds == "tippingstate" then
+			returnValue = getAttachedStatus(self, dashboard, "tippingstate", 0)
 			
 		-- ridgeMarker
-		elseif cmds == "ridgeMarker" then
+		elseif cmds == "ridgemarker" then
 			if s == "" or tonumber(s) == nil then
 				Logging.xmlWarning(self.xmlFile, "No ridgeMarker state given for DashboardLive ridgeMarker command")
 				returnValue = false
 			end
-			returnValue = getAttachedStatus(self, dashboard, "ridgeMarker") == tonumber(s)
+			returnValue = getAttachedStatus(self, dashboard, "ridgemarker") == tonumber(s)
 		
 		-- foldingState
-		elseif cmds == "foldingState" then
-			returnValue = getAttachedStatus(self, dashboard, "foldingState", 0)
-		elseif cmds == "unfoldingState" then
-			returnValue = getAttachedStatus(self, dashboard, "unfoldingState", 0)
+		elseif cmds == "foldingstate" then
+			returnValue = getAttachedStatus(self, dashboard, "foldingstate", 0)
+		elseif cmds == "unfoldingstate" then
+			returnValue = getAttachedStatus(self, dashboard, "unfoldingstate", 0)
 		
 		-- lowering state
-		elseif cmds == "liftState" and self.spec_attacherJoints ~= nil and tonumber(dashboard.dblAttacherJointIndices) ~= nil then
+		elseif cmds == "liftstate" and self.spec_attacherJoints ~= nil and tonumber(dashboard.dblAttacherJointIndices) ~= nil then
 			local attacherJoint = self.spec_attacherJoints.attacherJoints[tonumber(dashboard.dblAttacherJointIndices)]
 			if attacherJoint ~= nil and attacherJoint.moveAlpha ~= nil then
 				returnValue = 1 - attacherJoint.moveAlpha
@@ -1748,22 +1761,22 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			end
 			
 		-- tipSide / tipSideText
-		elseif cmds == "tipSide" or cmds == "tipSideText" then
+		elseif cmds == "tipside" or cmds == "tipsidetext" then
 			returnValue = getAttachedStatus(self, dashboard, cmds, 0)
 		
 		-- real clock
-		elseif cmds == "realClock" then
+		elseif cmds == "realclock" then
 			returnValue = getDate("%T")
 			
 		-- heading
-		elseif cmds == "heading" or cmds == "headingText1" or cmds == "headingText2" then
+		elseif cmds == "heading" or cmds == "headingtext1" or cmds == "headingtext2" then
 			local x1, y1, z1 = localToWorld(self.rootNode, 0, 0, 0)
 			local x2, y2, z2 = localToWorld(self.rootNode, 0, 0, 1)
 			local dx, dz = x2 - x1, z2 - z1
 			local heading = math.floor(180 - (180 / math.pi) * math.atan2(dx, dz))
 			if cmds == "heading" then
 				returnValue = heading
-			elseif cmds == "headingText2" then
+			elseif cmds == "headingtext2" then
 				local headingTexts = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
 				local index = math.floor(((heading + 22.5) % 360) * 8 / 360) + 1
 				dbgprint("heading: "..tostring(heading).." / index: "..tostring(index), 2)
@@ -1775,7 +1788,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			end
 
 		-- field number
-		elseif cmds == "fieldNumber" then
+		elseif cmds == "fieldnumber" then
 			local fieldNum = 0
 			local x, _, z = getWorldTranslation(self.rootNode)
 			local farmland = g_farmlandManager:getFarmlandAtWorldPosition(x, z)
@@ -1845,25 +1858,25 @@ function DashboardLive.getDashboardLiveCombine(self, dashboard)
 		elseif c == "hectars" then
 			return spec.workedHectars
 			
-		elseif c == "cutHeight" then
+		elseif c == "cutheight" then
 			local specCutter = findspecialization(self, "spec_cutter")
 			if specCutter ~= nil then
 				return specCutter.currentCutHeight
 			end
 		
-		elseif c == "pipeState" then
+		elseif c == "pipestate" then
 			local specPipe = self.spec_pipe
 			if specPipe ~= nil and sn ~= nil then
 				return specPipe.currentState == sn
 			end
 			
-		elseif c == "pipeFolding" then
+		elseif c == "pipefolding" then
 			local specPipe = self.spec_pipe
 			if specPipe ~= nil then
 				return specPipe.currentState ~= specPipe.targetState
 			end
 		
-		elseif c == "pipeFoldingState" then
+		elseif c == "pipefoldingstate" then
 			local specPipe = self.spec_pipe
 			if specPipe ~= nil then
 				local returnValue = specPipe:getAnimationTime(specPipe.animation.name) * dashboard.dblFactor
@@ -1911,7 +1924,7 @@ function DashboardLive.getDashboardLiveVCA(self, dashboard)
 		elseif c == "diff_awd" or c == "diff_awd" then
 			return (spec.modVCAFound and self:vcaGetState("diffLockAWD")) or (spec.modEVFound and self.vData.is[3]==1)
 		
-		elseif c == "diff_awdF" then
+		elseif c == "diff_awdf" then
 			return spec.modVCAFound and self:vcaGetState("diffFrontAdv")
 	
 		elseif c == "ks" then
@@ -1953,26 +1966,26 @@ function DashboardLive.getDashboardLiveGPS(self, dashboard)
 	
 	if spec.modGuidanceSteeringFound or spec.modVCAFound or spec.modEVFound then
 		if o == "on" then
-			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
 			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and specHLM.contour ~= 0)
 			return returnValue
 		
 		elseif o == "active" then
-			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
+			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapIsOn")) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
 			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0 and not specHLM.contourSetActive)
 			return returnValue
 	
 		elseif o == "lane+" then
-			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane >= 0	
 			return returnValue
 
 		elseif o == "lane-" then
-			local returnValue = spec.GS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane < 0
 			return returnValue
 		end	
@@ -2042,9 +2055,9 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 			end
 		elseif o == "distance" then
 			returnValue = specPS.tramLineDistance
-		elseif o == "laneDrive" then
+		elseif o == "lanedrive" then
 			returnValue = specPS.currentLane
-		elseif o == "laneFull" then
+		elseif o == "lanefull" then
 			local maxLine = specPS.tramLinePeriodicSequence
 			if maxLine == 2 and specPS.tramLineDistanceMultiplier == 1 then maxLine = 1 end
 			returnValue = maxLine
@@ -2123,22 +2136,23 @@ function DashboardLive.getDashboardLiveBaler(self, dashboard)
 	dbgprint("getDashboardLiveBaler : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	local spec = self.spec_DashboardLive
 	local c = dashboard.dblCommand
-	
-	if c == "baleSize" then
-		return getAttachedStatus(self, dashboard, "baleSize", 0)
-	elseif c == "baleCountAnz" then
-		return getAttachedStatus(self, dashboard, "baleCountAnz", 0)
-	elseif c == "baleCountTotal" then
-		return getAttachedStatus(self, dashboard, "baleCountTotal", 0)
-	elseif c == "wrappedBaleCountAnz" then
-		return getAttachedStatus(self, dashboard, "wrappedBaleCountAnz", 0)
-	elseif c == "wrappedBaleCountTotal" then
-		return getAttachedStatus(self, dashboard, "wrappedBaleCountTotal", 0)
+	if c == "isroundbale" then
+		return getAttachedStatus(self, dashboard, "baleisround", 0)
+	elseif c == "balesize" then
+		return getAttachedStatus(self, dashboard, "balesize", 0)
+	elseif c == "balecountanz" then
+		return getAttachedStatus(self, dashboard, "balecountanz", 0)
+	elseif c == "balecounttotal" then
+		return getAttachedStatus(self, dashboard, "balecounttotal", 0)
+	elseif c == "wrappedbalecountanz" then
+		return getAttachedStatus(self, dashboard, "wrappedbalecountanz", 0)
+	elseif c == "wrappedbalecounttotal" then
+		return getAttachedStatus(self, dashboard, "wrappedbalecounttotal", 0)
 	end
 end
 
 function DashboardLive.getDashboardLiveLSA(self, dashboard)
-	local returnValue = getAttachedStatus(self, dashboard, "lockSteeringAxle", false)
+	local returnValue = getAttachedStatus(self, dashboard, "locksteeringaxle", false)
 	dbgprint("getDashboardLiveLSA : returnValue: "..tostring(returnValue), 4)
 	return returnValue
 end
@@ -2150,18 +2164,18 @@ function DashboardLive.getDashboardLiveCXP(self, dashboard)
 	if specXP ~= nil and specXP.mrCombineLimiter ~= nil then
 		local returnValue
 		local mr = specXP.mrCombineLimiter
-		if c == "tonPerHour" then
+		if c == "tonperhour" then
 			returnValue = mr.tonPerHour
-		elseif c == "engineLoad" then
+		elseif c == "engineload" then
 			returnValue = mr.engineLoad * mr.loadMultiplier * f
 		elseif c == "yield" then
 			returnValue = mr.yield
-		elseif c == "highMoisture" then
+		elseif c == "highmoisture" then
 			returnValue = mr.highMoisture
 		end
 		dbgprint("combineXP returnValue: "..tostring(mr[c]), 4)
 		return returnValue
-	elseif c == "highMoisture" then
+	elseif c == "highmoisture" then
 		dbgprint("combineXP returnValue ("..tostring(self:getFullName()).."): false (spec not found)", 4)
 		return false
 	end

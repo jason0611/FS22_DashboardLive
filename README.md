@@ -19,6 +19,7 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 ```
 -- Feature-Backlog: (+) realized | (-) planned | (?) found no way until now | (%) impossible
 
+== Planned for next ModHub update ==
 + tippingState (text/number): percent number)
 + tipSide (boolean / text)
 + headingText1 (text): N/E/S/W
@@ -30,18 +31,20 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + realClock (text/number): Real-Life-Time
 + joints="S": Selects active (selected) vehicle
 + combineXP
-- precisionFarming
 + fillLevel weight (thanks to HiPhi)
 + actual slip
 + pipe state
 + pipe overloading
-- cutter turn rate
-- front loader state
-? mini-map integration
-? camera integration
-- CVT-Addon
 + hasSpec (boolean): test if specialization is present (thanks to HiPhi77)
 + hasTypeDesc (boolean): test if vehicle or implement is of wanted type
+- front loader state
+- CVT-Addon
+
+== Planned for later ModHub updates ==
+- precisionFarming
+- cutter turn rate
+? mini-map integration
+? camera integration
 - ISO-Bus: activate dedicated terminal depending on connected implement
 - Generic spec access (functions/values)
 
@@ -55,6 +58,5 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 -- Internal improvements
 + trim-function to adapt texts to given length
 - generalization of recursive functions
-- remove case-sensibility from commands
-
++ remove case-sensibility from commands
 ```

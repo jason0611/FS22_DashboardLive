@@ -1633,7 +1633,7 @@ function DashboardLive.getDBLAttributesBaler(self, xmlFile, key, dashboard)
 	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
 	dbgprint("getDBLAttributesBaler : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
 	
-	dashboard.dblOption = xmlFile:getValue(key .. "#option", "selected") -- 'selected' or 'current'
+	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option", "selected")) -- 'selected' or 'current'
 	
 	return true
 end

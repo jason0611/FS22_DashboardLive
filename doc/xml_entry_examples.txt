@@ -46,7 +46,31 @@ Fahrzeug xml Einträge
 			<!-- baleSize, current gives unfinished bale in baler, selected the next selected -->
 			<dashboard valueType="base" 	cmd="baleSize"	option="current"	joints="1 3 4"			displayType="TEXT" 			node="PT_baleSize_current" 		groups="MOTOR_ACTIVE"	textColor="0 0 0 1"		textSize="0.006"	textMask="000"	font="GENERIC"	textAlignment="RIGHT"/>
             <dashboard valueType="base" 	cmd="baleSize"	option="selected"	joints="1 3 4"			displayType="TEXT" 			node="PT_baleSize_selected" 	groups="MOTOR_ACTIVE"	textColor="0 0 0 1"		textSize="0.006"	textMask="000"	font="GENERIC"	textAlignment="RIGHT"/>
-			<!-- baleCount - to be used with Bale Count System by GameMasTer from modhub -->
-			<dashboard valueType="base" 	cmd="baleCount"	 		joints="1 3 4"			displayType="TEXT" 			node="PT_baleCount" 		groups="MOTOR_ACTIVE"		trailer="1"			textColor="0 0 0 1"		textSize="0.006"	textMask="000"	font="GENERIC"	textAlignment="RIGHT"/>
+			<!-- baleCount - to be used with Bale Count mod by ifko / goeweil DLC -->
+			<dashboard valueType="base" 	cmd="baleCountAnz"	 		joints="1 3 4"			displayType="TEXT" 			node="PT_baleCount" 		groups="MOTOR_ACTIVE"		trailer="1"			textColor="0 0 0 1"		textSize="0.006"	textMask="000"	font="GENERIC"	textAlignment="RIGHT"/>
+
+
+			<!-- Front Loader -->
+			<!-- tool Rotation
+				- joints - check vehicle xml, there should be an extra attacherjoint in the frontloader section, usually nr. 6
+				- option - ToolNumber to query, for base game frontloaders 1 and 2 
+				- factor - mainly to invert 
+
+				- can be used in TEXT, ANIMATION, SLIDER
+			-->
+            <dashboard valueType="frontLoader" 	cmd="toolrotation"	option="1" factor="-1"		    joints="6"		displayType="TEXT" 		    node="FO_CP_AngleText1" 		groups="MOTOR_ACTIVE DBL_FRONTLOADER"					textColor="0 0 0 1"		textSize="0.004"	textMask="00"	font="GENERIC"	textAlignment="RIGHT"/>
+            <dashboard valueType="frontLoader" 	cmd="toolrotation"	option="2" factor="1"		    joints="6"		displayType="TEXT" 		    node="FO_CP_AngleText2" 		groups="MOTOR_ACTIVE DBL_FRONTLOADER"					textColor="0 0 0 1"		textSize="0.004"	textMask="00"	font="GENERIC"	textAlignment="RIGHT"/>
+            <dashboard valueType="frontLoader" cmd="toolrotation"    factor="-1"	option="1"  joints="6" displayType="SLIDER"       node="loadBarFrontLoader1" minValueSlider="-5"    maxValueSlider="90" groups="MOTOR_ACTIVE"/>
+            <dashboard valueType="frontLoader" cmd="toolrotation"    factor="-1"	option="1"  joints="6" displayType="ANIMATION"       animName="FO_CP_Arm1_Anim" minValueAnim="-5"    	maxValueAnim="90" groups="MOTOR_ACTIVE"/>
+			<!-- istoolrotation
+				- boolean - true if rotation is between min and max
+
+				- to be used in VISIBILITY and EMITTER
+			-->
+            <dashboard valueType="frontLoader" cmd="istoolrotation" 	        option="2"  joints="6" displayType="EMITTER"       node="FO_CP_T1" min="-5" max="5" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE"/>
+
+			<!-- fillLevel of shovel attached to frontloder -->
+            <dashboard valueType="base" 	    cmd="fillLevel" option="abskg" joints="6" trailer="2" displayType="TEXT" node="FO_CP_FillLevel" groups="MOTOR_ACTIVE DBL_FRONTLOADER" textColor="0 0 0 1" textSize="0.006" font="GENERIC" textMask="000 kg" textAlignment="RIGHT"/>
+            
 		</dashboardLive>
 </dashboard>

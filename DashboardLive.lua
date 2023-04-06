@@ -1180,10 +1180,6 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						resultValue = baleTypeDef.length * 100
 					end
 				end
-			elseif mode == "baleautodrop" then
-				local specBaler = findSpecialization(implement.object,"spec_baleWrapper")
-				specBaler = specBaler or findSpecialization(implement.object,"spec_baler")
-				resultValue = specBaler~=nil and specBaler.automaticDrop
 			elseif mode == "balecountanz" or mode == "balecounttotal" then -- baleCounter by Ifko|nator, www.lsfarming-mods.com
 				local specBaleCounter = findSpecialization(implement.object,"spec_baleCounter")	
 				resultValue = 0
@@ -1237,14 +1233,15 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			-- frontloader
 			elseif mode == "toolrotation" or mode=="istoolrotation" then
 				local factor = element.dblFactor or 1
-				local specCyl = findSpecialization(implement.object,"spec_cylindered")
+				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
+				resultValue = 0
 				if specCyl ~= nil then
 					for toolIndex, tool in ipairs(specCyl.movingTools) do
 						if toolIndex == tonumber(element.dblOption) then
+							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor
 							if element.dblCommand == "toolrotation" then
-								resultValue = math.deg(tool.curRot[tool.rotationAxis]) * factor
+								resultValue = rot
 							elseif element.dblCommand == "istoolrotation" then
-								local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor
 								resultValue = rot >= element.dblMin and rot <=element.dblMax
 							end
 						end
@@ -2219,8 +2216,6 @@ function DashboardLive.getDashboardLiveBaler(self, dashboard)
 		return getAttachedStatus(self, dashboard, "wrappedbalecountanz", 0)
 	elseif c == "wrappedbalecounttotal" then
 		return getAttachedStatus(self, dashboard, "wrappedbalecounttotal", 0)
-	elseif c == "baleautodrop" then
-		return getAttachedStatus(self, dashboard, "baleautodrop", 0)
 	end
 end
 
@@ -2265,72 +2260,15 @@ function DashboardLive.getDashboardLiveFrontloader(self,dashboard)
 	dbgprint("getDashboardLiveFrontloader : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	local element = dashboard
 	local vehicle = self
-	if 1==1 then
-		return getAttachedStatus(vehicle,dashboard,dashboard.dblCommand)
-	else
-		-- from getAttachedStatus -- should be moved there...
-		if element.dblAttacherJointIndices == nil then
-			if element.attacherJointIndices ~= nil then
-				element.dblAttacherJointIndices = element.attacherJointIndices
-			else
-				Logging.xmlWarning(vehicle.xmlFile, "No attacherJointIndex given for DashboardLive attacher command "..tostring(mode))
-				return false
-			end
-		end
-
-		local joints 
-		if type(element.dblAttacherJointIndices) == "number" then
-			joints = {}
-			joints[1] = element.dblAttacherJointIndices
-		elseif type(element.dblAttacherJointIndices) == "table" then
-			joints = element.dblAttacherJointIndices
-		else
-			joints = string.split(element.dblAttacherJointIndices, " ")
-		end
-		local result = default or false
-		local noImplement = true
-		local jointExists = false
-		
-		local andMode = element.dblOption == "all" --element.dblOption ~= nil and string.find(element.dblOption, "all") ~= nil
-		local orMode = element.dblOption == "any" --element.dblOption ~= nil and string.find(element.dblOption, "any") ~= nil
-		local firstRun = true
-		
-		for _, jointIndex in ipairs(joints) do
-			dbgprint("jointIndex: "..tostring(tonumber(jointIndex)), 4)
-			local implement
-			if tonumber(jointIndex) == 0 then
-				implement = {}
-				implement.object = vehicle
-			else
-				implement = vehicle:getImplementFromAttacherJointIndex(tonumber(jointIndex)) 
-			end
-			jointExists = vehicle:getAttacherJointByJointDescIndex(tonumber(jointIndex)) ~= nil
-			dbgprint("jointExists: "..tostring(jointExists).." / implement: "..tostring(implement), 4)
-			if implement ~= nil then
-				local spec = implement.object.spec_cylindered
-				local dbgRow = 0
-				if spec ~= nil then
-					for toolIndex, tool in ipairs(spec.movingTools) do
-						dbgrender("tool rot " .. tostring(toolIndex) .. " : " .. tostring(tool.curRot[tool.rotationAxis]),dbgRow,3)
-						dbgRow = dbgRow + 1
-						local factor = dashboard.dblFactor or 1
-						-- dbgrender("tool tr " .. tostring(toolIndex) .. " : " .. tostring(tool.curTrans[tool.translationAxis]),dbgRow,3)
-						-- dbgRow = dbgRow + 1
-						--if type(element.dblOption) == "number" and toolIndex == tonumber(element.dblOption) then
-						if toolIndex == tonumber(element.dblOption) then
-							if element.dblCommand == "rotation" then
-								return math.deg(tool.curRot[tool.rotationAxis]) * factor
-							elseif element.dblCommand == "minmax" then
-								local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor
-								return rot >= element.dblMin and rot <=element.dblMax
-							end
-
-						end
-					end
-				end
-			end
-		end
+	local c = dashboard.dblCommand
+	local returnValue
+	if c == "toolrotation" then
+		returnValue = getAttachedStatus(vehicle,dashboard,"toolrotation",0)
+	elseif c == "istoolrotation" then
+		returnValue = getAttachedStatus(vehicle,dashboard,"istoolrotation",false)
 	end
+	return returnValue
+	
 end
 	
 function DashboardLive:onUpdate(dt)

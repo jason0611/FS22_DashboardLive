@@ -360,6 +360,16 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : ModIntegration <print>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
+
+		-- frontLoader
+        dashboardData = {	
+			valueTypeToLoad = "frontLoader",
+			valueObject = self,
+			valueFunc = DashboardLive.getDashboardLiveFrontloader,
+			additionalAttributesFunc = DashboardLive.getDBLAttributesFrontloader
+		}
+		self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData) 
+
     end
 end
 
@@ -1170,7 +1180,6 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						resultValue = baleTypeDef.length * 100
 					end
 				end
-				
 			elseif mode == "balecountanz" or mode == "balecounttotal" then -- baleCounter by Ifko|nator, www.lsfarming-mods.com
 				local specBaleCounter = findSpecialization(implement.object,"spec_baleCounter")	
 				resultValue = 0
@@ -1208,7 +1217,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						dbgprint(implement.object:getFullName().." wrappedBaleCountTotal: "..tostring(resultValue), 4)
 					end
 				end
-			
+
 			elseif mode == "locksteeringaxle" then --lockSteeringAxles by Ifko|nator, www.lsfarming-mods.com
 				local c = element.dblCommand
 				local specLSA = findSpecialization(implement.object, "spec_lockSteeringAxles", t)
@@ -1220,6 +1229,24 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					resultValue = false
 				end
 				dbgprint(implement.object:getFullName().." : lockSteeringAxles ("..tostring(c).."), trailer "..tostring(t)..": "..tostring(resultValue), 4)
+			
+			-- frontloader
+			elseif mode == "toolrotation" or mode=="istoolrotation" then
+				local factor = element.dblFactor or 1
+				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
+				resultValue = 0
+				if specCyl ~= nil then
+					for toolIndex, tool in ipairs(specCyl.movingTools) do
+						if toolIndex == tonumber(element.dblOption) then
+							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor
+							if element.dblCommand == "toolrotation" then
+								resultValue = rot
+							elseif element.dblCommand == "istoolrotation" then
+								resultValue = rot >= element.dblMin and rot <=element.dblMax
+							end
+						end
+					end
+				end
 
             elseif mode == "connected" then
             	resultValue = true
@@ -1673,6 +1700,29 @@ function DashboardLive.getDBLAttributesPrint(self, xmlFile, key, dashboard)
 	return true
 end
 
+-- frontLoader
+function DashboardLive.getDBLAttributesFrontloader(self, xmlFile, key, dashboard)
+	
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd","rotation")) -- rotation,  minmax
+    dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
+    
+	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
+	dbgprint("getDBLAttributesBaler : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
+
+	dashboard.dblOption = xmlFile:getValue(key .. "#option", "1") -- number of tool
+
+	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1") -- factor
+
+	local min = xmlFile:getValue(key .. "#min")
+	local max = xmlFile:getValue(key .. "#max")
+	
+	if min ~= nil then dashboard.dblMin = min end
+    if max ~= nil then dashboard.dblMax = max end
+    
+	
+	return true
+end
+
 -- get states
 
 function DashboardLive.getDashboardLiveBase(self, dashboard)
@@ -1946,6 +1996,10 @@ function DashboardLive.getDashboardLiveVCA(self, dashboard)
 			
 		elseif c == "slip" then
 			return spec.modVCAFound and self.spec_vca.wheelSlip ~= nil and (self.spec_vca.wheelSlip - 1) * 100
+		elseif c == "speed2" then
+			return spec.modVCAFound and self:vcaGetState("ccSpeed2")
+		elseif c == "speed3" then
+			return spec.modVCAFound and self:vcaGetState("ccSpeed3")
 		end
 	end
 	
@@ -2200,6 +2254,21 @@ function DashboardLive.getDashboardLivePrint(self, dashboard)
 	dbgprint("getDashboardLivePrint : dblOption: "..tostring(dashboard.dblOption), 4)
 	
 	return dashboard.dblOption or ""
+end
+
+function DashboardLive.getDashboardLiveFrontloader(self,dashboard)
+	dbgprint("getDashboardLiveFrontloader : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	local element = dashboard
+	local vehicle = self
+	local c = dashboard.dblCommand
+	local returnValue
+	if c == "toolrotation" then
+		returnValue = getAttachedStatus(vehicle,dashboard,"toolrotation",0)
+	elseif c == "istoolrotation" then
+		returnValue = getAttachedStatus(vehicle,dashboard,"istoolrotation",false)
+	end
+	return returnValue
+	
 end
 	
 function DashboardLive:onUpdate(dt)

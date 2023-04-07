@@ -1816,11 +1816,16 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			returnValue = getAttachedStatus(self, dashboard, "unfoldingstate", 0)
 		
 		-- lowering state
-		elseif cmds == "liftstate" and self.spec_attacherJoints ~= nil and tonumber(dashboard.dblAttacherJointIndices) ~= nil then
-			local attacherJoint = self.spec_attacherJoints.attacherJoints[tonumber(dashboard.dblAttacherJointIndices)]
-			if attacherJoint ~= nil and attacherJoint.moveAlpha ~= nil then
-				returnValue = 1 - attacherJoint.moveAlpha
+		elseif cmds == "liftstate" and self.spec_attacherJoints ~= nil then 
+			if tonumber(dashboard.dblAttacherJointIndices) ~= nil then
+				local attacherJoint = self.spec_attacherJoints.attacherJoints[tonumber(dashboard.dblAttacherJointIndices)]
+				if attacherJoint ~= nil and attacherJoint.moveAlpha ~= nil then
+					returnValue = 1 - attacherJoint.moveAlpha
+				else
+					returnValue = 0
+				end
 			else
+				Logging.xmlWarning(self.xmlFile, "command `liftstate` to show state of 3P-Joint must apply to only one attacherJoint")
 				returnValue = 0
 			end
 			
@@ -1886,7 +1891,6 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		if dashboard.dblMax ~= nil and type(returnValue) == "number" then
 			returnValue = math.min(returnValue, dashboard.dblMax)
 		end
-		
 		return returnValue
 	end
 	

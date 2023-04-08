@@ -1043,10 +1043,16 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolding" or mode == "folding" then
+            	local spec = implement.object.spec_foldable
             	local foldable, subImplement = isFoldable(implement, true, true)
 				local implement = subImplement or implement
             	local unfolded = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
-            	resultValue = foldable and not unfolded and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 or false
+            	--resultValue = foldable and not unfolded and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 or false
+               	if mode == "folding" then
+               		returnValue = foldable and not unfolded and spec.foldMoveDirection == 1 or false
+               	else
+               		returnValue = foldable and not unfolded and spec.foldMoveDirection == -1 or false
+               	end
                	dbgprint(implement.object:getFullName().." unfolding: "..tostring(resultValue), 4)
                	
             elseif mode == "unfoldingstate" then

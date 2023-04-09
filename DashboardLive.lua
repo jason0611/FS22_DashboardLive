@@ -914,8 +914,9 @@ local function recursiveCheck(implement, checkFunc, search, getCheckedImplement,
 	return checkResult
 end
 	
-local function isFoldable(implement, search, getFoldableImplement)
-	local foldable = implement.object ~= nil and implement.object.spec_foldable ~= nil and implement.object.spec_foldable.foldingParts ~= nil and #implement.object.spec_foldable.foldingParts > 0
+local function isFoldable(implement, search, getFoldableImplement, t)
+	local spec = implement.object ~= nil and findSpecialization(implement.object, "spec_foldable", t)
+	local foldable = spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
 	if not foldable and implement.object.spec_attacherJoints ~= nil and search then
 		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
 		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
@@ -1014,6 +1015,18 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "lowerable" then
 				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true, false, t)
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
+				
+			elseif mode == "lowering" or mode == "lifting" then
+				if vehicle.spec_attacherJoints ~= nil and vehicle.spec_attacherJoints.attacherJoints ~= nil then
+					local joint = vehicle.spec_attacherJoints.attacherJoints[tonumber(jointIndex)]
+					if mode == "lowering" then 
+						resultValue = joint ~= nil and joint.isMoving and joint.moveDown -- todo: check if animation is active
+					else
+						resultValue = joint ~= nil and joint.isMoving and not joint.moveDown -- todo: check if animation is active
+					end
+				else
+					resultValue = false
+				end
 			
 			elseif mode == "pto" then
 				resultValue = findPTOStatus(implement.object)
@@ -1031,44 +1044,46 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgprint(implement.object:getFullName().." foldable: "..tostring(resultValue), 4)
 				
 			elseif mode == "folded" then
-				local foldable, subImplement = isFoldable(implement, true, true)
+				local foldable, subImplement = isFoldable(implement, true, true, t)
 				local implement = subImplement or implement
 				resultValue = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded() and implement.object.spec_foldable.foldAnimTime == 1 or false
             	dbgprint(implement.object:getFullName().." folded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolded" then
-            	local foldable, subImplement = isFoldable(implement, true, true)
+            	local foldable, subImplement = isFoldable(implement, true, true, t)
 				local implement = subImplement or implement
             	resultValue = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolding" or mode == "folding" then
-            	local spec = implement.object.spec_foldable
-            	local foldable, subImplement = isFoldable(implement, true, true)
+            	local spec = findSpecialization(implement.object, "spec_foldable", t)
+            	local foldable, subImplement = isFoldable(implement, true, true, t)
 				local implement = subImplement or implement
             	local unfolded = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
             	--resultValue = foldable and not unfolded and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 or false
                	if mode == "folding" then
-               		returnValue = foldable and not unfolded and spec.foldMoveDirection == 1 or false
+               		resultValue = spec ~= nil and foldable and not unfolded and spec.foldMoveDirection == 1 and spec.foldAnimTime > 0 and spec.foldAnimTime < 1 or false
                	else
-               		returnValue = foldable and not unfolded and spec.foldMoveDirection == -1 or false
+               		resultValue = spec ~= nil and foldable and not unfolded and spec.foldMoveDirection == -1 and spec.foldAnimTime > 0 and spec.foldAnimTime < 1 or false
                	end
-               	dbgprint(implement.object:getFullName().." unfolding: "..tostring(resultValue), 4)
+               	dbgprint(implement.object:getFullName().." "..mode..": "..tostring(resultValue), 4)
                	
             elseif mode == "unfoldingstate" then
-            	local foldable, subImplement = isFoldable(implement, true, true)
+            	local foldable, subImplement = isFoldable(implement, true, true, t)
 				local implement = subImplement or implement
-            	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
-            		resultValue = 1 - implement.object.spec_foldable.foldAnimTime
+				local spec = findSpecialization(implement.object, "spec_foldable", t)
+            	if foldable and spec.foldAnimTime >= 0 and spec.foldAnimTime <= 1 then 
+            		resultValue = 1 - spec.foldAnimTime
             	else
             		resultValue = 0
             	end
                	dbgprint(implement.object:getFullName().." unfoldingState: "..tostring(resultValue), 4)
              
             elseif mode == "foldingstate" then
-            	local foldable, subImplement = isFoldable(implement, true, true)
+            	local foldable, subImplement = isFoldable(implement, true, true, t)
 				local implement = subImplement or implement
-            	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
+				local spec = findSpecialization(implement.object, "spec_foldable", t)
+            	if foldable and spec.foldAnimTime >= 0 and spec.foldAnimTime <= 1 then 
             		resultValue = implement.object.spec_foldable.foldAnimTime
             	else
             		resultValue = 0
@@ -1750,6 +1765,12 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 	
 			elseif c == "lifted" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "raised", o == "default", t)
+				
+			elseif c == "lifting" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lifting")
+				
+			elseif c == "lowering" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowering")
 	
 			elseif c == "lowered" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowered", o == "default", t)
@@ -1774,10 +1795,10 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolded", o == "default", t)
 			
 			elseif c == "folding" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "folding", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "folding")
 			
 			elseif c == "unfolding" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolding", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolding")
 			
 			elseif c == "tipping" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "tipping", o == "default")
@@ -1827,6 +1848,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				local attacherJoint = self.spec_attacherJoints.attacherJoints[tonumber(dashboard.dblAttacherJointIndices)]
 				if attacherJoint ~= nil and attacherJoint.moveAlpha ~= nil then
 					returnValue = 1 - attacherJoint.moveAlpha
+					dbgrenderTable(attacherJoint, 3, 3)
 				else
 					returnValue = 0
 				end

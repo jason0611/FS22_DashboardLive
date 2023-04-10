@@ -1113,7 +1113,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					local fullState = "info_tipSide"..tostring(s)
 					local fullStateName = g_i18n.texts[fullState]
 					local trailerStateNum = specTR.preferedTipSideIndex
-					local trailerStateName = specTR.tipSides[trailerStateNum].name
+					local trailerStateName = specTR.tipSides[trailerStateNum] ~= nil and specTR.tipSides[trailerStateNum].name
 					dbgprint("tipSide found for trailer: "..tostring(t).." / tipSide: "..tostring(trailerStateName), 4) 
 					resultValue = fullStateName == trailerStateName
 				elseif mode == "tipsidetext" and specTR ~= nil then

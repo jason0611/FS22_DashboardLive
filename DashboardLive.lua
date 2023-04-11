@@ -788,21 +788,50 @@ local function getIndexOfActiveImplement(rootVehicle, level)
 	return returnVal * returnSign
 end
 
-	
-local function getFillLevel(device, ftPartition, ftType)
-	dbgprint("getFillLevel: "..tostring(device:getName()), 4)
+local function getChoosenFillLevelState(device, ftPartition, ftType)
 	local fillLevel = {abs = nil, pct = nil, max = nil, maxKg = nil, absKg = nil, pctKg = nil}
+	local fillUnits = device:getFillUnits() or {}
+	dbgprint("getChoosenFillLevelState: fillUnits = "..tostring(fillUnits), 4)
 	
-	if device.spec_fillUnit ~= nil then -- only if device has got a fillUnit
+	for i = 1,#fillUnits do
+		if ftPartition ~= 0 then i = ftPartition end
+		local fillUnit = device:getFillUnitByIndex(i)
+		dbgprint("getChoosenFillLevelState: fillUnit = "..tostring(fillUnit), 4)
+		if fillUnit == nil then break end
 		
+		local ftIndex = device:getFillUnitFillType(i)
+		local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
+		if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
+			if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max, fillLevel.absKg = 0, 0, 0, 0 end
+			-- we cannot just sum up percentages... 50% + 50% <> 100%
+			--fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
+			fillLevel.abs = fillLevel.abs + device:getFillUnitFillLevel(i)
+			fillLevel.max = fillLevel.max + device:getFillUnitCapacity(i)
+			-- so lets calculate it on our own. (lua should not have a divide by zero problem...)
+			fillLevel.pct = fillLevel.abs / fillLevel.max
+			local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
+			if fillTypeDesc ~= nil then
+				fillLevel.absKg = fillLevel.absKg + device:getFillUnitFillLevel(i) * fillTypeDesc.massPerLiter * 1000
+			else
+				fillLevel.absKg = filllevel.absKg + device:getFillUnitFillLevel(i)
+			end
+		end
+		if ftPartition ~= 0 then break end
+	end
+	return fillLevel
+end
+	
+--[[
+local function getChoosenFillLevelState(device, ftPartition, ftType)
+	if device.spec_fillUnit ~= nil then -- only if device has got a fillUnit	
 		if ftPartition ~= 0 then
 			local fillUnit = device:getFillUnitByIndex(ftPartition)
-			dbgprint("getFillLevel: fillUnit = "..tostring(fillUnit), 4)
+			dbgprint("getChoosenFillLevelState: fillUnit = "..tostring(fillUnit), 4)
 			if fillUnit ~= nil then
 				local ftIndex = device:getFillUnitFillType(ftPartition)
-				dbgprint("getFillLevel: ftIndex = "..tostring(ftIndex), 4)
+				dbgprint("getChoosenFillLevelState: ftIndex = "..tostring(ftIndex), 4)
 				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
-				dbgprint("getFillLevel: ftCategory = "..tostring(ftCategory), 4)
+				dbgprint("getChoosenFillLevelState: ftCategory = "..tostring(ftCategory), 4)
 				if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
 					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
 					fillLevel.pct = device:getFillUnitFillLevelPercentage(ftPartition)
@@ -850,45 +879,70 @@ local function getFillLevel(device, ftPartition, ftType)
 	end
 	return fillLevel
 end
+--]]
+
+local function recursiveTrailerSearch(vehicle, trailer, step)
+	dbgprint("recursiveTrailerSearch", 4)
+	return findSpecializationImplement(vehicle, "spec_fillUnit", trailer)
+end
 
 -- returns fillLevel {pct, abs, max, absKg}
 -- param vehicle - vehicle reference
 -- param ftIndex - index of fillVolume: 1 - root/first trailer/implement, 2 - first/second trailer/implement, 3 - root/first and first/second trailer or implement
 -- param ftType  - fillType
-
-local function getFillLevelStatus(vehicle, ftIndex, ftPartition, ftType)
-	dbgprint("getFillLevelStatus", 4)
-	local spec = vehicle.spec_DashboardLive
-	local fillLevel = {abs = nil, pct = nil, max = nil}
+local function getFillLevelTable(vehicle, ftIndex, ftPartition, ftType)
+	dbgprint("getFillLevelTable", 4)
+	local fillLevelTable = {abs = nil, pct = nil, max = nil, maxKg = nil, absKg = nil, pctKg = nil}
 	
 	if ftType == nil then ftType = "ALL" end
 	
 	if ftType ~= "ALL" and g_fillTypeManager.nameToIndex[ftType] == nil and g_fillTypeManager.nameToCategoryIndex[ftType] == nil then
 		Logging.xmlWarning(vehicle.xmlFile, "Given fillType "..tostring(ftType).." not known!")
-		return fillLevel
+		return fillLevelTable
+	end
+	
+	local device = findSpecializationImplement(vehicle, "spec_fillUnit", ftIndex)
+	if device ~= nil then
+		fillLevelTable = getChoosenFillLevelState(device, ftPartition, ftType)
+	end
+	return fillLevelTable
+end
+
+--[[
+local function getFillLevelTable(vehicle, ftIndex, ftPartition, ftType)
+	dbgprint("getFillLevelTable", 4)
+	local spec = vehicle.spec_DashboardLive
+	local fillLevelTable = {abs = nil, pct = nil, max = nil, maxKg = nil, absKg = nil, pctKg = nil}
+	
+	if ftType == nil then ftType = "ALL" end
+	
+	if ftType ~= "ALL" and g_fillTypeManager.nameToIndex[ftType] == nil and g_fillTypeManager.nameToCategoryIndex[ftType] == nil then
+		Logging.xmlWarning(vehicle.xmlFile, "Given fillType "..tostring(ftType).." not known!")
+		return fillLevelTable
 	end
 	
 	-- root vehicle	or first implement (depends on "joint")
 	if ftIndex == 0 then
-		dbgprint("getFillLevelStatus : root vehicle or first implement", 4)
-		fillLevel = getFillLevel(vehicle, ftPartition, ftType)
+		dbgprint("getFillLevelTable : root vehicle or first implement", 4)
+		fillLevelTable = getChoosenFillLevelState(vehicle, ftPartition, ftType)
 	end
 	
 	-- next implement
 	if ftIndex == 1 then	
 		local allImplements = vehicle:getAttachedImplements()
-		dbgprint("getFillLevelStatus : next implement", 4)
+		dbgprint("getFillLevelTable : next implement", 4)
 		for _, implement in pairs(allImplements) do
-			fillLevel = getFillLevel(implement.object, ftPartition, ftType)
-			if fillLevel.abs ~= nil then -- first come, first serve
-				return fillLevel
+			fillLevelTable = getChoosenFillLevelState(implement.object, ftPartition, ftType)
+			if fillLevelTable.abs ~= nil then -- first come, first serve
+				return fillLevelTable
 			end
 		end
 	end
 
-	--dbgrenderTable(fillLevel, 1 + 5 * ftIndex, 3)
-	return fillLevel
+	--dbgrenderTable(fillLevelTable, 1 + 5 * ftIndex, 3)
+	return fillLevelTable
 end
+--]]
 
 local function recursiveCheck(implement, checkFunc, search, getCheckedImplement, iteration, iterationStep)
 	if implement.object == nil or checkFunc == nil then return false end
@@ -1140,7 +1194,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				if t == nil then t = 0 end
 
 				local maxValue, pctValue, absValue, maxKGValue,absKGValue, pctKGValue
-				local fillLevel = getFillLevelStatus(implement.object, t, p)
+				local fillLevel = getFillLevelTable(implement.object, t, p)
 				dbgprint_r(fillLevel, 4, 2)
 				
 				if fillLevel.abs == nil then 
@@ -2288,19 +2342,16 @@ function DashboardLive.getDashboardLivePrint(self, dashboard)
 	return dashboard.dblOption or ""
 end
 
-function DashboardLive.getDashboardLiveFrontloader(self,dashboard)
+function DashboardLive.getDashboardLiveFrontloader(self, dashboard)
 	dbgprint("getDashboardLiveFrontloader : dblCommand: "..tostring(dashboard.dblCommand), 4)
-	local element = dashboard
-	local vehicle = self
 	local c = dashboard.dblCommand
-	local returnValue
+	local returnValue = 0
 	if c == "toolrotation" then
-		returnValue = getAttachedStatus(vehicle,dashboard,"toolrotation",0)
+		returnValue = getAttachedStatus(self, dashboard, "toolrotation",0)
 	elseif c == "istoolrotation" then
-		returnValue = getAttachedStatus(vehicle,dashboard,"istoolrotation",false)
+		returnValue = getAttachedStatus(self, dashboard,"istoolrotation",false)
 	end
 	return returnValue
-	
 end
 	
 function DashboardLive:onUpdate(dt)

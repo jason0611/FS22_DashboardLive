@@ -344,6 +344,22 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : ModIntegration <combineXP>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
+        -- frontLoader
+        dashboardData = {
+							valueTypeToLoad = "frontLoader",
+							valueObject = self,
+							valueFunc = DashboardLive.getDashboardLiveFrontloader,
+							additionalAttributesFunc = DashboardLive.getDBLAttributesFrontloader
+		}
+		self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData) 
+		if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <frontLoader>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <frontLoader>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
         -- print
         dashboardData = {	
         					valueTypeToLoad = "print",
@@ -360,16 +376,6 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : ModIntegration <print>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
-
-		-- frontLoader
-        dashboardData = {	
-			valueTypeToLoad = "frontLoader",
-			valueObject = self,
-			valueFunc = DashboardLive.getDashboardLiveFrontloader,
-			additionalAttributesFunc = DashboardLive.getDBLAttributesFrontloader
-		}
-		self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData) 
-
     end
 end
 
@@ -1313,7 +1319,9 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				if specCyl ~= nil then
 					for toolIndex, tool in ipairs(specCyl.movingTools) do
 						if toolIndex == tonumber(element.dblOption) then
-							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor
+							local origin = tool.rotMax or 0
+							local originDeg = math.deg(origin) * -1
+							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor * -1 - originDeg
 							if element.dblCommand == "toolrotation" then
 								resultValue = rot
 							elseif element.dblCommand == "istoolrotation" then
@@ -1778,11 +1786,11 @@ end
 -- frontLoader
 function DashboardLive.getDBLAttributesFrontloader(self, xmlFile, key, dashboard)
 	
-	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd","rotation")) -- rotation,  minmax
-    dbgprint("getDBLAttributesBase : command: "..tostring(dashboard.dblCommand), 2)
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd", "toolrotation")) -- rotation,  minmax
+    dbgprint("getDBLAttributesFrontloader : command: "..tostring(dashboard.dblCommand), 2)
     
 	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
-	dbgprint("getDBLAttributesBaler : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
+	dbgprint("getDBLAttributesFrontloader : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
 
 	dashboard.dblOption = xmlFile:getValue(key .. "#option", "1") -- number of tool
 
@@ -1930,7 +1938,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			elseif cmds == "headingtext2" then
 				local headingTexts = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
 				local index = math.floor(((heading + 22.5) % 360) * 8 / 360) + 1
-				dbgprint("heading: "..tostring(heading).." / index: "..tostring(index), 2)
+				dbgprint("heading: "..tostring(heading).." / index: "..tostring(index), 4)
 				returnValue = headingTexts[index]
 			else
 				local headingTexts = {"N", "E", "S", "W"}
@@ -2347,9 +2355,11 @@ function DashboardLive.getDashboardLiveFrontloader(self, dashboard)
 	local c = dashboard.dblCommand
 	local returnValue = 0
 	if c == "toolrotation" then
-		returnValue = getAttachedStatus(self, dashboard, "toolrotation",0)
+		returnValue = getAttachedStatus(self, dashboard, "toolrotation")
+		dbgprint("getDashboardLiveFrontloader : toolrotation: returnValue: "..tostring(returnValue), 4)
 	elseif c == "istoolrotation" then
-		returnValue = getAttachedStatus(self, dashboard,"istoolrotation",false)
+		returnValue = getAttachedStatus(self, dashboard,"istoolrotation")
+		dbgprint("getDashboardLiveFrontloader : istoolrotation: returnValue: "..tostring(returnValue), 4)
 	end
 	return returnValue
 end

@@ -756,7 +756,6 @@ end
 
 -- recursive search through all attached vehicles including rootVehicle
 -- usage: call getIndexOfActiveImplement(rootVehicle)
-
 local function getIndexOfActiveImplement(rootVehicle, level)
 	
 	local level = level or 1
@@ -856,66 +855,6 @@ local function getChoosenAttacherState(device, ftType)
 	end
 	return fillLevel
 end
-	
---[[
-local function getChoosenFillLevelState(device, ftPartition, ftType)
-	if device.spec_fillUnit ~= nil then -- only if device has got a fillUnit	
-		if ftPartition ~= 0 then
-			local fillUnit = device:getFillUnitByIndex(ftPartition)
-			dbgprint("getChoosenFillLevelState: fillUnit = "..tostring(fillUnit), 4)
-			if fillUnit ~= nil then
-				local ftIndex = device:getFillUnitFillType(ftPartition)
-				dbgprint("getChoosenFillLevelState: ftIndex = "..tostring(ftIndex), 4)
-				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
-				dbgprint("getChoosenFillLevelState: ftCategory = "..tostring(ftCategory), 4)
-				if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
-					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
-					fillLevel.pct = device:getFillUnitFillLevelPercentage(ftPartition)
-					fillLevel.abs = device:getFillUnitFillLevel(ftPartition)
-					fillLevel.max = device:getFillUnitCapacity(ftPartition)
-					local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
-					if fillTypeDesc ~= nil then
-						fillLevel.absKg = device:getFillUnitFillLevel(ftPartition) * fillTypeDesc.massPerLiter * 1000
-					else
-						-- in case we do not get a fillTypeDesc, lets assume a massPerLiter of 1, not sure if this everhappens.
-						fillLevel.absKg = filllevel.abs
-					end
-
-					fillLevel.maxKg = ((device:getAvailableComponentMass()*1000) + fillLevel.absKg)
-					fillLevel.pctKg = fillLevel.absKg / fillLevel.maxKg
-					
-				end	
-			end
-		else
-			local fillUnits = device:getFillUnits()
-			for i,_ in pairs(fillUnits) do
-				local ftIndex = device:getFillUnitFillType(i)
-				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
-				if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
-					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max, fillLevel.absKg = 0, 0, 0, 0 end
-					-- we cannot just sum up percentages... 50% + 50% <> 100%
-					--fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
-					fillLevel.abs = fillLevel.abs + device:getFillUnitFillLevel(i)
-					fillLevel.max = fillLevel.max + device:getFillUnitCapacity(i)
-					-- so lets calculate it on our own. (lua should not have a divide by zero problem...)
-					fillLevel.pct = fillLevel.abs / fillLevel.max
-					local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
-					if fillTypeDesc ~= nil then
-						fillLevel.absKg = fillLevel.absKg + device:getFillUnitFillLevel(i) * fillTypeDesc.massPerLiter * 1000
-					else
-						fillLevel.absKg = filllevel.absKg + device:getFillUnitFillLevel(i)
-					end
-				end
-			end
-			-- Available Mass is only available for the device, not for a partition
-			fillLevel.maxKg = ((device:getAvailableComponentMass()*1000) + fillLevel.absKg)
-			fillLevel.pctKg = fillLevel.absKg / fillLevel.maxKg
-		end
-		
-	end
-	return fillLevel
-end
---]]
 
 local function recursiveTrailerSearch(vehicle, trailer, step)
 	dbgprint("recursiveTrailerSearch", 4)
@@ -949,68 +888,87 @@ local function getFillLevelTable(vehicle, ftIndex, ftPartition, ftType)
 	return fillLevelTable
 end
 
---[[
-local function getFillLevelTable(vehicle, ftIndex, ftPartition, ftType)
-	dbgprint("getFillLevelTable", 4)
-	local spec = vehicle.spec_DashboardLive
-	local fillLevelTable = {abs = nil, pct = nil, max = nil, maxKg = nil, absKg = nil, pctKg = nil}
-	
-	if ftType == nil then ftType = "ALL" end
-	
-	if ftType ~= "ALL" and g_fillTypeManager.nameToIndex[ftType] == nil and g_fillTypeManager.nameToCategoryIndex[ftType] == nil then
-		Logging.xmlWarning(vehicle.xmlFile, "Given fillType "..tostring(ftType).." not known!")
-		return fillLevelTable
-	end
-	
-	-- root vehicle	or first implement (depends on "joint")
-	if ftIndex == 0 then
-		dbgprint("getFillLevelTable : root vehicle or first implement", 4)
-		fillLevelTable = getChoosenFillLevelState(vehicle, ftPartition, ftType)
-	end
-	
-	-- next implement
-	if ftIndex == 1 then	
-		local allImplements = vehicle:getAttachedImplements()
-		dbgprint("getFillLevelTable : next implement", 4)
-		for _, implement in pairs(allImplements) do
-			fillLevelTable = getChoosenFillLevelState(implement.object, ftPartition, ftType)
-			if fillLevelTable.abs ~= nil then -- first come, first serve
-				return fillLevelTable
-			end
-		end
-	end
-
-	--dbgrenderTable(fillLevelTable, 1 + 5 * ftIndex, 3)
-	return fillLevelTable
-end
---]]
-
 local function recursiveCheck(implement, checkFunc, search, getCheckedImplement, iteration, iterationStep)
 	if implement.object == nil or checkFunc == nil then return false end
 	
 	if type(search)=="number" then 
 		iteration = search
+		search = false
+	elseif iteration == nil then
 		search = true
 	end
 	
 	iterationStep = iterationStep or 1 -- only implements (trailer >=1) are adressed
-	dbgprint("iteration: "..tostring(iteration), 4)
+	dbgprint("recursiveCheck : iteration: "..tostring(iteration), 4)
 	
-	local checkResult = checkFunc(implement.object, false)
-	if not checkResult and implement.object.spec_attacherJoints ~= nil and search and (iteration == nil or iterationStep < iteration) then
+	local checkResult = false
+	if search or iterationStep == iteration then checkResult = checkFunc(implement.object, false) end
+	local returnImplement = checkResult and implement or nil
+	
+	if not checkResult and implement.object.spec_attacherJoints ~= nil and (search or iterationStep < iteration) and (iteration == nil or iterationStep < iteration) then
 		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
 		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
-			checkResult = recursiveCheck(attachedImplements[1], checkFunc, search, getCheckedImplement, iteration, iterationStep + 1)
-		end
-		if getCheckedImplement then
-			return checkResult, attachedImplements[1]
+			checkResult, returnImplement = recursiveCheck(attachedImplements[1], checkFunc, search, getCheckedImplement, iteration, iterationStep + 1)
 		end
 	end
-	return checkResult
+	if getCheckedImplement then
+		return checkResult, returnImplement
+	else
+		return checkResult
+	end
+end
+
+local function getIsFoldable(device)
+	local spec = device.spec_foldable
+	return spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
+end
+
+local function isFoldable(implement, search, getFoldableImplement, t)
+	local foldable, returnImplement = recursiveCheck(implement, getIsFoldable, t == nil, getFoldableImplement, t)
+	if getFoldableImplement then
+		return foldable, returnImplement
+	else
+		return foldable
+	end
 end
 	
+--[[
+local function isFoldable(implement, search, getFoldableImplement, target, step)
+	local s = step or 0
+	local spec = implement.object ~= nil and implement.object.spec_foldable --findSpecialization(implement.object, "spec_foldable", t) or nil
+	local foldable = spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
+	local returnImplement = foldable and implement or nil
+	
+	if not foldable and implement.object.spec_attacherJoints ~= nil and search then
+		dbgprint("isFoldable : searching attached implements", 4)
+		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
+		if attachedImplements ~= nil and attachedImplements ~= {} then
+			for i = 1,#attachedImplements do
+				dbgprint("isFoldable : recursion - implement #"..tostring(i), 4)
+				foldable, returnImplement = isFoldable(attachedImplements[i], search, getFoldableImplement, t ~= nil and t-1 or nil)
+				if foldable then 
+					if returnImplement ~= nil then
+						dbgprint("isFoldable : Found implement "..tostring(returnImplement.object:getFullName()), 4)
+					else
+						dbgprint("isFoldable : Found implement", 4)
+					end
+					break 
+				end
+			end
+		end
+	end
+	
+	if foldable and getFoldableImplement then 
+		return foldable, returnImplement
+	else
+		return foldable
+	end
+end
+--]]
+
+--[[
 local function isFoldable(implement, search, getFoldableImplement, t)
-	local spec = implement.object ~= nil and findSpecialization(implement.object, "spec_foldable", t)
+	local spec = implement.object ~= nil and findSpecialization(implement.object, "spec_foldable", t) or nil
 	local foldable = spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
 	if not foldable and implement.object.spec_attacherJoints ~= nil and search then
 		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
@@ -1023,6 +981,7 @@ local function isFoldable(implement, search, getFoldableImplement, t)
 	end
 	return foldable
 end
+--]]
 
 local function getAttachedStatus(vehicle, element, mode, default)
 	
@@ -1114,10 +1073,18 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "lowering" or mode == "lifting" then
 				if vehicle.spec_attacherJoints ~= nil and vehicle.spec_attacherJoints.attacherJoints ~= nil then
 					local joint = vehicle.spec_attacherJoints.attacherJoints[tonumber(jointIndex)]
+					
+					local animationRunning = false
+					local loweringRange = true
+					local spec = findSpecialization(implement.object, "spec_foldable", t)
+					if spec ~= nil and spec.foldMiddleAnimTime ~= nil and (spec.foldAnimTime <= (spec.turnOnFoldMinLimit or 0) or spec.foldAnimTime >= (spec.turnOnFoldMaxLimit or 1)) then 
+            			loweringRange = false
+            		end
+					
 					if mode == "lowering" then 
-						resultValue = joint ~= nil and joint.isMoving and joint.moveDown -- todo: check if animation is active
+						resultValue = joint ~= nil and joint.isMoving and joint.moveDown and loweringRange
 					else
-						resultValue = joint ~= nil and joint.isMoving and not joint.moveDown -- todo: check if animation is active
+						resultValue = joint ~= nil and joint.isMoving and not joint.moveDown and loweringRange
 					end
 				else
 					resultValue = false
@@ -1139,34 +1106,34 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgprint(implement.object:getFullName().." foldable: "..tostring(resultValue), 4)
 				
 			elseif mode == "folded" then
-				local foldable, subImplement = isFoldable(implement, true, true, t)
-				local implement = subImplement or implement
-				resultValue = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded() and implement.object.spec_foldable.foldAnimTime == 1 or false
+				local foldable, foldableImplement = isFoldable(implement, true, true, t)
+				--local implement = subImplement or implement
+				resultValue = foldable and foldableImplement.object.getIsUnfolded ~= nil and not foldableImplement.object:getIsUnfolded() and foldableImplement.object.spec_foldable.foldAnimTime == 1 or false
             	dbgprint(implement.object:getFullName().." folded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolded" then
-            	local foldable, subImplement = isFoldable(implement, true, true, t)
-				local implement = subImplement or implement
-            	resultValue = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
+            	local foldable, foldableImplement = isFoldable(implement, true, true, t)
+            	resultValue = foldable and foldableImplement.object.getIsUnfolded ~= nil and foldableImplement.object:getIsUnfolded() or false
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolding" or mode == "folding" then
-            	local spec = findSpecialization(implement.object, "spec_foldable", t)
-            	local foldable, subImplement = isFoldable(implement, true, true, t)
-				local implement = subImplement or implement
-            	local unfolded = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
-            	--resultValue = foldable and not unfolded and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 or false
-               	if mode == "folding" then
-               		resultValue = spec ~= nil and foldable and not unfolded and spec.foldMoveDirection == 1 and spec.foldAnimTime > 0 and spec.foldAnimTime < 1 or false
-               	else
-               		resultValue = spec ~= nil and foldable and not unfolded and spec.foldMoveDirection == -1 and spec.foldAnimTime > 0 and spec.foldAnimTime < 1 or false
-               	end
-               	dbgprint(implement.object:getFullName().." "..mode..": "..tostring(resultValue), 4)
-               	
+            	local foldable, foldableImplement = isFoldable(implement, true, true, t)
+            	if not foldable then 
+            		resultValue = false
+            	else
+					local spec = foldableImplement ~= nil and foldableImplement.object ~= nil and foldableImplement.object.spec_foldable or nil
+					local unfolded = foldableImplement ~= nil and foldableImplement.object ~= nil and foldableImplement.object.getIsUnfolded ~= nil and foldableImplement.object:getIsUnfolded()
+					if mode == "folding" then
+						resultValue = spec ~= nil and not unfolded and spec.foldMoveDirection == 1 and spec.foldAnimTime > 0 and spec.foldAnimTime < 1
+					else
+						resultValue = spec ~= nil and not unfolded and spec.foldMoveDirection == -1 and spec.foldAnimTime > 0 and spec.foldAnimTime < 1
+					end
+					dbgprint(implement.object:getFullName().." "..mode..": "..tostring(resultValue), 4)
+				end
+				
             elseif mode == "unfoldingstate" then
-            	local foldable, subImplement = isFoldable(implement, true, true, t)
-				local implement = subImplement or implement
-				local spec = findSpecialization(implement.object, "spec_foldable", t)
+            	local spec = findSpecialization(implement.object, "spec_foldable", t)
+            	local foldable = isFoldable(implement, true, false, t)
             	if foldable and spec.foldAnimTime >= 0 and spec.foldAnimTime <= 1 then 
             		resultValue = 1 - spec.foldAnimTime
             	else
@@ -1175,11 +1142,10 @@ local function getAttachedStatus(vehicle, element, mode, default)
                	dbgprint(implement.object:getFullName().." unfoldingState: "..tostring(resultValue), 4)
              
             elseif mode == "foldingstate" then
-            	local foldable, subImplement = isFoldable(implement, true, true, t)
-				local implement = subImplement or implement
-				local spec = findSpecialization(implement.object, "spec_foldable", t)
+            	local spec = findSpecialization(implement.object, "spec_foldable", t)
+            	local foldable = isFoldable(implement, true, false, t)
             	if foldable and spec.foldAnimTime >= 0 and spec.foldAnimTime <= 1 then 
-            		resultValue = implement.object.spec_foldable.foldAnimTime
+            		resultValue = spec.foldAnimTime
             	else
             		resultValue = 0
             	end

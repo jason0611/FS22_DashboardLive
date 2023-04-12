@@ -101,6 +101,7 @@ end
 function DashboardLive.registerOverwrittenFunctions(vehicleType)
 	SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsDashboardGroupActive", DashboardLive.getIsDashboardGroupActive)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "defaultAnimationDashboardStateFunc", DashboardLive.defaultAnimationDashboardStateFunc)
 end
 
 function DashboardLive:onPreLoad(savegame)
@@ -898,7 +899,7 @@ local function recursiveCheck(implement, checkFunc, search, getCheckedImplement,
 		search = true
 	end
 	
-	iterationStep = iterationStep or 1 -- only implements (trailer >=1) are adressed
+	iterationStep = iterationStep or 0 -- only implements here, so we start at 0
 	dbgprint("recursiveCheck : iteration: "..tostring(iteration), 4)
 	
 	local checkResult = false
@@ -931,57 +932,6 @@ local function isFoldable(implement, search, getFoldableImplement, t)
 		return foldable
 	end
 end
-	
---[[
-local function isFoldable(implement, search, getFoldableImplement, target, step)
-	local s = step or 0
-	local spec = implement.object ~= nil and implement.object.spec_foldable --findSpecialization(implement.object, "spec_foldable", t) or nil
-	local foldable = spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
-	local returnImplement = foldable and implement or nil
-	
-	if not foldable and implement.object.spec_attacherJoints ~= nil and search then
-		dbgprint("isFoldable : searching attached implements", 4)
-		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
-		if attachedImplements ~= nil and attachedImplements ~= {} then
-			for i = 1,#attachedImplements do
-				dbgprint("isFoldable : recursion - implement #"..tostring(i), 4)
-				foldable, returnImplement = isFoldable(attachedImplements[i], search, getFoldableImplement, t ~= nil and t-1 or nil)
-				if foldable then 
-					if returnImplement ~= nil then
-						dbgprint("isFoldable : Found implement "..tostring(returnImplement.object:getFullName()), 4)
-					else
-						dbgprint("isFoldable : Found implement", 4)
-					end
-					break 
-				end
-			end
-		end
-	end
-	
-	if foldable and getFoldableImplement then 
-		return foldable, returnImplement
-	else
-		return foldable
-	end
-end
---]]
-
---[[
-local function isFoldable(implement, search, getFoldableImplement, t)
-	local spec = implement.object ~= nil and findSpecialization(implement.object, "spec_foldable", t) or nil
-	local foldable = spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
-	if not foldable and implement.object.spec_attacherJoints ~= nil and search then
-		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
-		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
-			foldable = isFoldable(attachedImplements[1])
-		end
-		if getFoldableImplement then 
-			return foldable, attachedImplements[1]
-		end
-	end
-	return foldable
-end
---]]
 
 local function getAttachedStatus(vehicle, element, mode, default)
 	
@@ -1358,6 +1308,15 @@ local function getAttachedStatus(vehicle, element, mode, default)
     dbgprint("returnValue: "..tostring(result), 4)
     return result
 end
+
+-- Overwritten vanilla-functions to achieve a better tolerance to errors caused by wrong variable types
+function DashboardLive:defaultAnimationDashboardStateFunc(superfunc, dashboard, newValue, minValue, maxValue, isActive)
+	if type(newValue)=="boolean" then
+		if newValue then newValue = 1 else newValue = 0 end
+	end
+	return superfunc(self, dashboard, newValue, minValue, maxValue, isActive)
+end
+Dashboard.defaultAnimationDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultAnimationDashboardStateFunc, DashboardLive.defaultAnimationDashboardStateFunc)
 
 -- GROUPS
 
@@ -1814,7 +1773,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 	if dashboard.dblCommand ~= nil then
 		local specWM = self.spec_workMode
 		local specRM = self.spec_ridgeMarker
-		local cmds, j, s, o, t = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption, dashboard.dblTrailer
+		local cmds, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption
 		local cmd = string.split(cmds, " ")
 		local returnValue = false
 		
@@ -1827,7 +1786,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "connected")
 	
 			elseif c == "lifted" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "raised", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "raised", o == "default")
 				
 			elseif c == "lifting" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "lifting")
@@ -1836,10 +1795,10 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowering")
 	
 			elseif c == "lowered" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowered", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowered", o == "default")
 
 			elseif c == "lowerable" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowerable", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowerable", o == "default")
 
 			elseif c == "pto" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "pto", o == "default")
@@ -1849,13 +1808,13 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "ptorpm", o == "default")
 
 			elseif c == "foldable" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "foldable", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "foldable", o == "default")
 
 			elseif c == "folded" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "folded", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "folded", o == "default")
 
 			elseif c == "unfolded" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolded", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolded", o == "default")
 			
 			elseif c == "folding" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "folding")

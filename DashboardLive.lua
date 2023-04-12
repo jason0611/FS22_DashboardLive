@@ -826,6 +826,36 @@ local function getChoosenFillLevelState(device, ftPartition, ftType)
 	end
 	return fillLevel
 end
+
+local function getChoosenAttacherState(device, ftType)
+	local fillLevel = {abs = nil, pct = nil, max = nil, maxKg = nil, absKg = nil, pctKg = nil}
+	local fillUnits = device.spec_dynamicMountAttacher.dynamicMountedObjects or {}
+	dbgprint("getChoosenAttacherState: fillUnits = "..tostring(fillUnits), 4)
+	
+	for i,fillUnit in pairs(fillUnits) do
+		dbgprint("getChoosenFillLevelState: fillUnit = "..tostring(fillUnit), 4)
+		if fillUnit == nil then break end
+		
+		local ftIndex = fillUnit.fillType
+		local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
+		if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
+			if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max, fillLevel.absKg = 0, 0, 0, 0 end
+			-- we cannot just sum up percentages... 50% + 50% <> 100%
+			--fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
+			fillLevel.abs = fillLevel.abs + fillUnit.fillLevel
+			fillLevel.max = fillLevel.max + fillUnit.fillLevel
+			-- so lets calculate it on our own. (lua should not have a divide by zero problem...)
+			fillLevel.pct = fillLevel.abs / fillLevel.max
+			local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
+			if fillTypeDesc ~= nil then
+				fillLevel.absKg = fillLevel.absKg + fillUnit.fillLevel * fillTypeDesc.massPerLiter * 1000
+			else
+				fillLevel.absKg = filllevel.absKg + fillUnit.fillLevel
+			end
+		end
+	end
+	return fillLevel
+end
 	
 --[[
 local function getChoosenFillLevelState(device, ftPartition, ftType)
@@ -910,6 +940,11 @@ local function getFillLevelTable(vehicle, ftIndex, ftPartition, ftType)
 	local device = findSpecializationImplement(vehicle, "spec_fillUnit", ftIndex)
 	if device ~= nil then
 		fillLevelTable = getChoosenFillLevelState(device, ftPartition, ftType)
+	else
+		device = findSpecializationImplement(vehicle, "spec_dynamicMountAttacher", ftIndex)
+		if device ~= nil then 
+			fillLevelTable = getChoosenAttacherState(device, ftType)
+		end
 	end
 	return fillLevelTable
 end

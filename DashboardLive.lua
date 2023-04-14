@@ -101,6 +101,7 @@ end
 function DashboardLive.registerOverwrittenFunctions(vehicleType)
 	SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsDashboardGroupActive", DashboardLive.getIsDashboardGroupActive)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "defaultAnimationDashboardStateFunc", DashboardLive.defaultAnimationDashboardStateFunc)
 end
 
 function DashboardLive:onPreLoad(savegame)
@@ -342,6 +343,22 @@ function DashboardLive:onLoad(savegame)
         end
         if spec.modIntegration then
         	dbgprint("onLoad : ModIntegration <combineXP>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
+        -- frontLoader
+        dashboardData = {
+							valueTypeToLoad = "frontLoader",
+							valueObject = self,
+							valueFunc = DashboardLive.getDashboardLiveFrontloader,
+							additionalAttributesFunc = DashboardLive.getDBLAttributesFrontloader
+		}
+		self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData) 
+		if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <frontLoader>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <frontLoader>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
         -- print
@@ -740,7 +757,6 @@ end
 
 -- recursive search through all attached vehicles including rootVehicle
 -- usage: call getIndexOfActiveImplement(rootVehicle)
-
 local function getIndexOfActiveImplement(rootVehicle, level)
 	
 	local level = level or 1
@@ -778,106 +794,99 @@ local function getIndexOfActiveImplement(rootVehicle, level)
 	return returnVal * returnSign
 end
 
-	
-local function getFillLevel(device, ftPartition, ftType)
-	dbgprint("getFillLevel: "..tostring(device:getName()), 4)
+local function getChoosenFillLevelState(device, ftPartition, ftType)
 	local fillLevel = {abs = nil, pct = nil, max = nil, maxKg = nil, absKg = nil, pctKg = nil}
+	local fillUnits = device:getFillUnits() or {}
+	dbgprint("getChoosenFillLevelState: fillUnits = "..tostring(fillUnits), 4)
 	
-	if device.spec_fillUnit ~= nil then -- only if device has got a fillUnit
+	for i = 1,#fillUnits do
+		if ftPartition ~= 0 then i = ftPartition end
+		local fillUnit = device:getFillUnitByIndex(i)
+		dbgprint("getChoosenFillLevelState: fillUnit = "..tostring(fillUnit), 4)
+		if fillUnit == nil then break end
 		
-		if ftPartition ~= 0 then
-			local fillUnit = device:getFillUnitByIndex(ftPartition)
-			dbgprint("getFillLevel: fillUnit = "..tostring(fillUnit), 4)
-			if fillUnit ~= nil then
-				local ftIndex = device:getFillUnitFillType(ftPartition)
-				dbgprint("getFillLevel: ftIndex = "..tostring(ftIndex), 4)
-				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
-				dbgprint("getFillLevel: ftCategory = "..tostring(ftCategory), 4)
-				if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
-					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max = 0, 0, 0 end
-					fillLevel.pct = device:getFillUnitFillLevelPercentage(ftPartition)
-					fillLevel.abs = device:getFillUnitFillLevel(ftPartition)
-					fillLevel.max = device:getFillUnitCapacity(ftPartition)
-					local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
-					if fillTypeDesc ~= nil then
-						fillLevel.absKg = device:getFillUnitFillLevel(ftPartition) * fillTypeDesc.massPerLiter * 1000
-					else
-						-- in case we do not get a fillTypeDesc, lets assume a massPerLiter of 1, not sure if this everhappens.
-						fillLevel.absKg = filllevel.abs
-					end
-
-					fillLevel.maxKg = ((device:getAvailableComponentMass()*1000) + fillLevel.absKg)
-					fillLevel.pctKg = fillLevel.absKg / fillLevel.maxKg
-					
-				end	
+		local ftIndex = device:getFillUnitFillType(i)
+		local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
+		if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
+			if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max, fillLevel.absKg = 0, 0, 0, 0 end
+			-- we cannot just sum up percentages... 50% + 50% <> 100%
+			--fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
+			fillLevel.abs = fillLevel.abs + device:getFillUnitFillLevel(i)
+			fillLevel.max = fillLevel.max + device:getFillUnitCapacity(i)
+			-- so lets calculate it on our own. (lua should not have a divide by zero problem...)
+			fillLevel.pct = fillLevel.abs / fillLevel.max
+			local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
+			if fillTypeDesc ~= nil then
+				fillLevel.absKg = fillLevel.absKg + device:getFillUnitFillLevel(i) * fillTypeDesc.massPerLiter * 1000
+			else
+				fillLevel.absKg = filllevel.absKg + device:getFillUnitFillLevel(i)
 			end
-		else
-			local fillUnits = device:getFillUnits()
-			for i,_ in pairs(fillUnits) do
-				local ftIndex = device:getFillUnitFillType(i)
-				local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
-				if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
-					if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max, fillLevel.absKg = 0, 0, 0, 0 end
-					-- we cannot just sum up percentages... 50% + 50% <> 100%
-					--fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
-					fillLevel.abs = fillLevel.abs + device:getFillUnitFillLevel(i)
-					fillLevel.max = fillLevel.max + device:getFillUnitCapacity(i)
-					-- so lets calculate it on our own. (lua should not have a divide by zero problem...)
-					fillLevel.pct = fillLevel.abs / fillLevel.max
-					local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
-					if fillTypeDesc ~= nil then
-						fillLevel.absKg = fillLevel.absKg + device:getFillUnitFillLevel(i) * fillTypeDesc.massPerLiter * 1000
-					else
-						fillLevel.absKg = filllevel.absKg + device:getFillUnitFillLevel(i)
-					end
-				end
-			end
-			-- Available Mass is only available for the device, not for a partition
-			fillLevel.maxKg = ((device:getAvailableComponentMass()*1000) + fillLevel.absKg)
-			fillLevel.pctKg = fillLevel.absKg / fillLevel.maxKg
 		end
-		
+		if ftPartition ~= 0 then break end
 	end
 	return fillLevel
+end
+
+local function getChoosenAttacherState(device, ftType)
+	local fillLevel = {abs = nil, pct = nil, max = nil, maxKg = nil, absKg = nil, pctKg = nil}
+	local fillUnits = device.spec_dynamicMountAttacher.dynamicMountedObjects or {}
+	dbgprint("getChoosenAttacherState: fillUnits = "..tostring(fillUnits), 4)
+	
+	for i,fillUnit in pairs(fillUnits) do
+		dbgprint("getChoosenFillLevelState: fillUnit = "..tostring(fillUnit), 4)
+		if fillUnit == nil then break end
+		
+		local ftIndex = fillUnit.fillType
+		local ftCategory = g_fillTypeManager.categoryNameToFillTypes[ftType]
+		if ftType == "ALL" or ftIndex == g_fillTypeManager.nameToIndex[ftType] or ftCategory ~= nil and ftCategory[ftIndex] then
+			if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max, fillLevel.absKg = 0, 0, 0, 0 end
+			-- we cannot just sum up percentages... 50% + 50% <> 100%
+			--fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
+			fillLevel.abs = fillLevel.abs + fillUnit.fillLevel
+			fillLevel.max = fillLevel.max + fillUnit.fillLevel
+			-- so lets calculate it on our own. (lua should not have a divide by zero problem...)
+			fillLevel.pct = fillLevel.abs / fillLevel.max
+			local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
+			if fillTypeDesc ~= nil then
+				fillLevel.absKg = fillLevel.absKg + fillUnit.fillLevel * fillTypeDesc.massPerLiter * 1000
+			else
+				fillLevel.absKg = filllevel.absKg + fillUnit.fillLevel
+			end
+		end
+	end
+	return fillLevel
+end
+
+local function recursiveTrailerSearch(vehicle, trailer, step)
+	dbgprint("recursiveTrailerSearch", 4)
+	return findSpecializationImplement(vehicle, "spec_fillUnit", trailer)
 end
 
 -- returns fillLevel {pct, abs, max, absKg}
 -- param vehicle - vehicle reference
 -- param ftIndex - index of fillVolume: 1 - root/first trailer/implement, 2 - first/second trailer/implement, 3 - root/first and first/second trailer or implement
 -- param ftType  - fillType
-
-local function getFillLevelStatus(vehicle, ftIndex, ftPartition, ftType)
-	dbgprint("getFillLevelStatus", 4)
-	local spec = vehicle.spec_DashboardLive
-	local fillLevel = {abs = nil, pct = nil, max = nil}
+local function getFillLevelTable(vehicle, ftIndex, ftPartition, ftType)
+	dbgprint("getFillLevelTable", 4)
+	local fillLevelTable = {abs = nil, pct = nil, max = nil, maxKg = nil, absKg = nil, pctKg = nil}
 	
 	if ftType == nil then ftType = "ALL" end
 	
 	if ftType ~= "ALL" and g_fillTypeManager.nameToIndex[ftType] == nil and g_fillTypeManager.nameToCategoryIndex[ftType] == nil then
 		Logging.xmlWarning(vehicle.xmlFile, "Given fillType "..tostring(ftType).." not known!")
-		return fillLevel
+		return fillLevelTable
 	end
 	
-	-- root vehicle	or first implement (depends on "joint")
-	if ftIndex == 0 then
-		dbgprint("getFillLevelStatus : root vehicle or first implement", 4)
-		fillLevel = getFillLevel(vehicle, ftPartition, ftType)
-	end
-	
-	-- next implement
-	if ftIndex == 1 then	
-		local allImplements = vehicle:getAttachedImplements()
-		dbgprint("getFillLevelStatus : next implement", 4)
-		for _, implement in pairs(allImplements) do
-			fillLevel = getFillLevel(implement.object, ftPartition, ftType)
-			if fillLevel.abs ~= nil then -- first come, first serve
-				return fillLevel
-			end
+	local device = findSpecializationImplement(vehicle, "spec_fillUnit", ftIndex)
+	if device ~= nil then
+		fillLevelTable = getChoosenFillLevelState(device, ftPartition, ftType)
+	else
+		device = findSpecializationImplement(vehicle, "spec_dynamicMountAttacher", ftIndex)
+		if device ~= nil then 
+			fillLevelTable = getChoosenAttacherState(device, ftType)
 		end
 	end
-
-	--dbgrenderTable(fillLevel, 1 + 5 * ftIndex, 3)
-	return fillLevel
+	return fillLevelTable
 end
 
 local function recursiveCheck(implement, checkFunc, search, getCheckedImplement, iteration, iterationStep)
@@ -885,37 +894,43 @@ local function recursiveCheck(implement, checkFunc, search, getCheckedImplement,
 	
 	if type(search)=="number" then 
 		iteration = search
+		search = false
+	elseif iteration == nil then
 		search = true
 	end
 	
-	iterationStep = iterationStep or 1 -- only implements (trailer >=1) are adressed
-	dbgprint("iteration: "..tostring(iteration), 4)
+	iterationStep = iterationStep or 0 -- only implements here, so we start at 0
+	dbgprint("recursiveCheck : iteration: "..tostring(iteration), 4)
 	
-	local checkResult = checkFunc(implement.object, false)
-	if not checkResult and implement.object.spec_attacherJoints ~= nil and search and (iteration == nil or iterationStep < iteration) then
+	local checkResult = false
+	if search or iterationStep == iteration then checkResult = checkFunc(implement.object, false) end
+	local returnImplement = checkResult and implement or nil
+	
+	if not checkResult and implement.object.spec_attacherJoints ~= nil and (search or iterationStep < iteration) and (iteration == nil or iterationStep < iteration) then
 		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
 		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
-			checkResult = recursiveCheck(attachedImplements[1], checkFunc, search, getCheckedImplement, iteration, iterationStep + 1)
-		end
-		if getCheckedImplement then
-			return checkResult, attachedImplements[1]
+			checkResult, returnImplement = recursiveCheck(attachedImplements[1], checkFunc, search, getCheckedImplement, iteration, iterationStep + 1)
 		end
 	end
-	return checkResult
+	if getCheckedImplement then
+		return checkResult, returnImplement
+	else
+		return checkResult
+	end
 end
-	
-local function isFoldable(implement, search, getFoldableImplement)
-	local foldable = implement.object ~= nil and implement.object.spec_foldable ~= nil and implement.object.spec_foldable.foldingParts ~= nil and #implement.object.spec_foldable.foldingParts > 0
-	if not foldable and implement.object.spec_attacherJoints ~= nil and search then
-		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
-		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
-			foldable = isFoldable(attachedImplements[1])
-		end
-		if getFoldableImplement then 
-			return foldable, attachedImplements[1]
-		end
+
+local function getIsFoldable(device)
+	local spec = device.spec_foldable
+	return spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
+end
+
+local function isFoldable(implement, search, getFoldableImplement, t)
+	local foldable, returnImplement = recursiveCheck(implement, getIsFoldable, t == nil, getFoldableImplement, t)
+	if getFoldableImplement then
+		return foldable, returnImplement
+	else
+		return foldable
 	end
-	return foldable
 end
 
 local function getAttachedStatus(vehicle, element, mode, default)
@@ -1004,6 +1019,26 @@ local function getAttachedStatus(vehicle, element, mode, default)
             elseif mode == "lowerable" then
 				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true, false, t)
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
+				
+			elseif mode == "lowering" or mode == "lifting" then
+				if vehicle.spec_attacherJoints ~= nil and vehicle.spec_attacherJoints.attacherJoints ~= nil then
+					local joint = vehicle.spec_attacherJoints.attacherJoints[tonumber(jointIndex)]
+					
+					local animationRunning = false
+					local loweringRange = true
+					local spec = findSpecialization(implement.object, "spec_foldable", t)
+					if spec ~= nil and spec.foldMiddleAnimTime ~= nil and (spec.foldAnimTime <= (spec.turnOnFoldMinLimit or 0) or spec.foldAnimTime >= (spec.turnOnFoldMaxLimit or 1)) then 
+            			loweringRange = false
+            		end
+					
+					if mode == "lowering" then 
+						resultValue = joint ~= nil and joint.isMoving and joint.moveDown and loweringRange
+					else
+						resultValue = joint ~= nil and joint.isMoving and not joint.moveDown and loweringRange
+					end
+				else
+					resultValue = false
+				end
 			
 			elseif mode == "pto" then
 				resultValue = findPTOStatus(implement.object)
@@ -1021,39 +1056,46 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgprint(implement.object:getFullName().." foldable: "..tostring(resultValue), 4)
 				
 			elseif mode == "folded" then
-				local foldable, subImplement = isFoldable(implement, true, true)
-				local implement = subImplement or implement
-				resultValue = foldable and implement.object.getIsUnfolded ~= nil and not implement.object:getIsUnfolded() and implement.object.spec_foldable.foldAnimTime == 1 or false
+				local foldable, foldableImplement = isFoldable(implement, true, true, t)
+				--local implement = subImplement or implement
+				resultValue = foldable and foldableImplement.object.getIsUnfolded ~= nil and not foldableImplement.object:getIsUnfolded() and foldableImplement.object.spec_foldable.foldAnimTime == 1 or false
             	dbgprint(implement.object:getFullName().." folded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolded" then
-            	local foldable, subImplement = isFoldable(implement, true, true)
-				local implement = subImplement or implement
-            	resultValue = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded() or false
+            	local foldable, foldableImplement = isFoldable(implement, true, true, t)
+            	resultValue = foldable and foldableImplement.object.getIsUnfolded ~= nil and foldableImplement.object:getIsUnfolded() or false
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolding" or mode == "folding" then
-            	local foldable, subImplement = isFoldable(implement, true, true)
-				local implement = subImplement or implement
-            	local unfolded = foldable and implement.object.getIsUnfolded ~= nil and implement.object:getIsUnfolded()
-            	resultValue = foldable and not unfolded and implement.object.spec_foldable.foldAnimTime > 0 and implement.object.spec_foldable.foldAnimTime < 1 or false
-               	dbgprint(implement.object:getFullName().." unfolding: "..tostring(resultValue), 4)
-               	
+            	local foldable, foldableImplement = isFoldable(implement, true, true, t)
+            	if not foldable then 
+            		resultValue = false
+            	else
+					local spec = foldableImplement ~= nil and foldableImplement.object ~= nil and foldableImplement.object.spec_foldable or nil
+					local unfolded = foldableImplement ~= nil and foldableImplement.object ~= nil and foldableImplement.object.getIsUnfolded ~= nil and foldableImplement.object:getIsUnfolded()
+					if mode == "folding" then
+						resultValue = spec ~= nil and not unfolded and spec.foldMoveDirection == 1 and spec.foldAnimTime > 0 and spec.foldAnimTime < 1
+					else
+						resultValue = spec ~= nil and not unfolded and spec.foldMoveDirection == -1 and spec.foldAnimTime > 0 and spec.foldAnimTime < 1
+					end
+					dbgprint(implement.object:getFullName().." "..mode..": "..tostring(resultValue), 4)
+				end
+				
             elseif mode == "unfoldingstate" then
-            	local foldable, subImplement = isFoldable(implement, true, true)
-				local implement = subImplement or implement
-            	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
-            		resultValue = 1 - implement.object.spec_foldable.foldAnimTime
+            	local spec = findSpecialization(implement.object, "spec_foldable", t)
+            	local foldable = isFoldable(implement, true, false, t)
+            	if foldable and spec.foldAnimTime >= 0 and spec.foldAnimTime <= 1 then 
+            		resultValue = 1 - spec.foldAnimTime
             	else
             		resultValue = 0
             	end
                	dbgprint(implement.object:getFullName().." unfoldingState: "..tostring(resultValue), 4)
              
             elseif mode == "foldingstate" then
-            	local foldable, subImplement = isFoldable(implement, true, true)
-				local implement = subImplement or implement
-            	if foldable and implement.object.spec_foldable.foldAnimTime >= 0 and implement.object.spec_foldable.foldAnimTime <= 1 then 
-            		resultValue = implement.object.spec_foldable.foldAnimTime
+            	local spec = findSpecialization(implement.object, "spec_foldable", t)
+            	local foldable = isFoldable(implement, true, false, t)
+            	if foldable and spec.foldAnimTime >= 0 and spec.foldAnimTime <= 1 then 
+            		resultValue = spec.foldAnimTime
             	else
             		resultValue = 0
             	end
@@ -1109,7 +1151,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				if t == nil then t = 0 end
 
 				local maxValue, pctValue, absValue, maxKGValue,absKGValue, pctKGValue
-				local fillLevel = getFillLevelStatus(implement.object, t, p)
+				local fillLevel = getFillLevelTable(implement.object, t, p)
 				dbgprint_r(fillLevel, 4, 2)
 				
 				if fillLevel.abs == nil then 
@@ -1170,7 +1212,6 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						resultValue = baleTypeDef.length * 100
 					end
 				end
-				
 			elseif mode == "balecountanz" or mode == "balecounttotal" then -- baleCounter by Ifko|nator, www.lsfarming-mods.com
 				local specBaleCounter = findSpecialization(implement.object,"spec_baleCounter")	
 				resultValue = 0
@@ -1208,7 +1249,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						dbgprint(implement.object:getFullName().." wrappedBaleCountTotal: "..tostring(resultValue), 4)
 					end
 				end
-			
+
 			elseif mode == "locksteeringaxle" then --lockSteeringAxles by Ifko|nator, www.lsfarming-mods.com
 				local c = element.dblCommand
 				local specLSA = findSpecialization(implement.object, "spec_lockSteeringAxles", t)
@@ -1220,6 +1261,26 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					resultValue = false
 				end
 				dbgprint(implement.object:getFullName().." : lockSteeringAxles ("..tostring(c).."), trailer "..tostring(t)..": "..tostring(resultValue), 4)
+			
+			-- frontloader
+			elseif mode == "toolrotation" or mode=="istoolrotation" then
+				local factor = element.dblFactor or 1
+				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
+				resultValue = 0
+				if specCyl ~= nil then
+					for toolIndex, tool in ipairs(specCyl.movingTools) do
+						if toolIndex == tonumber(element.dblOption) then
+							local origin = tool.rotMax or 0
+							local originDeg = math.deg(origin) * -1
+							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor * -1 - originDeg
+							if element.dblCommand == "toolrotation" then
+								resultValue = rot
+							elseif element.dblCommand == "istoolrotation" then
+								resultValue = rot >= element.dblMin and rot <=element.dblMax
+							end
+						end
+					end
+				end
 
             elseif mode == "connected" then
             	resultValue = true
@@ -1247,6 +1308,15 @@ local function getAttachedStatus(vehicle, element, mode, default)
     dbgprint("returnValue: "..tostring(result), 4)
     return result
 end
+
+-- Overwritten vanilla-functions to achieve a better tolerance to errors caused by wrong variable types
+function DashboardLive:defaultAnimationDashboardStateFunc(superfunc, dashboard, newValue, minValue, maxValue, isActive)
+	if type(newValue)=="boolean" then
+		if newValue then newValue = 1 else newValue = 0 end
+	end
+	return superfunc(self, dashboard, newValue, minValue, maxValue, isActive)
+end
+Dashboard.defaultAnimationDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultAnimationDashboardStateFunc, DashboardLive.defaultAnimationDashboardStateFunc)
 
 -- GROUPS
 
@@ -1673,6 +1743,29 @@ function DashboardLive.getDBLAttributesPrint(self, xmlFile, key, dashboard)
 	return true
 end
 
+-- frontLoader
+function DashboardLive.getDBLAttributesFrontloader(self, xmlFile, key, dashboard)
+	
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd", "toolrotation")) -- rotation,  minmax
+    dbgprint("getDBLAttributesFrontloader : command: "..tostring(dashboard.dblCommand), 2)
+    
+	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
+	dbgprint("getDBLAttributesFrontloader : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
+
+	dashboard.dblOption = xmlFile:getValue(key .. "#option", "1") -- number of tool
+
+	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1") -- factor
+
+	local min = xmlFile:getValue(key .. "#min")
+	local max = xmlFile:getValue(key .. "#max")
+	
+	if min ~= nil then dashboard.dblMin = min end
+    if max ~= nil then dashboard.dblMax = max end
+    
+	
+	return true
+end
+
 -- get states
 
 function DashboardLive.getDashboardLiveBase(self, dashboard)
@@ -1680,7 +1773,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 	if dashboard.dblCommand ~= nil then
 		local specWM = self.spec_workMode
 		local specRM = self.spec_ridgeMarker
-		local cmds, j, s, o, t = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption, dashboard.dblTrailer
+		local cmds, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption
 		local cmd = string.split(cmds, " ")
 		local returnValue = false
 		
@@ -1693,13 +1786,19 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "connected")
 	
 			elseif c == "lifted" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "raised", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "raised", o == "default")
+				
+			elseif c == "lifting" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lifting")
+				
+			elseif c == "lowering" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowering")
 	
 			elseif c == "lowered" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowered", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowered", o == "default")
 
 			elseif c == "lowerable" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowerable", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lowerable", o == "default")
 
 			elseif c == "pto" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "pto", o == "default")
@@ -1709,19 +1808,19 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "ptorpm", o == "default")
 
 			elseif c == "foldable" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "foldable", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "foldable", o == "default")
 
 			elseif c == "folded" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "folded", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "folded", o == "default")
 
 			elseif c == "unfolded" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolded", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolded", o == "default")
 			
 			elseif c == "folding" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "folding", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "folding")
 			
 			elseif c == "unfolding" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolding", o == "default", t)
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "unfolding")
 			
 			elseif c == "tipping" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "tipping", o == "default")
@@ -1766,11 +1865,17 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			returnValue = getAttachedStatus(self, dashboard, "unfoldingstate", 0)
 		
 		-- lowering state
-		elseif cmds == "liftstate" and self.spec_attacherJoints ~= nil and tonumber(dashboard.dblAttacherJointIndices) ~= nil then
-			local attacherJoint = self.spec_attacherJoints.attacherJoints[tonumber(dashboard.dblAttacherJointIndices)]
-			if attacherJoint ~= nil and attacherJoint.moveAlpha ~= nil then
-				returnValue = 1 - attacherJoint.moveAlpha
+		elseif cmds == "liftstate" and self.spec_attacherJoints ~= nil then 
+			if tonumber(dashboard.dblAttacherJointIndices) ~= nil then
+				local attacherJoint = self.spec_attacherJoints.attacherJoints[tonumber(dashboard.dblAttacherJointIndices)]
+				if attacherJoint ~= nil and attacherJoint.moveAlpha ~= nil then
+					returnValue = 1 - attacherJoint.moveAlpha
+					dbgrenderTable(attacherJoint, 3, 3)
+				else
+					returnValue = 0
+				end
 			else
+				Logging.xmlWarning(self.xmlFile, "command `liftstate` to show state of 3P-Joint must apply to only one attacherJoint")
 				returnValue = 0
 			end
 			
@@ -1793,7 +1898,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			elseif cmds == "headingtext2" then
 				local headingTexts = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
 				local index = math.floor(((heading + 22.5) % 360) * 8 / 360) + 1
-				dbgprint("heading: "..tostring(heading).." / index: "..tostring(index), 2)
+				dbgprint("heading: "..tostring(heading).." / index: "..tostring(index), 4)
 				returnValue = headingTexts[index]
 			else
 				local headingTexts = {"N", "E", "S", "W"}
@@ -1836,7 +1941,6 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		if dashboard.dblMax ~= nil and type(returnValue) == "number" then
 			returnValue = math.min(returnValue, dashboard.dblMax)
 		end
-		
 		return returnValue
 	end
 	
@@ -1946,6 +2050,10 @@ function DashboardLive.getDashboardLiveVCA(self, dashboard)
 			
 		elseif c == "slip" then
 			return spec.modVCAFound and self.spec_vca.wheelSlip ~= nil and (self.spec_vca.wheelSlip - 1) * 100
+		elseif c == "speed2" then
+			return spec.modVCAFound and self:vcaGetState("ccSpeed2")
+		elseif c == "speed3" then
+			return spec.modVCAFound and self:vcaGetState("ccSpeed3")
 		end
 	end
 	
@@ -2200,6 +2308,20 @@ function DashboardLive.getDashboardLivePrint(self, dashboard)
 	dbgprint("getDashboardLivePrint : dblOption: "..tostring(dashboard.dblOption), 4)
 	
 	return dashboard.dblOption or ""
+end
+
+function DashboardLive.getDashboardLiveFrontloader(self, dashboard)
+	dbgprint("getDashboardLiveFrontloader : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	local c = dashboard.dblCommand
+	local returnValue = 0
+	if c == "toolrotation" then
+		returnValue = getAttachedStatus(self, dashboard, "toolrotation")
+		dbgprint("getDashboardLiveFrontloader : toolrotation: returnValue: "..tostring(returnValue), 4)
+	elseif c == "istoolrotation" then
+		returnValue = getAttachedStatus(self, dashboard,"istoolrotation")
+		dbgprint("getDashboardLiveFrontloader : istoolrotation: returnValue: "..tostring(returnValue), 4)
+	end
+	return returnValue
 end
 	
 function DashboardLive:onUpdate(dt)

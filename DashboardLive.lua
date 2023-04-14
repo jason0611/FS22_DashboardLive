@@ -101,7 +101,6 @@ end
 function DashboardLive.registerOverwrittenFunctions(vehicleType)
 	SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsDashboardGroupActive", DashboardLive.getIsDashboardGroupActive)
-    SpecializationUtil.registerOverwrittenFunction(vehicleType, "defaultAnimationDashboardStateFunc", DashboardLive.defaultAnimationDashboardStateFunc)
 end
 
 function DashboardLive:onPreLoad(savegame)

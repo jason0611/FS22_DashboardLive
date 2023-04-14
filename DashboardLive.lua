@@ -1310,13 +1310,14 @@ local function getAttachedStatus(vehicle, element, mode, default)
 end
 
 -- Overwritten vanilla-functions to achieve a better tolerance to errors caused by wrong variable types
-function DashboardLive:defaultAnimationDashboardStateFunc(superfunc, dashboard, newValue, minValue, maxValue, isActive)
+function DashboardLive:catchBooleanForDashboardStateFunc(superfunc, dashboard, newValue, minValue, maxValue, isActive)
 	if type(newValue)=="boolean" then
-		if newValue then newValue = 1 else newValue = 0 end
+		newValue = newValue and 1 or 0
 	end
 	return superfunc(self, dashboard, newValue, minValue, maxValue, isActive)
 end
-Dashboard.defaultAnimationDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultAnimationDashboardStateFunc, DashboardLive.defaultAnimationDashboardStateFunc)
+Dashboard.defaultAnimationDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultAnimationDashboardStateFunc, DashboardLive.catchBooleanForDashboardStateFunc)
+Dashboard.defaultSliderDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultSliderDashboardStateFunc, DashboardLive.catchBooleanForDashboardStateFunc)
 
 -- GROUPS
 

@@ -38,9 +38,9 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + hasSpec (boolean): test if specialization is present (thanks to HiPhi77)
 + hasTypeDesc (boolean): test if vehicle or implement is of wanted type
 + front loader state
-- CVT-Addon
 
 == Planned for later ModHub updates ==
+- CVT-Addon
 - precisionFarming
 - cutter turn rate
 ? mini-map integration

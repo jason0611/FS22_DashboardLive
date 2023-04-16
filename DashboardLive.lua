@@ -841,15 +841,15 @@ local function getChoosenAttacherState(device, ftType)
 			if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max, fillLevel.absKg = 0, 0, 0, 0 end
 			-- we cannot just sum up percentages... 50% + 50% <> 100%
 			--fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
-			fillLevel.abs = fillLevel.abs + fillUnit.fillLevel
-			fillLevel.max = fillLevel.max + fillUnit.fillLevel
+			fillLevel.abs = fillUnit.fillLevel ~= nil and fillLevel.abs + fillUnit.fillLevel or fillLevel.abs
+			fillLevel.max = fillUnit.fillLevel ~= nil and fillLevel.max + fillUnit.fillLevel or fillLevel.max
 			-- so lets calculate it on our own. (lua should not have a divide by zero problem...)
 			fillLevel.pct = fillLevel.abs / fillLevel.max
 			local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
 			if fillTypeDesc ~= nil then
 				fillLevel.absKg = fillLevel.absKg + fillUnit.fillLevel * fillTypeDesc.massPerLiter * 1000
 			else
-				fillLevel.absKg = filllevel.absKg + fillUnit.fillLevel
+				fillLevel.absKg = fillLevel.absKg + fillUnit.fillLevel
 			end
 		end
 	end

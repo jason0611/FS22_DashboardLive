@@ -1129,7 +1129,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				elseif mode == "tipsidetext" and specTR ~= nil then
 					local len = string.len(element.textMask or "00.0")
 					local alignment = element.textAlignment or RenderText.ALIGN_RIGHT
-					local tipSideName = specTR.tipSides[specTR.preferedTipSideIndex].name
+					local tipSideName = specTR.tipSides ~= nil and specTR.preferedTipSideIndex ~= nil and specTR.tipSides[specTR.preferedTipSideIndex].name or " "
 					resultValue = trim(tipSideName, len, alignment)
 					dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(returnValue), 4) 
 				else 

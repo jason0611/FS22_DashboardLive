@@ -1265,13 +1265,16 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "toolrotation" or mode=="istoolrotation" then
 				local factor = element.dblFactor or 1
 				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
+				local s = element.dblStateText
+				dbgprint(implement.object:getFullName().." : frontLoader - " .. mode .. " - " .. s,3)
 				resultValue = 0
 				if specCyl ~= nil then
 					for toolIndex, tool in ipairs(specCyl.movingTools) do
 						if toolIndex == tonumber(element.dblOption) then
 							local origin = tool.rotMax or 0
 							local originDeg = math.deg(origin) * -1
-							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor * -1 - originDeg
+							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor * -1 -- - originDeg
+							if s=="origin" then rot = rot - originDeg end
 							if element.dblCommand == "toolrotation" then
 								resultValue = rot
 							elseif element.dblCommand == "istoolrotation" then
@@ -1280,7 +1283,45 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						end
 					end
 				end
-
+			elseif mode=="swathstate" then
+				local specWM =  findSpecialization(implement.object,"spec_workMode",t)
+				local states
+				if type(element.dblStateText) == "number" then
+					states = {}
+					states[1] = element.dblStateText
+				elseif type(element.dblStateText) == "table" then
+					states = element.dblStateText
+				else
+					states = string.split(element.dblStateText, " ")
+				end
+				resultValue = false
+				for _, state in ipairs(states) do
+					if tonumber(state) ~= nil and specWM ~= nil then
+						resultValue = resultValue or specWM.state == tonumber(state)
+					end
+				end
+			elseif mode=="mpconditioner" then
+				resultValue = false
+				local specMPConverter = findSpecialization(implement.object,"spec_mower",t)
+				if specMPConverter ~= nil and specMPConverter.currentConverter ~= nil then
+					resultValue = specMPConverter.currentConverter == "MOWERCONDITIONER"
+				end
+			elseif mode=="seedtype" then
+				resultValue = ""
+				local specS = findSpecialization(implement.object,"spec_sowingMachine")
+				if specS ~= nil then
+					local fillType = g_fruitTypeManager:getFillTypeByFruitTypeIndex(specS.seeds[specS.currentSeed])
+					local len = string.len(element.textMask or "xxxx")
+					local alignment = element.textAlignment or RenderText.ALIGN_RIGHT
+					local fillName = fillType ~= nil and  fillType.title ~=nil and string.sub(fillType.title,1,len) or ""
+					if alignment == RenderText.ALIGN_RIGHT then
+						resultValue = string.format("%"..tostring(len).."s",fillName)
+					else 
+						resultValue = string.format("%-"..tostring(len).."s",fillName)
+					end
+					resultValue = string.gsub(resultValue,"ü","u")
+					resultValue = string.gsub(resultValue,"Ö","O")
+				end
             elseif mode == "connected" then
             	resultValue = true
             	
@@ -1756,6 +1797,8 @@ function DashboardLive.getDBLAttributesFrontloader(self, xmlFile, key, dashboard
 
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1") -- factor
 
+	dashboard.dblStateText = xmlFile:getValue(key .. "#stateText","origin")
+
 	local min = xmlFile:getValue(key .. "#min")
 	local max = xmlFile:getValue(key .. "#max")
 	
@@ -1824,13 +1867,19 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			
 			elseif c == "tipping" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "tipping", o == "default")
+			elseif c == "swath" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "swathstate", o == "default")
+			elseif c == "mpconditioner" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "mpconditioner", o == "default")
+			elseif c == "seedtype" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "seedtype", o == "default")
 
-			elseif specWM ~= nil and c == "swath" then
-				if s == "" or tonumber(s) == nil then
-					Logging.xmlWarning(vehicle.xmlFile, "No swath state number given for DashboardLive swath command")
-					return false
-				end
-				returnValue = returnValue or specWM.state == tonumber(s)
+			-- elseif specWM ~= nil and c == "swath" then
+			-- 	if s == "" or tonumber(s) == nil then
+			-- 		Logging.xmlWarning(vehicle.xmlFile, "No swath state number given for DashboardLive swath command")
+			-- 		return false
+			-- 	end
+			-- 	returnValue = returnValue or specWM.state == tonumber(s)
 			end
 		end
 		

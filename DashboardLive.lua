@@ -841,15 +841,15 @@ local function getChoosenAttacherState(device, ftType)
 			if fillLevel.pct == nil then fillLevel.pct, fillLevel.abs, fillLevel.max, fillLevel.absKg = 0, 0, 0, 0 end
 			-- we cannot just sum up percentages... 50% + 50% <> 100%
 			--fillLevel.pct = fillLevel.pct + device:getFillUnitFillLevelPercentage(i)
-			fillLevel.abs = fillLevel.abs + fillUnit.fillLevel
-			fillLevel.max = fillLevel.max + fillUnit.fillLevel
+			fillLevel.abs = fillUnit.fillLevel ~= nil and fillLevel.abs + fillUnit.fillLevel or fillLevel.abs
+			fillLevel.max = fillUnit.fillLevel ~= nil and fillLevel.max + fillUnit.fillLevel or fillLevel.max
 			-- so lets calculate it on our own. (lua should not have a divide by zero problem...)
 			fillLevel.pct = fillLevel.abs / fillLevel.max
 			local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
 			if fillTypeDesc ~= nil then
 				fillLevel.absKg = fillLevel.absKg + fillUnit.fillLevel * fillTypeDesc.massPerLiter * 1000
 			else
-				fillLevel.absKg = filllevel.absKg + fillUnit.fillLevel
+				fillLevel.absKg = fillLevel.absKg + fillUnit.fillLevel
 			end
 		end
 	end
@@ -1129,7 +1129,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				elseif mode == "tipsidetext" and specTR ~= nil then
 					local len = string.len(element.textMask or "00.0")
 					local alignment = element.textAlignment or RenderText.ALIGN_RIGHT
-					local tipSideName = specTR.tipSides[specTR.preferedTipSideIndex].name
+					local tipSideName = specTR.tipSides ~= nil and specTR.preferedTipSideIndex ~= nil and specTR.tipSides[specTR.preferedTipSideIndex].name or " "
 					resultValue = trim(tipSideName, len, alignment)
 					dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(returnValue), 4) 
 				else 
@@ -1265,13 +1265,16 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "toolrotation" or mode=="istoolrotation" then
 				local factor = element.dblFactor or 1
 				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
+				local s = element.dblStateText
+				dbgprint(implement.object:getFullName().." : frontLoader - " .. mode .. " - " .. s,3)
 				resultValue = 0
 				if specCyl ~= nil then
 					for toolIndex, tool in ipairs(specCyl.movingTools) do
 						if toolIndex == tonumber(element.dblOption) then
 							local origin = tool.rotMax or 0
 							local originDeg = math.deg(origin) * -1
-							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor * -1 - originDeg
+							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor * -1 -- - originDeg
+							if s=="origin" then rot = rot - originDeg end
 							if element.dblCommand == "toolrotation" then
 								resultValue = rot
 							elseif element.dblCommand == "istoolrotation" then
@@ -1280,7 +1283,39 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						end
 					end
 				end
-
+			elseif mode=="swathstate" then
+				local specWM =  findSpecialization(implement.object,"spec_workMode",t)
+				local states
+				if type(element.dblStateText) == "number" then
+					states = {}
+					states[1] = element.dblStateText
+				elseif type(element.dblStateText) == "table" then
+					states = element.dblStateText
+				else
+					states = string.split(element.dblStateText, " ")
+				end
+				resultValue = false
+				for _, state in ipairs(states) do
+					if tonumber(state) ~= nil and specWM ~= nil then
+						resultValue = resultValue or specWM.state == tonumber(state)
+					end
+				end
+			elseif mode=="mpconditioner" then
+				resultValue = false
+				local specMPConverter = findSpecialization(implement.object,"spec_mower",t)
+				if specMPConverter ~= nil and specMPConverter.currentConverter ~= nil then
+					resultValue = specMPConverter.currentConverter == "MOWERCONDITIONER"
+				end
+			elseif mode=="seedtype" then
+				resultValue = ""
+				local specS = findSpecialization(implement.object,"spec_sowingMachine")
+				if specS ~= nil then
+					local fillType = g_fruitTypeManager:getFillTypeByFruitTypeIndex(specS.seeds[specS.currentSeed])
+					local len = string.len(element.textMask or "xxxx")
+					resultValue = trim(fillType.title,len)
+					resultValue = string.gsub(resultValue,"ü","u")
+					resultValue = string.gsub(resultValue,"Ö","O")
+				end
             elseif mode == "connected" then
             	resultValue = true
             	
@@ -1756,6 +1791,8 @@ function DashboardLive.getDBLAttributesFrontloader(self, xmlFile, key, dashboard
 
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1") -- factor
 
+	dashboard.dblStateText = xmlFile:getValue(key .. "#stateText","origin")
+
 	local min = xmlFile:getValue(key .. "#min")
 	local max = xmlFile:getValue(key .. "#max")
 	
@@ -1824,13 +1861,19 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			
 			elseif c == "tipping" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "tipping", o == "default")
+			elseif c == "swath" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "swathstate", o == "default")
+			elseif c == "mpconditioner" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "mpconditioner", o == "default")
+			elseif c == "seedtype" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "seedtype", o == "default")
 
-			elseif specWM ~= nil and c == "swath" then
-				if s == "" or tonumber(s) == nil then
-					Logging.xmlWarning(vehicle.xmlFile, "No swath state number given for DashboardLive swath command")
-					return false
-				end
-				returnValue = returnValue or specWM.state == tonumber(s)
+			-- elseif specWM ~= nil and c == "swath" then
+			-- 	if s == "" or tonumber(s) == nil then
+			-- 		Logging.xmlWarning(vehicle.xmlFile, "No swath state number given for DashboardLive swath command")
+			-- 		return false
+			-- 	end
+			-- 	returnValue = returnValue or specWM.state == tonumber(s)
 			end
 		end
 		
@@ -2178,7 +2221,8 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 			elseif FS22_proSeed ~= nil and FS22_proSeed.ProSeedTramLines ~= nil then
 				local mode = specPS.tramLineMode
 				local text = FS22_proSeed.ProSeedTramLines.TRAMLINE_MODE_TO_KEY[mode]
-				returnValue = trim(g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text)), 7)
+				local len = string.len(dashboard.textMask or "xxxx")
+				returnValue = trim(g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text)), len)
 			end
 		elseif o == "distance" then
 			returnValue = specPS.tramLineDistance

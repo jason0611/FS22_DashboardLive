@@ -1312,7 +1312,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				if specS ~= nil then
 					local fillType = g_fruitTypeManager:getFillTypeByFruitTypeIndex(specS.seeds[specS.currentSeed])
 					local len = string.len(element.textMask or "xxxx")
-					resultValue = trim(fillType.title,len)
+					local alignment = element.textAlignment
+					resultValue = trim(fillType.title, len, alignment)
 					resultValue = string.gsub(resultValue,"ü","u")
 					resultValue = string.gsub(resultValue,"Ö","O")
 				end
@@ -1861,10 +1862,13 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			
 			elseif c == "tipping" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "tipping", o == "default")
+				
 			elseif c == "swath" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "swathstate", o == "default")
+				
 			elseif c == "mpconditioner" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "mpconditioner", o == "default")
+				
 			elseif c == "seedtype" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "seedtype", o == "default")
 
@@ -1904,6 +1908,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		-- foldingState
 		elseif cmds == "foldingstate" then
 			returnValue = getAttachedStatus(self, dashboard, "foldingstate", 0)
+			
 		elseif cmds == "unfoldingstate" then
 			returnValue = getAttachedStatus(self, dashboard, "unfoldingstate", 0)
 		

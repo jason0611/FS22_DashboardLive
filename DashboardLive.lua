@@ -704,21 +704,6 @@ local function lower(text)
 	end
 end
 
--- get most significant sub Part of text (first n chars) ensuring minimum length
--- e.g. 
--- Sugarbeet, 4 returns "Sugar"
--- Oat 7 left returns "Oat    "
--- Oat 7 right return "    Oat"
--- Auto 1 return "A"
-local function textMSB(text, len, alignment)
-	local textPart = string.sub(text,1,len)
-	if alignment == RenderText.ALIGN_RIGHT then
-		return string.format("%"..tostring(len).."s",textPart)
-	else 
-		return string.format("%-"..tostring(len).."s",textPart)
-	end
-end
-
 local function findSpecialization(device, specName, iteration, iterationStep)
 	iterationStep = iterationStep or 0 -- initialization
 	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
@@ -1327,8 +1312,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				if specS ~= nil then
 					local fillType = g_fruitTypeManager:getFillTypeByFruitTypeIndex(specS.seeds[specS.currentSeed])
 					local len = string.len(element.textMask or "xxxx")
-					local alignment = element.textAlignment or RenderText.ALIGN_RIGHT
-					resultValue = textMSB(fillType.title,len,alignment)
+					resultValue = trim(fillType.title,len)
 					resultValue = string.gsub(resultValue,"ü","u")
 					resultValue = string.gsub(resultValue,"Ö","O")
 				end
@@ -2238,8 +2222,7 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 				local mode = specPS.tramLineMode
 				local text = FS22_proSeed.ProSeedTramLines.TRAMLINE_MODE_TO_KEY[mode]
 				local len = string.len(dashboard.textMask or "xxxx")
-				local alignment = dashboard.textAlignment or RenderText.ALIGN_RIGHT
-				returnValue = textMSB(g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text)),len,alignment)
+				returnValue = trim(g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text)), len)
 			end
 		elseif o == "distance" then
 			returnValue = specPS.tramLineDistance

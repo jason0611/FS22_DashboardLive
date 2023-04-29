@@ -889,7 +889,7 @@ local function getFillLevelTable(vehicle, ftIndex, ftPartition, ftType)
 end
 
 local function recursiveCheck(implement, checkFunc, search, getCheckedImplement, iteration, iterationStep)
-	if implement.object == nil or checkFunc == nil then return false end
+	if implement.object == nil then return false end
 	
 	if type(search)=="number" then 
 		iteration = search
@@ -902,13 +902,17 @@ local function recursiveCheck(implement, checkFunc, search, getCheckedImplement,
 	dbgprint("recursiveCheck : iteration: "..tostring(iteration), 4)
 	
 	local checkResult = false
-	if search or iterationStep == iteration then checkResult = checkFunc(implement.object, false) end
+	local checkFuncOrig = checkFunc
+	if type(checkFunc)=="string" then
+		checkFunc = implement.object[checkFunc]
+	end
+	if search or iterationStep == iteration then checkResult = checkFunc ~= nil and checkFunc(implement.object, false) end
 	local returnImplement = checkResult and implement or nil
 	
 	if not checkResult and implement.object.spec_attacherJoints ~= nil and (search or iterationStep < iteration) and (iteration == nil or iterationStep < iteration) then
 		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
 		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
-			checkResult, returnImplement = recursiveCheck(attachedImplements[1], checkFunc, search, getCheckedImplement, iteration, iterationStep + 1)
+			checkResult, returnImplement = recursiveCheck(attachedImplements[1], checkFuncOrig, search, getCheckedImplement, iteration, iterationStep + 1)
 		end
 	end
 	if getCheckedImplement then
@@ -923,6 +927,7 @@ local function getIsFoldable(device)
 	return spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
 end
 
+--[[
 local function isFoldable(implement, search, getFoldableImplement, t)
 	local foldable, returnImplement = recursiveCheck(implement, getIsFoldable, t == nil, getFoldableImplement, t)
 	if getFoldableImplement then
@@ -931,6 +936,7 @@ local function isFoldable(implement, search, getFoldableImplement, t)
 		return foldable
 	end
 end
+--]]
 
 local function getAttachedStatus(vehicle, element, mode, default)
 	
@@ -1008,15 +1014,15 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgprint(implement.object:getFullName().." hasTypeDesc "..tostring(options)..": "..tostring(resultValue), 4)
 				
             elseif mode == "raised" then
-            	resultValue = not recursiveCheck(implement, implement.object.getIsLowered, true, false, t)
+            	resultValue = not recursiveCheck(implement, "getIsLowered", true, false, t)
             	dbgprint(implement.object:getFullName().." raised: "..tostring(resultValue), 4)
             	
             elseif mode == "lowered" then
-            	resultValue = recursiveCheck(implement, implement.object.getIsLowered, true, false, t)
+            	resultValue = recursiveCheck(implement, "getIsLowered", true, false, t)
             	dbgprint(implement.object:getFullName().." lowered: "..tostring(resultValue), 4)
             	
             elseif mode == "lowerable" then
-				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true, false, t)
+				resultValue = recursiveCheck(implement, "getAllowsLowering", true, false, t)
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
 				
 			elseif mode == "lowering" or mode == "lifting" then
@@ -1050,23 +1056,23 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				end
 				
             elseif mode == "foldable" then
-            	local foldable = isFoldable(implement, true)
+            	local foldable = recursiveCheck(implement, getIsFoldable, t == nil, false, t) --isFoldable(implement, true)
 				resultValue = foldable or false
 				dbgprint(implement.object:getFullName().." foldable: "..tostring(resultValue), 4)
 				
 			elseif mode == "folded" then
-				local foldable, foldableImplement = isFoldable(implement, true, true, t)
+				local foldable, foldableImplement = recursiveCheck(implement, getIsFoldable, t == nil, true, t) --isFoldable(implement, true, true, t)
 				--local implement = subImplement or implement
 				resultValue = foldable and foldableImplement.object.getIsUnfolded ~= nil and not foldableImplement.object:getIsUnfolded() and foldableImplement.object.spec_foldable.foldAnimTime == 1 or false
             	dbgprint(implement.object:getFullName().." folded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolded" then
-            	local foldable, foldableImplement = isFoldable(implement, true, true, t)
+            	local foldable, foldableImplement = recursiveCheck(implement, getIsFoldable, t == nil, true, t) --isFoldable(implement, true, true, t)
             	resultValue = foldable and foldableImplement.object.getIsUnfolded ~= nil and foldableImplement.object:getIsUnfolded() or false
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolding" or mode == "folding" then
-            	local foldable, foldableImplement = isFoldable(implement, true, true, t)
+            	local foldable, foldableImplement = recursiveCheck(implement, getIsFoldable, t == nil, true, t) --isFoldable(implement, true, true, t)
             	if not foldable then 
             		resultValue = false
             	else
@@ -1082,7 +1088,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				
             elseif mode == "unfoldingstate" then
             	local spec = findSpecialization(implement.object, "spec_foldable", t)
-            	local foldable = isFoldable(implement, true, false, t)
+            	local foldable = recursiveCheck(implement, getIsFoldable, t == nil, false, t) --isFoldable(implement, true, false, t)
             	if foldable and spec.foldAnimTime >= 0 and spec.foldAnimTime <= 1 then 
             		resultValue = 1 - spec.foldAnimTime
             	else
@@ -1092,7 +1098,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
              
             elseif mode == "foldingstate" then
             	local spec = findSpecialization(implement.object, "spec_foldable", t)
-            	local foldable = isFoldable(implement, true, false, t)
+            	local foldable = recursiveCheck(implement, getIsFoldable, t == nil, false, t) --isFoldable(implement, true, false, t)
             	if foldable and spec.foldAnimTime >= 0 and spec.foldAnimTime <= 1 then 
             		resultValue = spec.foldAnimTime
             	else

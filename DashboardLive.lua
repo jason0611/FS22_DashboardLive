@@ -2177,13 +2177,30 @@ end
 
 function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	dbgprint("getDashboardLiveGPS : dblOption: "..tostring(dashboard.dblOption), 4)
+	local o = dashboard.dblOption
 	local spec = self.spec_DashboardLive
 	local specGS = self.spec_globalPositioningSystem
 	local returnValue = 0
 	
 	local factor = dashboard.dblFactor or 1
+	local gsValue = specGS ~= nil and specGS.guidanceData.currentLane or 0
+	if o == "delta" or o == "dir" then
+		gsValue = specGS ~= nil and specGS.guidanceData.alphaRad
+	end
 	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil then
 		returnValue = math.abs(specGS.guidanceData.currentLane) * factor
+	end
+	if o == "dir" and gsValue < 0 then
+		returnValue = -1
+	elseif gsValue > 0 then
+		returnValue = 1
+	else
+		returnValue = 0
+	end
+	if o == "dirLeft" then
+		returnValue = gsValue < 0
+	elseif o == "dirRight" then
+		returnValue = gsValue > 0
 	end
 	if dashboard.dblMin ~= nil and type(returnValue) == "number" then
 		returnValue = math.max(returnValue, dashboard.dblMin)
@@ -2447,5 +2464,8 @@ function DashboardLive:onDraw()
 	if self.spec_dischargeable ~= nil then
 		dbgrenderTable(self.spec_dischargeable, 0, 3)
 		dbgrender("dischargeState: "..tostring(self.spec_dischargeable:getDischargeState()), 26, 3)
+	end
+	if self.spec_globalPositioningSystem ~= nil then
+		dbgrenderTable(self.spec_globalPositioningSystem.guidanceData, 1, 3)
 	end
 end

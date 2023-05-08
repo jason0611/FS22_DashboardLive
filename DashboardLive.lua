@@ -2191,7 +2191,7 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	end
 	
 	local gsValue = specGS ~= nil and specGS.guidanceData.currentLane or 0
-	if o == "delta" or o == "dir" then
+	if o == "delta" or o == "dir" or o == "dirLeft" or o == "dirRight" then
 		gsValue = specGS ~= nil and math.floor(specGS.guidanceData.alphaRad * 100) / 100 or 0
 	end
 	if o == "delta" then
@@ -2205,9 +2205,9 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 		returnValue = 0
 	end
 	if o == "dirLeft" then
-		returnValue = gsValue < 0
+		returnValue = gsValue < -0.02
 	elseif o == "dirRight" then
-		returnValue = gsValue > 0
+		returnValue = gsValue > 0.02
 	end
 	if dashboard.dblMin ~= nil and type(returnValue) == "number" then
 		returnValue = math.max(returnValue, dashboard.dblMin)
@@ -2215,7 +2215,6 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	if dashboard.dblMax ~= nil and type(returnValue) == "number" then
 		returnValue = math.min(returnValue, dashboard.dblMax)
 	end
-	if o == "delta" then print(tostring(returnValue)) end
 	return returnValue
 end
 

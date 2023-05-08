@@ -1116,7 +1116,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	if specImplement ~= nil and specImplement.spec_trailer:getTipState() > 0 then
             		local specTR = specImplement.spec_trailer
             		local tipSide = specTR.tipSides[specTR.currentTipSideIndex]
-            		resultValue = specImplement:getAnimationTime(tipSide.animation.name)
+            		resultValue = tipSide ~= nil and specImplement:getAnimationTime(tipSide.animation.name) or 0
             	else
             		resultValue = 0
             	end
@@ -2182,19 +2182,23 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	local specGS = self.spec_globalPositioningSystem
 	local returnValue = 0
 	
+	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil then
+		returnValue = math.abs(specGS.guidanceData.currentLane) * factor
+	end
+	
 	local factor = dashboard.dblFactor or 1
 	local gsValue = specGS ~= nil and specGS.guidanceData.currentLane or 0
 	if o == "delta" or o == "dir" then
 		gsValue = specGS ~= nil and specGS.guidanceData.alphaRad
 	end
-	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil then
-		returnValue = math.abs(specGS.guidanceData.currentLane) * factor
+	if o == "delta" then
+		returnValue = math.floor(gsValue * 100)/100
 	end
 	if o == "dir" and gsValue < 0 then
 		returnValue = -1
-	elseif gsValue > 0 then
+	elseif o == "dir" and gsValue > 0 then
 		returnValue = 1
-	else
+	elseif o == "dir"
 		returnValue = 0
 	end
 	if o == "dirLeft" then

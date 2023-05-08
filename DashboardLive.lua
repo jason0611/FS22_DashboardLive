@@ -1695,6 +1695,9 @@ function DashboardLive.getDBLAttributesGPSNumbers(self, xmlFile, key, dashboard)
     
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1")
     dbgprint("getDBLAttributesNumbers : factor: "..tostring(dashboard.dblFactor), 2)
+    
+    dashboard.dblOption = xmlFile:getValue(key .. "#option")
+	dbgprint("getDBLAttributesNumbers : option: "..tostring(dashboard.dblOption), 2)
 
 	return true
 end
@@ -2182,23 +2185,23 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	local specGS = self.spec_globalPositioningSystem
 	local returnValue = 0
 	
+	local factor = dashboard.dblFactor or 1
 	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil then
 		returnValue = math.abs(specGS.guidanceData.currentLane) * factor
 	end
 	
-	local factor = dashboard.dblFactor or 1
 	local gsValue = specGS ~= nil and specGS.guidanceData.currentLane or 0
 	if o == "delta" or o == "dir" then
-		gsValue = specGS ~= nil and specGS.guidanceData.alphaRad
+		gsValue = specGS ~= nil and math.floor(specGS.guidanceData.alphaRad * 100) / 100 or 0
 	end
 	if o == "delta" then
-		returnValue = math.floor(gsValue * 100)/100
+		returnValue = gsValue * factor
 	end
 	if o == "dir" and gsValue < 0 then
 		returnValue = -1
 	elseif o == "dir" and gsValue > 0 then
 		returnValue = 1
-	elseif o == "dir"
+	elseif o == "dir" then
 		returnValue = 0
 	end
 	if o == "dirLeft" then
@@ -2212,7 +2215,7 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	if dashboard.dblMax ~= nil and type(returnValue) == "number" then
 		returnValue = math.min(returnValue, dashboard.dblMax)
 	end
-	
+	if o == "delta" then print(tostring(returnValue)) end
 	return returnValue
 end
 

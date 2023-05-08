@@ -1110,7 +1110,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	if specImplement ~= nil and specImplement.spec_trailer:getTipState() > 0 then
             		local specTR = specImplement.spec_trailer
             		local tipSide = specTR.tipSides[specTR.currentTipSideIndex]
-            		resultValue = specImplement:getAnimationTime(tipSide.animation.name)
+            		resultValue = tipSide ~= nil and specImplement:getAnimationTime(tipSide.animation.name) or 0
             	else
             		resultValue = 0
             	end

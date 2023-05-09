@@ -2180,7 +2180,7 @@ end
 
 function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	dbgprint("getDashboardLiveGPS : dblOption: "..tostring(dashboard.dblOption), 4)
-	local o = dashboard.dblOption
+	local o = string.lower(dashboard.dblOption or "")
 	local spec = self.spec_DashboardLive
 	local specGS = self.spec_globalPositioningSystem
 	local returnValue = 0
@@ -2190,31 +2190,70 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 		returnValue = math.abs(specGS.guidanceData.currentLane) * factor
 	end
 	
-	local gsValue = specGS ~= nil and specGS.guidanceData.currentLane or 0
-	if o == "delta" or o == "dir" or o == "dirLeft" or o == "dirRight" then
-		gsValue = specGS ~= nil and math.floor(specGS.guidanceData.alphaRad * 100) / 100 or 0
+	if o == "delta" or o == "dir" or o == "dirleft" or o == "dirright" then
+		local gsValue = specGS ~= nil and specGS.guidanceData.currentLane or 0
+		gsValue = specGS ~= nil and math.floor(specGS.guidanceData.alphaRad * specGS.guidanceData.snapDirectionMultiplier * 100) / 100 or 0
+		
+		if o == "delta" then
+			returnValue = gsValue * factor
+		end
+		
+		if o == "dir" and gsValue < 0 then
+			returnValue = -1
+		elseif o == "dir" and gsValue > 0 then
+			returnValue = 1
+		elseif o == "dir" then
+			returnValue = 0
+		end
+		
+		if o == "dirleft" then
+			returnValue = gsValue < -0.02
+		elseif o == "dirright" then
+			returnValue = gsValue > 0.02
+		end		
 	end
-	if o == "delta" then
-		returnValue = gsValue * factor
+	
+	if o == "headingdelta" then
+		local x1, y1, z1 = localToWorld(self.rootNode, 0, 0, 0)
+		local x2, y2, z2 = localToWorld(self.rootNode, 0, 0, 1)
+		local dx, dz = x2 - x1, z2 - z1
+		
+		local heading = math.floor(180 - (180 / math.pi) * math.atan2(dx, dz))
+		local snapAngle = 0
+		
+		-- we need to find the snap angle, specific to the Guidance Mod used
+		-- Guidance Steering
+		if specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive then
+			if specGS.guidanceData ~= nil and specGS.guidanceData.snapDirection ~= nil then
+				local lineDirX, lineDirZ = unpack(specGS.guidanceData.snapDirection)
+				snapAngle = -math.deg(math.atan(lineDirX/lineDirZ))
+			end
+		-- VCA
+		elseif (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0)  then
+			local curSnapAngle, _, curSnapOffset = self:vcaGetCurrentSnapAngle( math.atan2(dx, dz) )
+			snapAngle = 180 - math.deg(curSnapAngle)
+		end
+
+		local offset = heading - snapAngle
+		if offset > 180 then 
+			offset = offset - 360
+		end
+		if offset > 90 then
+			offset = offset - 180
+		end
+		if offset < -90 then
+			offset = offset + 180
+		end
+		returnValue = offset * factor
 	end
-	if o == "dir" and gsValue < 0 then
-		returnValue = -1
-	elseif o == "dir" and gsValue > 0 then
-		returnValue = 1
-	elseif o == "dir" then
-		returnValue = 0
-	end
-	if o == "dirLeft" then
-		returnValue = gsValue < -0.02
-	elseif o == "dirRight" then
-		returnValue = gsValue > 0.02
-	end
+	
 	if dashboard.dblMin ~= nil and type(returnValue) == "number" then
 		returnValue = math.max(returnValue, dashboard.dblMin)
 	end
 	if dashboard.dblMax ~= nil and type(returnValue) == "number" then
 		returnValue = math.min(returnValue, dashboard.dblMax)
 	end
+	
 	return returnValue
 end
 

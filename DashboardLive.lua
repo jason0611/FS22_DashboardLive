@@ -889,7 +889,7 @@ local function getFillLevelTable(vehicle, ftIndex, ftPartition, ftType)
 end
 
 local function recursiveCheck(implement, checkFunc, search, getCheckedImplement, iteration, iterationStep)
-	if implement.object == nil or checkFunc == nil then return false end
+	if implement.object == nil then return false end
 	
 	if type(search)=="number" then 
 		iteration = search
@@ -902,13 +902,17 @@ local function recursiveCheck(implement, checkFunc, search, getCheckedImplement,
 	dbgprint("recursiveCheck : iteration: "..tostring(iteration), 4)
 	
 	local checkResult = false
-	if search or iterationStep == iteration then checkResult = checkFunc(implement.object, false) end
+	local checkFuncOrig = checkFunc
+	if type(checkFunc)=="string" then
+		checkFunc = implement.object[checkFunc]
+	end
+	if search or iterationStep == iteration then checkResult = checkFunc ~= nil and checkFunc(implement.object, false) end
 	local returnImplement = checkResult and implement or nil
 	
 	if not checkResult and implement.object.spec_attacherJoints ~= nil and (search or iterationStep < iteration) and (iteration == nil or iterationStep < iteration) then
 		local attachedImplements = implement.object.spec_attacherJoints.attachedImplements
 		if attachedImplements ~= nil and attachedImplements[1]~=nil then 
-			checkResult, returnImplement = recursiveCheck(attachedImplements[1], checkFunc, search, getCheckedImplement, iteration, iterationStep + 1)
+			checkResult, returnImplement = recursiveCheck(attachedImplements[1], checkFuncOrig, search, getCheckedImplement, iteration, iterationStep + 1)
 		end
 	end
 	if getCheckedImplement then
@@ -923,6 +927,7 @@ local function getIsFoldable(device)
 	return spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
 end
 
+--[[
 local function isFoldable(implement, search, getFoldableImplement, t)
 	local foldable, returnImplement = recursiveCheck(implement, getIsFoldable, t == nil, getFoldableImplement, t)
 	if getFoldableImplement then
@@ -931,6 +936,7 @@ local function isFoldable(implement, search, getFoldableImplement, t)
 		return foldable
 	end
 end
+--]]
 
 local function getAttachedStatus(vehicle, element, mode, default)
 	
@@ -1008,15 +1014,15 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				dbgprint(implement.object:getFullName().." hasTypeDesc "..tostring(options)..": "..tostring(resultValue), 4)
 				
             elseif mode == "raised" then
-            	resultValue = not recursiveCheck(implement, implement.object.getIsLowered, true, false, t)
+            	resultValue = not recursiveCheck(implement, "getIsLowered", true, false, t)
             	dbgprint(implement.object:getFullName().." raised: "..tostring(resultValue), 4)
             	
             elseif mode == "lowered" then
-            	resultValue = recursiveCheck(implement, implement.object.getIsLowered, true, false, t)
+            	resultValue = recursiveCheck(implement, "getIsLowered", true, false, t)
             	dbgprint(implement.object:getFullName().." lowered: "..tostring(resultValue), 4)
             	
             elseif mode == "lowerable" then
-				resultValue = recursiveCheck(implement, implement.object.getAllowsLowering, true, false, t)
+				resultValue = recursiveCheck(implement, "getAllowsLowering", true, false, t)
 				dbgprint(implement.object:getFullName().." lowerable: "..tostring(resultValue), 4)
 				
 			elseif mode == "lowering" or mode == "lifting" then
@@ -1050,23 +1056,23 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				end
 				
             elseif mode == "foldable" then
-            	local foldable = isFoldable(implement, true)
+            	local foldable = recursiveCheck(implement, getIsFoldable, t == nil, false, t) --isFoldable(implement, true)
 				resultValue = foldable or false
 				dbgprint(implement.object:getFullName().." foldable: "..tostring(resultValue), 4)
 				
 			elseif mode == "folded" then
-				local foldable, foldableImplement = isFoldable(implement, true, true, t)
+				local foldable, foldableImplement = recursiveCheck(implement, getIsFoldable, t == nil, true, t) --isFoldable(implement, true, true, t)
 				--local implement = subImplement or implement
 				resultValue = foldable and foldableImplement.object.getIsUnfolded ~= nil and not foldableImplement.object:getIsUnfolded() and foldableImplement.object.spec_foldable.foldAnimTime == 1 or false
             	dbgprint(implement.object:getFullName().." folded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolded" then
-            	local foldable, foldableImplement = isFoldable(implement, true, true, t)
+            	local foldable, foldableImplement = recursiveCheck(implement, getIsFoldable, t == nil, true, t) --isFoldable(implement, true, true, t)
             	resultValue = foldable and foldableImplement.object.getIsUnfolded ~= nil and foldableImplement.object:getIsUnfolded() or false
             	dbgprint(implement.object:getFullName().." unfolded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolding" or mode == "folding" then
-            	local foldable, foldableImplement = isFoldable(implement, true, true, t)
+            	local foldable, foldableImplement = recursiveCheck(implement, getIsFoldable, t == nil, true, t) --isFoldable(implement, true, true, t)
             	if not foldable then 
             		resultValue = false
             	else
@@ -1082,7 +1088,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				
             elseif mode == "unfoldingstate" then
             	local spec = findSpecialization(implement.object, "spec_foldable", t)
-            	local foldable = isFoldable(implement, true, false, t)
+            	local foldable = recursiveCheck(implement, getIsFoldable, t == nil, false, t) --isFoldable(implement, true, false, t)
             	if foldable and spec.foldAnimTime >= 0 and spec.foldAnimTime <= 1 then 
             		resultValue = 1 - spec.foldAnimTime
             	else
@@ -1092,7 +1098,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
              
             elseif mode == "foldingstate" then
             	local spec = findSpecialization(implement.object, "spec_foldable", t)
-            	local foldable = isFoldable(implement, true, false, t)
+            	local foldable = recursiveCheck(implement, getIsFoldable, t == nil, false, t) --isFoldable(implement, true, false, t)
             	if foldable and spec.foldAnimTime >= 0 and spec.foldAnimTime <= 1 then 
             		resultValue = spec.foldAnimTime
             	else
@@ -1265,13 +1271,16 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "toolrotation" or mode=="istoolrotation" then
 				local factor = element.dblFactor or 1
 				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
+				local s = element.dblStateText
+				dbgprint(implement.object:getFullName().." : frontLoader - " .. mode .. " - " .. s,3)
 				resultValue = 0
 				if specCyl ~= nil then
 					for toolIndex, tool in ipairs(specCyl.movingTools) do
 						if toolIndex == tonumber(element.dblOption) then
 							local origin = tool.rotMax or 0
 							local originDeg = math.deg(origin) * -1
-							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor * -1 - originDeg
+							local rot = math.deg(tool.curRot[tool.rotationAxis]) * factor * -1 -- - originDeg
+							if s=="origin" then rot = rot - originDeg end
 							if element.dblCommand == "toolrotation" then
 								resultValue = rot
 							elseif element.dblCommand == "istoolrotation" then
@@ -1280,7 +1289,40 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						end
 					end
 				end
-
+			elseif mode=="swathstate" then
+				local specWM =  findSpecialization(implement.object,"spec_workMode",t)
+				local states
+				if type(element.dblStateText) == "number" then
+					states = {}
+					states[1] = element.dblStateText
+				elseif type(element.dblStateText) == "table" then
+					states = element.dblStateText
+				else
+					states = string.split(element.dblStateText, " ")
+				end
+				resultValue = false
+				for _, state in ipairs(states) do
+					if tonumber(state) ~= nil and specWM ~= nil then
+						resultValue = resultValue or specWM.state == tonumber(state)
+					end
+				end
+			elseif mode=="mpconditioner" then
+				resultValue = false
+				local specMPConverter = findSpecialization(implement.object,"spec_mower",t)
+				if specMPConverter ~= nil and specMPConverter.currentConverter ~= nil then
+					resultValue = specMPConverter.currentConverter == "MOWERCONDITIONER"
+				end
+			elseif mode=="seedtype" then
+				resultValue = ""
+				local specS = findSpecialization(implement.object,"spec_sowingMachine")
+				if specS ~= nil then
+					local fillType = g_fruitTypeManager:getFillTypeByFruitTypeIndex(specS.seeds[specS.currentSeed])
+					local len = string.len(element.textMask or "xxxx")
+					local alignment = element.textAlignment
+					resultValue = trim(fillType.title, len, alignment)
+					resultValue = string.gsub(resultValue,"ü","u")
+					resultValue = string.gsub(resultValue,"Ö","O")
+				end
             elseif mode == "connected" then
             	resultValue = true
             	
@@ -1653,6 +1695,9 @@ function DashboardLive.getDBLAttributesGPSNumbers(self, xmlFile, key, dashboard)
     
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1")
     dbgprint("getDBLAttributesNumbers : factor: "..tostring(dashboard.dblFactor), 2)
+    
+    dashboard.dblOption = xmlFile:getValue(key .. "#option")
+	dbgprint("getDBLAttributesNumbers : option: "..tostring(dashboard.dblOption), 2)
 
 	return true
 end
@@ -1756,6 +1801,8 @@ function DashboardLive.getDBLAttributesFrontloader(self, xmlFile, key, dashboard
 
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1") -- factor
 
+	dashboard.dblStateText = xmlFile:getValue(key .. "#stateText","origin")
+
 	local min = xmlFile:getValue(key .. "#min")
 	local max = xmlFile:getValue(key .. "#max")
 	
@@ -1824,13 +1871,22 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			
 			elseif c == "tipping" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "tipping", o == "default")
+				
+			elseif c == "swath" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "swathstate", o == "default")
+				
+			elseif c == "mpconditioner" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "mpconditioner", o == "default")
+				
+			elseif c == "seedtype" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "seedtype", o == "default")
 
-			elseif specWM ~= nil and c == "swath" then
-				if s == "" or tonumber(s) == nil then
-					Logging.xmlWarning(vehicle.xmlFile, "No swath state number given for DashboardLive swath command")
-					return false
-				end
-				returnValue = returnValue or specWM.state == tonumber(s)
+			-- elseif specWM ~= nil and c == "swath" then
+			-- 	if s == "" or tonumber(s) == nil then
+			-- 		Logging.xmlWarning(vehicle.xmlFile, "No swath state number given for DashboardLive swath command")
+			-- 		return false
+			-- 	end
+			-- 	returnValue = returnValue or specWM.state == tonumber(s)
 			end
 		end
 		
@@ -1861,6 +1917,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		-- foldingState
 		elseif cmds == "foldingstate" then
 			returnValue = getAttachedStatus(self, dashboard, "foldingstate", 0)
+			
 		elseif cmds == "unfoldingstate" then
 			returnValue = getAttachedStatus(self, dashboard, "unfoldingstate", 0)
 		
@@ -2123,6 +2180,7 @@ end
 
 function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	dbgprint("getDashboardLiveGPS : dblOption: "..tostring(dashboard.dblOption), 4)
+	local o = string.lower(dashboard.dblOption or "")
 	local spec = self.spec_DashboardLive
 	local specGS = self.spec_globalPositioningSystem
 	local returnValue = 0
@@ -2131,6 +2189,64 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	if spec.modGuidanceSteeringFound and specGS ~= nil and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil then
 		returnValue = math.abs(specGS.guidanceData.currentLane) * factor
 	end
+	
+	if o == "delta" or o == "dir" or o == "dirleft" or o == "dirright" then
+		local gsValue = specGS ~= nil and specGS.guidanceData.currentLane or 0
+		gsValue = specGS ~= nil and math.floor(specGS.guidanceData.alphaRad * specGS.guidanceData.snapDirectionMultiplier * 100) / 100 or 0
+		
+		if o == "delta" then
+			returnValue = gsValue * factor
+		end
+		
+		if o == "dir" and gsValue < 0 then
+			returnValue = -1
+		elseif o == "dir" and gsValue > 0 then
+			returnValue = 1
+		elseif o == "dir" then
+			returnValue = 0
+		end
+		
+		if o == "dirleft" then
+			returnValue = gsValue < -0.02
+		elseif o == "dirright" then
+			returnValue = gsValue > 0.02
+		end		
+	end
+	
+	if o == "headingdelta" then
+		local x1, y1, z1 = localToWorld(self.rootNode, 0, 0, 0)
+		local x2, y2, z2 = localToWorld(self.rootNode, 0, 0, 1)
+		local dx, dz = x2 - x1, z2 - z1
+		
+		local heading = math.floor(180 - (180 / math.pi) * math.atan2(dx, dz))
+		local snapAngle = 0
+		
+		-- we need to find the snap angle, specific to the Guidance Mod used
+		-- Guidance Steering
+		if specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive then
+			if specGS.guidanceData ~= nil and specGS.guidanceData.snapDirection ~= nil then
+				local lineDirX, lineDirZ = unpack(specGS.guidanceData.snapDirection)
+				snapAngle = -math.deg(math.atan(lineDirX/lineDirZ))
+			end
+		-- VCA
+		elseif (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0)  then
+			local curSnapAngle, _, curSnapOffset = self:vcaGetCurrentSnapAngle( math.atan2(dx, dz) )
+			snapAngle = 180 - math.deg(curSnapAngle)
+		end
+
+		local offset = heading - snapAngle
+		if offset > 180 then 
+			offset = offset - 360
+		end
+		if offset > 90 then
+			offset = offset - 180
+		end
+		if offset < -90 then
+			offset = offset + 180
+		end
+		returnValue = offset * factor
+	end
+	
 	if dashboard.dblMin ~= nil and type(returnValue) == "number" then
 		returnValue = math.max(returnValue, dashboard.dblMin)
 	end
@@ -2178,7 +2294,8 @@ function DashboardLive.getDashboardLivePS(self, dashboard)
 			elseif FS22_proSeed ~= nil and FS22_proSeed.ProSeedTramLines ~= nil then
 				local mode = specPS.tramLineMode
 				local text = FS22_proSeed.ProSeedTramLines.TRAMLINE_MODE_TO_KEY[mode]
-				returnValue = trim(g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text)), 7)
+				local len = string.len(dashboard.textMask or "xxxx")
+				returnValue = trim(g_i18n.modEnvironments["FS22_proSeed"]:getText(("info_mode_%s"):format(text)), len)
 			end
 		elseif o == "distance" then
 			returnValue = specPS.tramLineDistance
@@ -2392,5 +2509,8 @@ function DashboardLive:onDraw()
 	if self.spec_dischargeable ~= nil then
 		dbgrenderTable(self.spec_dischargeable, 0, 3)
 		dbgrender("dischargeState: "..tostring(self.spec_dischargeable:getDischargeState()), 26, 3)
+	end
+	if self.spec_globalPositioningSystem ~= nil then
+		dbgrenderTable(self.spec_globalPositioningSystem.guidanceData, 1, 3)
 	end
 end

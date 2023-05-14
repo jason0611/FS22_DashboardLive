@@ -863,9 +863,9 @@ local function getChoosenAttacherState(device, ftType)
 			fillLevel.pct = fillLevel.abs / fillLevel.max
 			local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(ftIndex)
 			if fillTypeDesc ~= nil then
-				fillLevel.absKg = fillLevel.absKg + fillUnit.fillLevel * fillTypeDesc.massPerLiter * 1000
+				fillLevel.absKg = fillUnit.fillLevel ~= nil and fillLevel.absKg + fillUnit.fillLevel * fillTypeDesc.massPerLiter * 1000 or fillLevel.absKg
 			else
-				fillLevel.absKg = fillLevel.absKg + fillUnit.fillLevel
+				fillLevel.absKg = fillUnit.fillLevel ~= nil and fillLevel.absKg + fillUnit.fillLevel or fillLevel.absKg
 			end
 		end
 	end

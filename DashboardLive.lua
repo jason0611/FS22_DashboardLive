@@ -1125,18 +1125,20 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "tipside" or mode == "tipsidetext" then
 				local s = element.dblStateText
 				local specTR = findSpecialization(implement.object, "spec_trailer", t)     
-				local trailerTipSide = specTR.preferedTipSideIndex or 0
-				local trailerTipSideName = specTR.tipSides ~= nil and specTR.tipSides[trailerTipSide] ~= nil and specTR.tipSides[trailerTipSide].name or " "    	
-				if mode == "tipside" and s ~= nil and specTR ~= nil then 
-					local fullState = "info_tipSide"..tostring(s)
-					local fullStateName = g_i18n.texts[fullState]
-					resultValue = fullStateName == trailerTipSideName
-					dbgprint("tipSide found for trailer: "..tostring(t).." / tipSide: "..tostring(trailerStateName), 4) 
-				elseif mode == "tipsidetext" and specTR ~= nil then
-					local len = string.len(element.textMask or "00.0")
-					local alignment = element.textAlignment or RenderText.ALIGN_RIGHT
-					resultValue = trim(trailerTipSideName, len, alignment)
-					dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(returnValue), 4) 
+				if specTR ~= nil then
+					local trailerTipSide = specTR.preferedTipSideIndex or 0
+					local trailerTipSideName = specTR.tipSides ~= nil and specTR.tipSides[trailerTipSide] ~= nil and specTR.tipSides[trailerTipSide].name or " "    	
+					if mode == "tipside" and s ~= nil then 
+						local fullState = "info_tipSide"..tostring(s)
+						local fullStateName = g_i18n.texts[fullState]
+						resultValue = fullStateName == trailerTipSideName
+						dbgprint("tipSide found for trailer: "..tostring(t).." / tipSide: "..tostring(trailerStateName), 4) 
+					elseif mode == "tipsidetext" then
+						local len = string.len(element.textMask or "00.0")
+						local alignment = element.textAlignment or RenderText.ALIGN_RIGHT
+						resultValue = trim(trailerTipSideName, len, alignment)
+						dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(returnValue), 4) 
+					end
 				else 
 					dbgprint(tostring(mode).." not found for trailer: "..tostring(t), 4)
 					if mode == "tipsidetext" then

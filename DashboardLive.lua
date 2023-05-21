@@ -1230,8 +1230,9 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						dbgprint(implement.object:getFullName().." baleCountTotal: "..tostring(resultValue), 4)
 					end
 				else
-					-- support for Goeweil DLC bale counter
-					specBaleCounter = findSpecialization(implement.object,"spec_pdlc_goeweilPack.baleCounter")
+					-- support for Goeweil or Vermeer DLC bale counter
+					specBaleCounter = findSpecialization(implement.object,"spec_pdlc_goeweilPack.baleCounter") 
+										or specBaleCounter = findSpecialization(implement.object,"spec_pdlc_vermeerPack.baleCounter")
 					if specBaleCounter ~= nil then
 						if mode == "balecountanz" then
 							resultValue = specBaleCounter.sessionCounter

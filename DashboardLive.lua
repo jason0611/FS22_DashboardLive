@@ -1124,24 +1124,23 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	
 			elseif mode == "tipside" or mode == "tipsidetext" then
 				local s = element.dblStateText
-				local specTR = findSpecialization(implement.object, "spec_trailer", t)            	
+				local specTR = findSpecialization(implement.object, "spec_trailer", t)     
+				local trailerTipSide = specTR.preferedTipSideIndex or 0
+				local trailerTipSideName = specTR.tipSides ~= nil and specTR.tipSides[trailerTipSide] ~= nil and specTR.tipSides[trailerTipSide].name or " "    	
 				if mode == "tipside" and s ~= nil and specTR ~= nil then 
 					local fullState = "info_tipSide"..tostring(s)
 					local fullStateName = g_i18n.texts[fullState]
-					local trailerStateNum = specTR.preferedTipSideIndex or 0
-					local trailerStateName = specTR.tipSides ~= nil and specTR.tipSides[trailerStateNum] ~= nil and specTR.tipSides[trailerStateNum].name or " "
+					resultValue = fullStateName == trailerTipSideName
 					dbgprint("tipSide found for trailer: "..tostring(t).." / tipSide: "..tostring(trailerStateName), 4) 
-					resultValue = fullStateName == trailerStateName
 				elseif mode == "tipsidetext" and specTR ~= nil then
 					local len = string.len(element.textMask or "00.0")
 					local alignment = element.textAlignment or RenderText.ALIGN_RIGHT
-					local tipSideName = specTR.tipSides ~= nil and specTR.preferedTipSideIndex ~= nil and specTR.tipSides[specTR.preferedTipSideIndex].name or " "
-					resultValue = trim(tipSideName, len, alignment)
+					resultValue = trim(trailerTipSideName, len, alignment)
 					dbgprint("tipSideText found for trailer: "..tostring(t).." / tipSide: "..tostring(returnValue), 4) 
 				else 
 					dbgprint(tostring(mode).." not found for trailer: "..tostring(t), 4)
 					if mode == "tipsidetext" then
-						resultValue=""
+						resultValue = ""
 					else
 						resultValue = false
 					end

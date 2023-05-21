@@ -1232,7 +1232,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				else
 					-- support for Goeweil or Vermeer DLC bale counter
 					specBaleCounter = findSpecialization(implement.object,"spec_pdlc_goeweilPack.baleCounter") 
-										or specBaleCounter = findSpecialization(implement.object,"spec_pdlc_vermeerPack.baleCounter")
+										or findSpecialization(implement.object,"spec_pdlc_vermeerPack.baleCounter")
 					if specBaleCounter ~= nil then
 						if mode == "balecountanz" then
 							resultValue = specBaleCounter.sessionCounter

@@ -1229,8 +1229,12 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						dbgprint(implement.object:getFullName().." baleCountTotal: "..tostring(resultValue), 4)
 					end
 				else
-					-- support for Goeweil DLC bale counter
-					specBaleCounter = findSpecialization(implement.object,"spec_pdlc_goeweilPack.baleCounter")
+					-- Vermeer DLC bale counter (the vermeer pack is used before the göweil pack by the game)
+					specBaleCounter = findSpecialization(implement.object,"spec_pdlc_vermeerPack.baleCounter")
+					if specBaleCounter == nil then
+						-- support for Goeweil DLC bale counter
+						specBaleCounter = findSpecialization(implement.object,"spec_pdlc_goeweilPack.baleCounter")
+					end
 					if specBaleCounter ~= nil then
 						if mode == "balecountanz" then
 							resultValue = specBaleCounter.sessionCounter

@@ -1013,9 +1013,9 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				end
 				dbgprint(implement.object:getFullName().." hasTypeDesc "..tostring(options)..": "..tostring(resultValue), 4)
 				
-            elseif mode == "raised" then
+            elseif mode == "lifted" then
             	resultValue = not recursiveCheck(implement, "getIsLowered", true, false, t)
-            	dbgprint(implement.object:getFullName().." raised: "..tostring(resultValue), 4)
+            	dbgprint(implement.object:getFullName().." lifted: "..tostring(resultValue), 4)
             	
             elseif mode == "lowered" then
             	resultValue = recursiveCheck(implement, "getIsLowered", true, false, t)
@@ -1453,7 +1453,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		returnValue = getAttachedStatus(self, group, "disconnected")
 	
 	elseif group.dblCommand == "base_lifted" then
-		returnValue = getAttachedStatus(self, group, "raised", group.dblActiveWithoutImplement)
+		returnValue = getAttachedStatus(self, group, "lifted", group.dblActiveWithoutImplement)
 		
 	elseif group.dblCommand == "base_lowered" then
 		returnValue = getAttachedStatus(self, group, "lowered", group.dblActiveWithoutImplement)
@@ -1835,7 +1835,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "connected")
 	
 			elseif c == "lifted" then
-				returnValue = returnValue or getAttachedStatus(self, dashboard, "raised", o == "default")
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "lifted", o == "default")
 				
 			elseif c == "lifting" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "lifting")
@@ -2136,6 +2136,8 @@ function DashboardLive.getDashboardLiveHLM(self, dashboard)
 				return specHLM.isOn and not specHLM.isActive
 			elseif o == "headland" then
 				return specHLM.isOn and specHLM.isActive
+			elseif o == "contour" then
+				return specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0
 			else
 				return specHLM.isOn
 			end

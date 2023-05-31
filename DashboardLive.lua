@@ -2133,11 +2133,11 @@ function DashboardLive.getDashboardLiveHLM(self, dashboard)
 
 		if specHLM ~= nil and specHLM.exists then
 			if o == "field" then
-				return specHLM.isOn and not specHLM.isActive
+				return specHLM.isOn and not specHLM.isActive and (specHLM.contour == 0 or specHLM.contour == nil)
 			elseif o == "headland" then
 				return specHLM.isOn and specHLM.isActive
 			elseif o == "contour" then
-				return specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0
+				return specHLM.isOn and not specHLM.isActive and (specHLM.contour ~= 0 and specHLM.contour ~= nil)
 			else
 				return specHLM.isOn
 			end

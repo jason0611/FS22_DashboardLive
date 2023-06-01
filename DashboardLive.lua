@@ -2195,12 +2195,12 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 	end
 	
 	if o == "delta" or o == "dir" or o == "dirleft" or o == "dirright" then
-		local gsValue = specGS ~= nil and specGS.guidanceData.currentLane or 0
-		gsValue = specGS ~= nil and specGS.guidanceData ~= nil 
-								and specGS.guidanceData.alphaRad ~= nil 
-								and specGS.guidanceData.snapDirectionMultiplier ~= nil 
-								and math.floor(specGS.guidanceData.alphaRad * specGS.guidanceData.snapDirectionMultiplier * 100) / 100 
-								or 0
+		local gsValue = specGS ~= nil 
+						and specGS.guidanceData ~= nil 
+						and specGS.guidanceData.alphaRad ~= nil 
+						and specGS.guidanceData.snapDirectionMultiplier ~= nil 
+						and math.floor(specGS.guidanceData.alphaRad * specGS.guidanceData.snapDirectionMultiplier * 100) / 100 
+						or 0
 		
 		if o == "delta" then
 			returnValue = gsValue * factor

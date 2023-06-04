@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
+GMSDebug:init(DashboardLive.MOD_NAME, false)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -762,7 +762,7 @@ local function getIndexOfActiveImplement(rootVehicle, level)
 	local returnVal = 0
 	local returnSign = 1
 	
-	if not rootVehicle:getIsActiveForInput() and rootVehicle.spec_attacherJoints ~= nil and rootVehicle.spec_attacherJoints.attacherJoints ~= nil then
+	if rootVehicle ~= nil and not rootVehicle:getIsActiveForInput() and rootVehicle.spec_attacherJoints ~= nil and rootVehicle.spec_attacherJoints.attacherJoints ~= nil and rootVehicle.steeringAxleNode ~= nil then
 	
 		for _,impl in pairs(rootVehicle.spec_attacherJoints.attachedImplements) do
 			

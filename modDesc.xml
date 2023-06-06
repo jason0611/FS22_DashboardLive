@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="75">
 	<author>Glowins Modschmiede</author>
-	<!-- <version>1.0.0.0</version> -->
-	<version>1.1.0.0 GM</version>
+	<version>1.1.0.0</version>
 	<contributors>AgrarPlay und LUWZ, Farming Duds, Myiamoto86, HiPhi77</contributors>
 	<title>
 		<en>Dashboard Live</en>
@@ -29,12 +28,20 @@ Basic game:
 - Compass heading
 - PTOs
 - Display of the currently active implement
++ Folding state
++ Tipping State
++ TipSide
++ Heading (N/E/S/W, N/NE/E/SE/S/SW/W/NE or degree) 
++ Field Number
++ FillLevel Weight
++ Realtime Clock
 
 VehicleControlAddon:
 - Status of the differential locks
 - Status of the all-wheel drive
 - Hold speed
 - GPS status
++ Actual wheel slip (if FS22_VehicleControlAddon or FS22_reaGUI is present)
 
 Enhanced Vehicle:
 - Status of the differential locks
@@ -52,7 +59,40 @@ Headland Management:
 ProSeed:
 - All displays of the ProSeed HUD
 
+Combine:
++ Filling state
++ Chopper / Swath state
++ Worked hectars
++ Cutting height
++ Pipe folding state
++ Pipe overloading state
+
+CombineXP:
++ Tons per Hour
++ Engine Load
++ Yield
++ High moisture warning
+
+Baler:
++ Bale size
++ Bale counter (if Vermeer-DLC, Goeweill DLC or Ifko's BaleCounter mod is present)
++ Wrapped bale counter (if Ifko's BaleCounter is present)
+
+Frontloader:
++ Tool position
+
 All supported mods are optional.
+
+Changelog V1.1.0.0:
+- added new base game functions
+- combine support
+- baler support
+- front loader support
+- wheel slip 
+- support for FS22_combineXP
+- support for FS22_lockSteeringAxle
+- several fixes
+- complete command overview added
 
 Important: Dashboard Live has to be build into vehicles first, to integrate functions and displays.
 A rough installation guide is included and there will also be video tutorials available soon.
@@ -81,12 +121,20 @@ Basisspiel:
 - Kompasskurs
 - PTOs
 - Anzeige des gerade aktiven Geräts
++ Status des Ausklapp-/Einklappvorgangs
++ Abkippstatus
++ Abkippseite
++ Kursanzeige (N/E/S/W, N/NE/E/SE/S/SW/W/NE oder Grad)
++ Feldnummer
++ Gewicht der geladenen Füllmenge
++ Echtzeit Uhr
 
 VehicleControlAddon:
 - Status der Differentialsperren
 - Status des Allradantriebs
 - Geschwindigkeit halten
 - GPS-Status
++ Schlupf der Antriebsräder (wenn FS22_VehicleControlAddon oder FS22_reaGUI vorhanden sind)
 
 Enhanced Vehicle:
 - Status der Differentialsperren
@@ -104,7 +152,39 @@ Headland Management:
 Proseed:
 - Alle Anzeigen des ProSeed-HUD
 
+Drescher:
++ Füllanzeige
++ Zustand von Strohhäcksler/Schwadablage
++ Schnitthöhe 
++ Stellung des Überladerohrs
++ Überladevorgang aktiv
+
+CombineXP:
++ Tonnen pro Stunde
++ Motorlast
++ Ertrag
++ Warnung bei hoher Feuchtigkeit
+
+Ballenpressen / Ballenwickler:
++ Ballengröße
++ Ballenzähler (wenn Vermeer-DLC, Goeweill DLC oder Ifko's BaleCounter Mod vorhanden ist)
++ Zähler gewickelter Ballen (wenn Ifko's BaleCounter Mod vorhanden ist)
+
+Frontlader:
++ Werkzeugstellung
+ 
 Alle unterstützten Mods sind optional.
+
+Änderungsliste V1.1.0.0:
+- Neue Funktionen des Basisspiels hinzugefügt
+- Unterstützung für Mähdrescher
+- Unterstützung für Ballenpressen
+- Frontlader-Unterstützung
+- Radschlupf 
+- Unterstützung für FS22_combineXP
+- Unterstützung für FS22_lockSteeringAxle
+- verschiedene Korrekturen
+- komplette Befehlsübersicht hinzugefügt
 
 Wichtig: Dashboard Live muss vorab in die Fahrzeuge eingebaut werden, um die Funktionen und Anzeigen nutzen zu können.
 Eine Einbauhilfe ist enthalten, außerdem wird es in Kürze Video-Tutorials geben.
@@ -133,12 +213,20 @@ jogo básico:
 - Direção da bússola
 - PTOs
 - Exibição do implemento atualmente ativo
++ Estado do engate frontal e traseiro
++ Estado das alfaias e reboques ligados
++ Níveis de enchimento
++ Direcção da bússola
++ Número do campo
++ FillLevel Weight (peso do nível de enchimento)
++ Relógio em tempo real
 
 Controle de veículo Addon:
 - Estado dos bloqueios do diferencial
 - Status da tração nas quatro rodas
 - Mantenha a velocidade
 - estado do GPS
++ Patinagem real das rodas (se FS22_VehicleControlAddon ou FS22_reaGUI estiver presente)
 
 Veículo aprimorado:
 - Estado dos bloqueios do diferencial
@@ -156,7 +244,40 @@ Gestão de Cabeceiras:
 ProSeed:
 - Todas as exibições do ProSeed HUD
 
+Combinar:
++ Estado de enchimento
++ Estado do cortador / faixa
++ Hectares trabalhados
++ Altura de corte
++ Estado de dobragem do tubo
++ Estado de sobrecarga do tubo
+
+CombineXP:
++ Toneladas por hora
++ Carga do motor
++ Rendimento
++ Aviso de humidade elevada
+
+Enfardadeira:
++ Tamanho do fardo
++ Contador de fardos (se Vermeer-DLC, Goeweill DLC ou Ifko's BaleCounter mod estiver presente)
++ Contador de fardos embrulhados (se o Ifko's BaleCounter estiver presente)
+
+Carregador frontal:
++ Posição da ferramenta
+
 Todos os mods suportados são opcionais.
+
+Changelog V1.1.0.0:
+- adicionadas novas funções de jogo base
+- suporte para ceifeira-debulhadora
+- suporte para enfardadeira
+- suporte para carregador frontal
+- deslizamento de rodas 
+- suporte para FS22_combineXP
+- suporte para FS22_lockSteeringAxle
+- várias correcções
+- visão geral completa dos comandos adicionada
 
 Importante: O Dashboard Live deve ser instalado primeiro nos veículos, para integrar funções e displays.
 Um guia de instalação aproximado está incluído e também haverá tutoriais em vídeo disponíveis em breve.

@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, false)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -41,6 +41,7 @@ function DashboardLive.initSpecialization()
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl", "DashboardLive command")
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#op", "DashboardLive operator")
 	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#page", "DashboardLive page")
+	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#group", "DashboardLive pages group")
 	schema:register(XMLValueType.BOOL, Dashboard.GROUP_XML_KEY .. "#dblActiveWithoutImplement", "return 'true' without implement")
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblAttacherJointIndices")
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblSelection")
@@ -60,6 +61,8 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#stateText", "stateText")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#trailer", "trailer number")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#partition", "trailer partition")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#page", "choosen page")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#group", "choosen page group")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#option", "Option")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
@@ -119,10 +122,14 @@ function DashboardLive:onLoad(savegame)
 	
 	-- management data
 	spec.dirtyFlag = self:getNextDirtyFlag()
-	spec.actPage = 1
 	spec.maxPage = 1
-	spec.groups = {}
-	spec.groups[1] = true
+	spec.actPageGroup = 1
+	spec.maxPageGroup = 1
+	spec.pageGroups = {}
+	spec.pageGroups[1] = {}
+	spec.pageGroups[1].pages = {}
+	spec.pageGroups[1].pages[1] = true
+	spec.pageGroups[1].actPage = 1
 	spec.updateTimer = 0
 	
 	-- zoom data
@@ -150,6 +157,23 @@ function DashboardLive:onLoad(savegame)
 	if self.loadDashboardsFromXML ~= nil then
 		local dashboardData
 		dbgprint("onLoad : loadDashboardsFromXML", 2)
+        -- page
+        dashboardData = {
+        					valueTypeToLoad = "page",
+        					valueObject = self,
+        					valueFunc = DashboardLive.getDashboardLivePage,
+        					additionalAttributesFunc = DashboardLive.getDBLAttributesPage
+        				}
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <page>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <page>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
+        
         -- base
         dashboardData = {	
         					valueTypeToLoad = "base",
@@ -381,7 +405,7 @@ end
 
 function DashboardLive:onPostLoad(savegame)
     local spec = self.spec_DashboardLive
-	dbgprint("onPostLoad: "..self:getName(), 2)
+	dbgprint("onPostLoad : "..self:getName(), 2)
 
 	-- Check if Mod GuidanceSteering exists
 	spec.modGuidanceSteeringFound = self.spec_globalPositioningSystem ~= nil
@@ -401,13 +425,25 @@ function DashboardLive:onPostLoad(savegame)
     local dashboard = self.spec_dashboard
     for _, group in pairs(dashboard.groups) do
     	if group.dblPage ~= nil then
+			spec.maxPageGroup = math.max(spec.maxPageGroup, group.dblPageGroup)
     		spec.maxPage = math.max(spec.maxPage, group.dblPage)
-    		spec.groups[group.dblPage] = true
+    		if spec.pageGroups[group.dblPageGroup] == nil then 
+    			spec.pageGroups[group.dblPageGroup] = {}
+    		end
+    		if spec.pageGroups[group.dblPageGroup].pages == nil then
+    			spec.pageGroups[group.dblPageGroup].pages = {}
+    		end
+    		if spec.pageGroups[group.dblPageGroup].actPage == nil then
+    			spec.pageGroups[group.dblPageGroup].actPage = 1
+    		end
+    		spec.pageGroups[group.dblPageGroup].pages[group.dblPage] = true
+    		dbgprint("onPostLoad : maxPageGroup set to "..tostring(spec.maxPageGroup), 2)
     		dbgprint("onPostLoad : maxPage set to "..tostring(spec.maxPage), 2)
     	else
     		dbgprint("onPostLoad : no pages found in group "..group.name, 2)
     	end
     end
+    dbgprint_r(spec.pageGroups, 4, 3)
 end
 
 -- Network stuff to synchronize engine data not synced by the game itself
@@ -467,12 +503,23 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 		if self:getIsActiveForInput(true) and spec ~= nil then 
 			local actionEventId
 			local sk = spec.maxPage > 1
-			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
-			g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
-			g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
-			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
-			g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
-			g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+			local sg = spec.maxPageGroup > 1
+			if sg then
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEGRPUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sg)
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEGRPDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sg)
+			end
+			if sk then
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+			end
 		end	
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM', self, DashboardLive.ZOOM, false, true, true, true, nil)	
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true, nil)	
@@ -506,25 +553,43 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 end
 
 function DashboardLive:CHANGEPAGE(actionName, keyStatus, arg3, arg4, arg5)
-	dbgprint("CHANGEPAGE", 4)
+	dbgprint("CHANGEPAGE: "..tostring(actionName), 2)
 	local spec = self.spec_DashboardLive
+	if actionName == "DBL_PAGEGRPUP" then
+		local pageGroupNum = spec.actPageGroup + 1
+		while spec.pageGroups[pageGroupNum] == nil do
+			pageGroupNum = pageGroupNum + 1
+			if pageGroupNum > spec.maxPageGroup then pageGroupNum = 1 end
+		end
+		spec.actPageGroup = pageGroupNum
+		dbgprint("CHANGEPAGE : NewPageGroup = "..tostring(spec.actPageGroup), 2)
+	end
+	if actionName == "DBL_PAGEGRPDN" then
+		local pageGroupNum = spec.actPageGroup - 1
+		while spec.pageGroups[pageGroupNum] == nil do
+			pageGroupNum = pageGroupNum - 1
+			if pageGroupNum < 1 then pageGroupNum = spec.maxPageGroup end
+		end
+		spec.actPageGroup = pageGroupNum
+		dbgprint("CHANGEPAGE : NewPageGroup = "..tostring(spec.actPageGroup), 2)
+	end
 	if actionName == "DBL_PAGEUP" then
-		local pageNum = spec.actPage + 1
-		while not spec.groups[pageNum] do
+		local pageNum = spec.pageGroups[spec.actPageGroup].actPage + 1
+		while not spec.pageGroups[spec.actPageGroup].pages[pageNum] do
 			pageNum = pageNum + 1
 			if pageNum > spec.maxPage then pageNum = 1 end
 		end
-		spec.actPage = pageNum
-		dbgprint("CHANGEPAGE : NewPage = "..spec.actPage, 2)
+		spec.pageGroups[spec.actPageGroup].actPage = pageNum
+		dbgprint("CHANGEPAGE : NewPage = "..tostring(spec.pageGroups[spec.actPageGroup].actPage), 2)
 	end
 	if actionName == "DBL_PAGEDN" then
-		local pageNum = spec.actPage - 1
-		while not spec.groups[pageNum] do
+		local pageNum = spec.pageGroups[spec.actPageGroup].actPage - 1
+		while not spec.pageGroups[spec.actPageGroup].pages[pageNum] do
 			pageNum = pageNum - 1
 			if pageNum < 1 then pageNum = spec.maxPage end
 		end
-		spec.actPage = pageNum
-		dbgprint("CHANGEPAGE : NewPage = "..spec.actPage, 2)
+		spec.pageGroups[spec.actPageGroup].actPage = pageNum
+		dbgprint("CHANGEPAGE : NewPage = "..tostring(spec.pageGroups[spec.actPageGroup].actPage), 2)
 	end
 end
 
@@ -1322,8 +1387,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					local len = string.len(element.textMask or "xxxx")
 					local alignment = element.textAlignment
 					resultValue = trim(fillType.title, len, alignment)
-					resultValue = string.gsub(resultValue,"Ã¼","u")
-					resultValue = string.gsub(resultValue,"Ã–","O")
+					resultValue = string.gsub(resultValue,"Ÿ","u")
+					resultValue = string.gsub(resultValue,"…","O")
 				end
             elseif mode == "connected" then
             	resultValue = true
@@ -1376,6 +1441,7 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	
 	if group.dblCommand == "page" then
 		group.dblPage = xmlFile:getValue(key .. "#page")
+		group.dblPageGroup = xmlFile:getValue(key .. "#group") or 1
 		dbgprint("loadDashboardGroupFromXML : page: "..tostring(group.dblPage), 2)
 	end
 	
@@ -1419,8 +1485,8 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		return superFunc(self, group)
 
 	-- page
-	elseif group.dblCommand == "page" and group.dblPage ~= nil then 
-		returnValue = spec.actPage == group.dblPage
+	elseif group.dblCommand == "page" and group.dblPage ~= nil and group.dblPageGroup ~= nil then 
+		returnValue = group.dblPage == spec.pageGroups[group.dblPageGroup].actPage
 	
 	-- vanilla game selector
 	elseif group.dblCommand == "base_selector" and group.dblSelection ~= nil then
@@ -1579,6 +1645,17 @@ end
 -- base fillType vca hlm gps gps_lane gps_width proseed selector
 
 -- readAttributes
+-- page
+function DashboardLive.getDBLAttributesPage(self, xmlFile, key, dashboard)
+	dashboard.dblPage = lower(xmlFile:getValue(key .. "#page"))
+	dbgprint("getDBLAttributesPage : page: "..tostring(dashboard.dblPage), 2)
+	
+	dashboard.dblPageGroup = lower(xmlFile:getValue(key .. "#group"))
+	dbgprint("getDBLAttributesPage : group: "..tostring(dashboard.dblPageGroup), 2)
+	
+	return true
+end
+
 -- base
 function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 
@@ -1816,6 +1893,22 @@ function DashboardLive.getDBLAttributesFrontloader(self, xmlFile, key, dashboard
 end
 
 -- get states
+function DashboardLive.getDashboardLivePage(self, dashboard)
+	dbgprint("getDashboardLivePage : dblPage: "..tostring(dashboard.dblPage)..", dblPageGroup: "..tostring(dashboard.dblPageGroup), 4)
+	local spec = self.spec_DashboardLive
+	local groupNum = tonumber(dashboard.dblPageGroup)
+	local pageNum = tonumber(dashboard.dblPage)
+	local returnValue = false
+	
+	if groupNum ~= nil and pageNum == nil then
+		returnValue = groupNum == spec.actPageGroup
+	elseif pageNum ~= nil then
+		groupNum = groupNum or 1 -- it makes no sense without given group, but maybe there are no groups so let set it to 1 in his case
+		returnValue = pageNum == spec.pageGroups[groupNum].actPage
+	end
+	
+	return returnValue
+end
 
 function DashboardLive.getDashboardLiveBase(self, dashboard)
 	dbgprint("getDashboardLiveBase : dblCommand: "..tostring(dashboard.dblCommand), 4)

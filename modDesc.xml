@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="75">
 	<author>Glowins Modschmiede</author>
-	<version>1.1.0.0</version>
+	<version>A.1.1.0</version>
 	<contributors>AgrarPlay und LUWZ, Farming Duds, Myiamoto86, HiPhi77</contributors>
 	<title>
 		<en>Dashboard Live</en>
@@ -294,6 +294,8 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
  	<actions>
 		<action name="DBL_PAGEUP" 		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_PAGEDN" 		category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_PAGEGRPUP" 		category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_PAGEGRPDN" 		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZOOM"   		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZOOM_PERM"	category="VEHICLE" ignoreComboMask="false" />
 		
@@ -321,6 +323,12 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
 		<action name="DBL_PRINTOUT" 	category="VEHICLE" ignoreComboMask="false" />
 	</actions>
 	<inputBinding>	
+		<actionBinding action="DBL_PAGEGRPUP">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_ralt KEY_up" neutralInput="0" index="1" />
+		</actionBinding>
+		<actionBinding action="DBL_PAGEGRPDN">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_ralt KEY_down " neutralInput="0" index="1" />
+		</actionBinding>
 		<actionBinding action="DBL_PAGEUP">
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_ralt KEY_right" neutralInput="0" index="1" />
 		</actionBinding>

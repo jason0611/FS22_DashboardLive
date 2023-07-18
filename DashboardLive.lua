@@ -30,7 +30,7 @@ DashboardLive.editMode = false
 
 DashboardLive.vanillaSchema = nil
 
-DashboardLive.scale = 0.05
+DashboardLive.scale = 0.1
 
 -- Console
 function DashboardLive:editParameter(scale)
@@ -74,6 +74,7 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#page", "choosen page")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#group", "choosen page group")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#option", "Option")
+	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#scale", "Minimap minimum scale factor")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#max", "Maximum")
@@ -94,6 +95,7 @@ function DashboardLive.initSpecialization()
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#trailer", "trailer number")
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#partition", "partition number")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#stateText", "stateText")
+	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#scale", "scale")
 	dbgprint("initSpecialization : vanillaSchema element options registered", 2)
 end
 
@@ -148,7 +150,7 @@ function DashboardLive:onLoad(savegame)
 	spec.zoomPerm = false
 	
 	--miniMap
-	spec.mapZoom = 1
+	spec.zoomValue = 1
 	
 	-- selector data
 	spec.selectorActive = 0
@@ -204,23 +206,22 @@ function DashboardLive:onLoad(savegame)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
         
-        --[[ miniMap
+        -- miniMap
         dashboardData = {	
-        					valueTypeToLoad = "minimap",
+        					valueTypeToLoad = "miniMap",
                         	valueObject = self,
                         	valueFunc = DashboardLive.getDashboardLiveMiniMap,
                             additionalAttributesFunc = DashboardLive.getDBLAttributesMiniMap
                         }
         self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
         if spec.vanillaIntegration then
-        	dbgprint("onLoad : VanillaIntegration <minimap>", 2)
+        	dbgprint("onLoad : VanillaIntegration <miniMap>", 2)
         	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
         end
         if spec.modIntegration then
-        	dbgprint("onLoad : ModIntegration <base>", 2)
+        	dbgprint("onLoad : ModIntegration <miniMap>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
-        --]]
         
         -- combine
         dashboardData = {	
@@ -1734,8 +1735,24 @@ end
 
 -- minimap
 function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
-	local node = xmlFile:getValue(key .. "#node")
-	DashboardLive.scale = xmlFile:getValue(key .. "#scale") or DashboardLive.scale
+	dashboard.scale = xmlFile:getValue(key .. "#scale") or DashboardLive.scale
+	dashboard.node = xmlFile:getValue(key .. "#node", nil, self.components, self.i3dMappings)
+	
+	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / scale = "..tostring(dashboard.scale), 2)
+	
+	local mapTexture = g_currentMission.mapImageFilename
+	if dashboard.node == nil then
+        Logging.xmlWarning(self.xmlFile, "Missing 'node' for dashboard '%s'", key)
+        return false
+    else
+		local materialId = getMaterial(dashboard.node, 0)
+		--materialId = setMaterialCustomMapFromFile(materialId, "miniMap", mapTexture, true, true, false)
+		materialId = setMaterialDiffuseMapFromFile(materialId, mapTexture, true, true, false)
+		setMaterial(dashboard.node, materialId, 0)
+		dbgprint("getDBLAttributesMiniMap: MiniMap Material set to "..tostring(materialId).." / texture set to "..mapTexture, 2)
+	end
+	
+	return true
 end
 
 -- combine
@@ -2136,6 +2153,45 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 	return false
 end
 
+function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
+	dbgprint("getDashboardLiveMiniMap : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	local spec = self.spec_DashboardLive
+	if spec == nil or dashboard.node == nil then 
+		print("no dashboard node for minimap given")
+		return false 
+	end
+	local node = self.steeringAxleNode or self.rootNode
+	local x, _, z = localToWorld(node, 0, 0, 0)
+	local xf, _, zf = localToWorld(node, 0, 0, 1)
+	local dx, dz = xf - x, zf - z
+	local heading = math.atan2(dx, dz) + math.pi
+	local scale = DashboardLive.scale
+	local quotient = 2 * g_currentMission.mapWidth
+	
+	local speed = self:getLastSpeed()
+	local width = g_currentMission.mapWidth
+	local zoomFactor = MathUtil.clamp(speed / 50, 0, 1)
+	local zoomTarget
+	
+	local onField = FSDensityMapUtil.getFieldDataAtWorldPosition(x, 0, z)
+	if onField then 
+		zoomTarget = 0.33 --* (width/2048) 
+	else
+		zoomTarget = 1
+	end
+	
+	if zoomTarget - 0.02 > spec.zoomValue then
+		spec.zoomValue = spec.zoomValue + 0.02
+	elseif zoomTarget + 0.02 < spec.zoomValue then
+		spec.zoomValue = spec.zoomValue - 0.02
+	end
+	
+	local zoom = (spec.zoomValue + 0.25 * zoomFactor) * (width/2048)
+	--setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * spec.mapZoom, heading)
+	setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * zoom, heading)
+	returnvalue = true
+end
+
 function DashboardLive.getDashboardLiveCombine(self, dashboard)
 	dbgprint("getDashboardLiveCombine : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	local spec = self.spec_combine
@@ -2351,6 +2407,7 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 		end		
 	end
 	
+	--[[
 	if o == "map" then
 		local spec = self.spec_DashboardLive
 		if spec == nil then return false; end
@@ -2383,6 +2440,7 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 		setShaderParameter(mapNode, "map", x/quotient, -z/quotient, scale * spec.mapZoom, heading)
 		returnvalue = true
 	end
+	--]]
 	
 	if o == "headingdelta" then
 		local x1, y1, z1 = localToWorld(self.rootNode, 0, 0, 0)

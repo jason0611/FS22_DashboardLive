@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<CustomShader version="5">
+    <Parameters>
+        <Parameter name="map" target="map" type="float4" group="base" defaultValue="0 0 0.2 0"/>
+    </Parameters>
+    <UvUsages/>
+    <Variations/>
+    <LodLevel startDistance="0">
+        <CodeInjections>
+            <CodeInjection position="OBJECT_PARAMETERS">
+<![CDATA[
+	// map.x: horizontal scroll
+	// map.y: vertical scroll
+	// map.z: zoom factor
+	// map.w: rotation (radiant)
+    float4 map;
+]]>
+            </CodeInjection>
+            <CodeInjection position="POST_SET_TEXCOORDS_VS">
+<![CDATA[
+#if defined(ALBEDO_MAP) || defined(EMISSIVE_MAP)
+    float2 mapPos = getDefaultTexCoords(In, object);
+    
+    float2 rotCenter = 0.5;
+	float radiant = object.map.w;
+    float2 mSinCos;
+    // compute sin and cos for this angle
+    sincos( radiant, mSinCos.x, mSinCos.y );
+	
+	float2 mTmpUV = mapPos - rotCenter;
+	mapPos.x = dot( mTmpUV, float2( mSinCos.y, - mSinCos.x ) );
+	mapPos.y = dot( mTmpUV, mSinCos.xy );
+	mapPos += rotCenter;
+	
+    // center correction
+	mapPos.xy -= 0.5; 
+	// scaling
+	mapPos.xy *= object.map.zz; 
+	// undo center correction
+	mapPos.xy += 0.5; 
+	
+	// scrolling
+	mapPos.xy += object.map.xy; 
+	
+	
+
+    Out.defaultTexCoords = mapPos;
+#endif
+]]>
+            </CodeInjection>
+          </CodeInjections>
+    </LodLevel>
+</CustomShader>

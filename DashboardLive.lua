@@ -2167,7 +2167,7 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 	
 	local speed = self:getLastSpeed()
 	local width = g_currentMission.mapWidth
-	local scale = DashboardLive.scale / (width/2028)
+	local scale = DashboardLive.scale --/ (width/2028)
 	local zoomFactor = MathUtil.clamp(speed / 50, 0, 1)
 	local zoomTarget
 	
@@ -2184,7 +2184,7 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 		spec.zoomValue = spec.zoomValue - 0.02
 	end
 	
-	local zoom = (spec.zoomValue + 0.25 * zoomFactor) * (width/2048)
+	local zoom = (spec.zoomValue + 0.25 * zoomFactor) / (width/2048)
 	--setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * spec.mapZoom, heading)
 	setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * zoom, heading)
 	returnvalue = true

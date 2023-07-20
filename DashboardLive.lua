@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -1737,7 +1737,6 @@ end
 function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
 	dashboard.scale = xmlFile:getValue(key .. "#scale") or DashboardLive.scale
 	dashboard.node = xmlFile:getValue(key .. "#node", nil, self.components, self.i3dMappings)
-	
 	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / scale = "..tostring(dashboard.scale), 2)
 	
 	local mapTexture = g_currentMission.mapImageFilename
@@ -1746,7 +1745,6 @@ function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
         return false
     else
 		local materialId = getMaterial(dashboard.node, 0)
-		--materialId = setMaterialCustomMapFromFile(materialId, "miniMap", mapTexture, true, true, false)
 		materialId = setMaterialDiffuseMapFromFile(materialId, mapTexture, true, true, false)
 		setMaterial(dashboard.node, materialId, 0)
 		dbgprint("getDBLAttributesMiniMap: MiniMap Material set to "..tostring(materialId).." / texture set to "..mapTexture, 2)

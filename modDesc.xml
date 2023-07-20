@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="75">
 	<author>Glowins Modschmiede</author>
-	<version>A.1.2.0</version>
+	<version>B.1.3.0</version>
 	<contributors>AgrarPlay und LUWZ, Farming Duds, Myiamoto86, HiPhi77</contributors>
 	<title>
 		<en>Dashboard Live</en>
@@ -12,8 +12,8 @@
 Dashboard Live (short: DBL) allows you to display all kinds of information in your board computers and/or dashboards in all kinds of tractors, no matter what brand. 
 
 A zoom function is included for better viewing of displays: 
-- Left shift key + space bar: Short zoom
-- Both shift keys + space bar: Permanent zoom on/off 
+- Left shift key - space bar: Short zoom
+- Both shift keys - space bar: Permanent zoom on/off 
 
 If supported in the vehicle, the right Alt key and left/right arrow can be used to scroll through displays.
 
@@ -28,20 +28,20 @@ Basic game:
 - Compass heading
 - PTOs
 - Display of the currently active implement
-+ Folding state
-+ Tipping State
-+ TipSide
-+ Heading (N/E/S/W, N/NE/E/SE/S/SW/W/NE or degree) 
-+ Field Number
-+ FillLevel Weight
-+ Realtime Clock
+- Folding state
+- Tipping State
+- TipSide
+- Heading (N/E/S/W, N/NE/E/SE/S/SW/W/NE or degree) 
+- Field Number
+- FillLevel Weight
+- Realtime Clock
 
 VehicleControlAddon:
 - Status of the differential locks
 - Status of the all-wheel drive
 - Hold speed
 - GPS status
-+ Actual wheel slip (if FS22_VehicleControlAddon or FS22_reaGUI is present)
+- Actual wheel slip (if FS22_VehicleControlAddon or FS22_reaGUI is present)
 
 Enhanced Vehicle:
 - Status of the differential locks
@@ -60,26 +60,26 @@ ProSeed:
 - All displays of the ProSeed HUD
 
 Combine:
-+ Filling state
-+ Chopper / Swath state
-+ Worked hectars
-+ Cutting height
-+ Pipe folding state
-+ Pipe overloading state
+- Filling state
+- Chopper / Swath state
+- Worked hectars
+- Cutting height
+- Pipe folding state
+- Pipe overloading state
 
 CombineXP:
-+ Tons per Hour
-+ Engine Load
-+ Yield
-+ High moisture warning
+- Tons per Hour
+- Engine Load
+- Yield
+- High moisture warning
 
 Baler:
-+ Bale size
-+ Bale counter (if Vermeer-DLC, Goeweill DLC or Ifko's BaleCounter mod is present)
-+ Wrapped bale counter (if Ifko's BaleCounter is present)
+- Bale size
+- Bale counter (if Vermeer-DLC, Goeweill DLC or Ifko's BaleCounter mod is present)
+- Wrapped bale counter (if Ifko's BaleCounter is present)
 
 Frontloader:
-+ Tool position
+- Tool position
 
 All supported mods are optional.
 
@@ -94,6 +94,9 @@ Changelog V1.1.0.0:
 - several fixes
 - complete command overview added
 
+Changelog V1.2.0.0:
+- added MiniMap integration
+
 Important: Dashboard Live has to be build into vehicles first, to integrate functions and displays.
 A rough installation guide is included and there will also be video tutorials available soon.
 
@@ -105,8 +108,8 @@ Further ideas or requests are welcome at <a href="https://github.com/jason0611/F
 Dashboard Live (kurz DBL) ermöglicht das Anzeigen aller möglichen Informationen in euren Boardcomputern und/oder Amaturen in allen möglichen Traktoren, völlig egal welcher Marke. 
 
 Um Anzeigen besser einsehen zu können ist eine Zoom-Funktion enthalten: 
-- Linke Shift-Taste + Leertaste: Kurzer Zoom
-- Beide Shift-Tasten + Leertaste: Dauerhafter Zoom an/aus
+- Linke Shift-Taste - Leertaste: Kurzer Zoom
+- Beide Shift-Tasten - Leertaste: Dauerhafter Zoom an/aus
 
 Wenn im Fahrzeug unterstützt, kann mit der rechten Alt-Taste und Pfeil links/rechts in Displays geblättert werden.
 
@@ -121,20 +124,20 @@ Basisspiel:
 - Kompasskurs
 - PTOs
 - Anzeige des gerade aktiven Geräts
-+ Status des Ausklapp-/Einklappvorgangs
-+ Abkippstatus
-+ Abkippseite
-+ Kursanzeige (N/E/S/W, N/NE/E/SE/S/SW/W/NE oder Grad)
-+ Feldnummer
-+ Gewicht der geladenen Füllmenge
-+ Echtzeit Uhr
+- Status des Ausklapp-/Einklappvorgangs
+- Abkippstatus
+- Abkippseite
+- Kursanzeige (N/E/S/W, N/NE/E/SE/S/SW/W/NE oder Grad)
+- Feldnummer
+- Gewicht der geladenen Füllmenge
+- Echtzeit Uhr
 
 VehicleControlAddon:
 - Status der Differentialsperren
 - Status des Allradantriebs
 - Geschwindigkeit halten
 - GPS-Status
-+ Schlupf der Antriebsräder (wenn FS22_VehicleControlAddon oder FS22_reaGUI vorhanden sind)
+- Schlupf der Antriebsräder (wenn FS22_VehicleControlAddon oder FS22_reaGUI vorhanden sind)
 
 Enhanced Vehicle:
 - Status der Differentialsperren
@@ -153,29 +156,29 @@ Proseed:
 - Alle Anzeigen des ProSeed-HUD
 
 Drescher:
-+ Füllanzeige
-+ Zustand von Strohhäcksler/Schwadablage
-+ Schnitthöhe 
-+ Stellung des Überladerohrs
-+ Überladevorgang aktiv
+- Füllanzeige
+- Zustand von Strohhäcksler/Schwadablage
+- Schnitthöhe 
+- Stellung des Überladerohrs
+- Überladevorgang aktiv
 
 CombineXP:
-+ Tonnen pro Stunde
-+ Motorlast
-+ Ertrag
-+ Warnung bei hoher Feuchtigkeit
+- Tonnen pro Stunde
+- Motorlast
+- Ertrag
+- Warnung bei hoher Feuchtigkeit
 
 Ballenpressen / Ballenwickler:
-+ Ballengröße
-+ Ballenzähler (wenn Vermeer-DLC, Goeweill DLC oder Ifko's BaleCounter Mod vorhanden ist)
-+ Zähler gewickelter Ballen (wenn Ifko's BaleCounter Mod vorhanden ist)
+- Ballengröße
+- Ballenzähler (wenn Vermeer-DLC, Goeweill DLC oder Ifko's BaleCounter Mod vorhanden ist)
+- Zähler gewickelter Ballen (wenn Ifko's BaleCounter Mod vorhanden ist)
 
 Frontlader:
-+ Werkzeugstellung
+- Werkzeugstellung
  
 Alle unterstützten Mods sind optional.
 
-Änderungsliste V1.1.0.0:
+Changelog V1.1.0.0:
 - Neue Funktionen des Basisspiels hinzugefügt
 - Unterstützung für Mähdrescher
 - Unterstützung für Ballenpressen
@@ -185,6 +188,9 @@ Alle unterstützten Mods sind optional.
 - Unterstützung für FS22_lockSteeringAxle
 - verschiedene Korrekturen
 - komplette Befehlsübersicht hinzugefügt
+
+Changelog V1.2.0.0:
+- MiniMap-Integration hinzugefügt
 
 Wichtig: Dashboard Live muss vorab in die Fahrzeuge eingebaut werden, um die Funktionen und Anzeigen nutzen zu können.
 Eine Einbauhilfe ist enthalten, außerdem wird es in Kürze Video-Tutorials geben.
@@ -197,8 +203,8 @@ Weitere Ideen oder Wünsche werden gerne unter <a href="https://github.com/jason
 Painel ao vivo (abreviação: DBL) permite que você exiba todos os tipos de informações em seus computadores de bordo e/ou painéis em todos os tipos de tratores, não importa a marca.
 
 Uma função de zoom está incluída para melhor visualização dos monitores:
-- Tecla shift esquerda + barra de espaço: zoom curto
-- Ambas as teclas shift + barra de espaço: zoom permanente ativado/desativado
+- Tecla shift esquerda - barra de espaço: zoom curto
+- Ambas as teclas shift - barra de espaço: zoom permanente ativado/desativado
 
 Se houver suporte no veículo, a tecla Alt direita e a seta esquerda/direita podem ser usadas para rolar pelas telas.
 
@@ -213,20 +219,20 @@ jogo básico:
 - Direção da bússola
 - PTOs
 - Exibição do implemento atualmente ativo
-+ Estado do engate frontal e traseiro
-+ Estado das alfaias e reboques ligados
-+ Níveis de enchimento
-+ Direcção da bússola
-+ Número do campo
-+ FillLevel Weight (peso do nível de enchimento)
-+ Relógio em tempo real
+- Estado do engate frontal e traseiro
+- Estado das alfaias e reboques ligados
+- Níveis de enchimento
+- Direcção da bússola
+- Número do campo
+- FillLevel Weight (peso do nível de enchimento)
+- Relógio em tempo real
 
 Controle de veículo Addon:
 - Estado dos bloqueios do diferencial
 - Status da tração nas quatro rodas
 - Mantenha a velocidade
 - estado do GPS
-+ Patinagem real das rodas (se FS22_VehicleControlAddon ou FS22_reaGUI estiver presente)
+- Patinagem real das rodas (se FS22_VehicleControlAddon ou FS22_reaGUI estiver presente)
 
 Veículo aprimorado:
 - Estado dos bloqueios do diferencial
@@ -245,26 +251,26 @@ ProSeed:
 - Todas as exibições do ProSeed HUD
 
 Combinar:
-+ Estado de enchimento
-+ Estado do cortador / faixa
-+ Hectares trabalhados
-+ Altura de corte
-+ Estado de dobragem do tubo
-+ Estado de sobrecarga do tubo
+- Estado de enchimento
+- Estado do cortador / faixa
+- Hectares trabalhados
+- Altura de corte
+- Estado de dobragem do tubo
+- Estado de sobrecarga do tubo
 
 CombineXP:
-+ Toneladas por hora
-+ Carga do motor
-+ Rendimento
-+ Aviso de humidade elevada
+- Toneladas por hora
+- Carga do motor
+- Rendimento
+- Aviso de humidade elevada
 
 Enfardadeira:
-+ Tamanho do fardo
-+ Contador de fardos (se Vermeer-DLC, Goeweill DLC ou Ifko's BaleCounter mod estiver presente)
-+ Contador de fardos embrulhados (se o Ifko's BaleCounter estiver presente)
+- Tamanho do fardo
+- Contador de fardos (se Vermeer-DLC, Goeweill DLC ou Ifko's BaleCounter mod estiver presente)
+- Contador de fardos embrulhados (se o Ifko's BaleCounter estiver presente)
 
 Carregador frontal:
-+ Posição da ferramenta
+- Posição da ferramenta
 
 Todos os mods suportados são opcionais.
 
@@ -278,6 +284,9 @@ Changelog V1.1.0.0:
 - suporte para FS22_lockSteeringAxle
 - várias correcções
 - visão geral completa dos comandos adicionada
+
+Changelog V1.2.0.0:
+- Integração do MiniMap adicionada
 
 Importante: O Dashboard Live deve ser instalado primeiro nos veículos, para integrar funções e displays.
 Um guia de instalação aproximado está incluído e também haverá tutoriais em vídeo disponíveis em breve.
@@ -344,7 +353,7 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
 	</inputBinding>
 	<l10n>
 		<text name="input_DBL_PAGEUP">
-            <en>Page up</en>
+            <en>Page group up</en>
             <de>Seite vor</de>
 			<br>Página para cima</br>
         </text>
@@ -352,6 +361,16 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
             <en>Page down</en>
             <de>Seite zurück</de>
 			<br>Página para baixo</br>
+        </text>
+        <text name="input_DBL_PAGEGRPUP">
+            <en>Terminal group up</en>
+            <de>Terminalgruppe vor</de>
+			<br>Grupo de terminais para cima</br>
+        </text>
+        <text name="input_DBL_PAGEGRPDN">
+            <en>Terminal group down up</en>
+            <de>Terminalgruppe zurück</de>
+			<br>Grupo de terminais para baixo</br>
         </text>
         <text name="input_DBL_ZOOM">
             <en>Quick Zoom</en>
@@ -365,9 +384,9 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
         </text>
         
         <text name="input_DBL_XUP">
-        	<en>DBL: Editor Mode: X+</en>
-            <de>DBL: Editor Modus: X+</de>
-			<br>DBL: Modo Editor: X+</br>
+        	<en>DBL: Editor Mode: X-</en>
+            <de>DBL: Editor Modus: X-</de>
+			<br>DBL: Modo Editor: X-</br>
         </text>
 		<text name="input_DBL_XDN">
 			<en>DBL: Editor Mode: X-</en>
@@ -375,9 +394,9 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
 			<br>DBL: Modo Editor: X-</br>
         </text>
 		<text name="input_DBL_YUP">
-			<en>DBL: Editor Mode: Y+</en>
-            <de>DBL: Editor Modus: Y+</de>
-			<br>DBL: Modo Editor: Y+</br>
+			<en>DBL: Editor Mode: Y-</en>
+            <de>DBL: Editor Modus: Y-</de>
+			<br>DBL: Modo Editor: Y-</br>
         </text>
 		<text name="input_DBL_YDN">
 			<en>DBL: Editor Mode: Y-</en>
@@ -385,9 +404,9 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
 			<br>DBL: Modo Editor: Y-</br>
         </text>
 		<text name="input_DBL_ZUP">
-			<en>DBL: Editor Mode: Z+</en>
-            <de>DBL: Editor Modus: Z+</de>
-			<br>DBL: Modo Editor: Z+</br>
+			<en>DBL: Editor Mode: Z-</en>
+            <de>DBL: Editor Modus: Z-</de>
+			<br>DBL: Modo Editor: Z-</br>
         </text>
 		<text name="input_DBL_ZDN">
 			<en>DBL: Editor Mode: Z-</en>

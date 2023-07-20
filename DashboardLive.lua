@@ -2167,7 +2167,7 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 	
 	local speed = self:getLastSpeed()
 	local width = g_currentMission.mapWidth
-	local scale = DashboardLive.scale --/ (width/2028)
+	local scale = DashboardLive.scale
 	local zoomFactor = MathUtil.clamp(speed / 50, 0, 1)
 	local zoomTarget
 	

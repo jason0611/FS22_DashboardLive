@@ -2163,11 +2163,11 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 	local xf, _, zf = localToWorld(node, 0, 0, 1)
 	local dx, dz = xf - x, zf - z
 	local heading = math.atan2(dx, dz) + math.pi
-	local scale = DashboardLive.scale
 	local quotient = 2 * g_currentMission.mapWidth
 	
 	local speed = self:getLastSpeed()
 	local width = g_currentMission.mapWidth
+	local scale = DashboardLive.scale / (width/2028)
 	local zoomFactor = MathUtil.clamp(speed / 50, 0, 1)
 	local zoomTarget
 	

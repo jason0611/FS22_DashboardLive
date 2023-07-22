@@ -185,4 +185,9 @@
 			<dashboard valueType="vca" cmd="park"						displayType="EMITTER"		node="0>0|6|4|4|14"	emitColor="RED"	intensity="0.8" groups="MOTOR_ACTIVE" />
 		</dashboardLive>
 	</vanillaDashboard>
+	<vanillaDashboard name="Pickup 2017" fileName="data/vehicles/lizard/pickup2017/pickup2017.xml" >
+		<nodes>
+			<node name="dbl_miniMap" node="0>0|13|2|0" symbol="map" moveTo="0.0011 0.0039 -0.0041" rotate="-55 0 0" scale="0.237 0.102 0.114"/>
+		</nodes>
+	</vanillaDashboard>
 </vanillaDashboards>

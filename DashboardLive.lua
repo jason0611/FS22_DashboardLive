@@ -1755,9 +1755,10 @@ end
 
 -- minimap
 function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd")) or "rotation"
 	dashboard.scale = xmlFile:getValue(key .. "#scale") or DashboardLive.scale
 	dashboard.node = xmlFile:getValue(key .. "#node", nil, self.components, self.i3dMappings)
-	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / scale = "..tostring(dashboard.scale), 2)
+	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / command = "..tostring(dashboard.dblCommand).." / scale = "..tostring(dashboard.scale), 2)
 	
 	local mapTexture = g_currentMission.mapImageFilename
 	if dashboard.node == nil then
@@ -2178,6 +2179,8 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 		print("no dashboard node for minimap given")
 		return false 
 	end
+	local cmd = dashboard.dblCommand
+	
 	local node = self.steeringAxleNode or self.rootNode
 	local x, _, z = localToWorld(node, 0, 0, 0)
 	local xf, _, zf = localToWorld(node, 0, 0, 1)
@@ -2203,9 +2206,18 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 	elseif zoomTarget + 0.02 < spec.zoomValue then
 		spec.zoomValue = spec.zoomValue - 0.02
 	end
-	
 	local zoom = (spec.zoomValue + 0.25 * zoomFactor) / (width/2048)
-	--setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * spec.mapZoom, heading)
+	
+	if cmd == "north" then
+		heading = 0
+	elseif cmd == "overview" then
+		heading = 0
+		zoom = 1
+		scale = 1
+		x = 0
+		z = 0
+	end
+	
 	setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * zoom, heading)
 	dbgprint("getDashboardLiveMiniMap : Finished with Pos "..tostring(x/quotient)..","..tostring(z/quotient).." / scale "..tostring(scale * zoom).. " / heading "..tostring(heading), 4)
 	returnvalue = true

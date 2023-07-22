@@ -307,6 +307,7 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
 		<action name="DBL_PAGEGRPDN" 		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZOOM"   		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZOOM_PERM"	category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_MAPORIENTATION"	category="VEHICLE" ignoreComboMask="false" />
 		
 		<!-- Editor Mode only -->
 		<action name="DBL_XUP" 			category="VEHICLE" ignoreComboMask="false" />
@@ -349,6 +350,9 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
 		</actionBinding>
 		<actionBinding action="DBL_ZOOM_PERM">
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_rshift KEY_space" neutralInput="0" index="1" />
+		</actionBinding>
+		<actionBinding action="DBL_MAPORIENTATION">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_9" neutralInput="0" index="1" />
 		</actionBinding>
 	</inputBinding>
 	<l10n>

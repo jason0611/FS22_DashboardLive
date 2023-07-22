@@ -151,6 +151,8 @@ function DashboardLive:onLoad(savegame)
 	
 	--miniMap
 	spec.zoomValue = 1
+	spec.orientations = {"rotate", "north", "overview"}
+	spec.orientation = "rotate"
 	
 	-- selector data
 	spec.selectorActive = 0
@@ -554,7 +556,9 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 			end
 		end	
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM', self, DashboardLive.ZOOM, false, true, true, true, nil)	
-		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true, nil)	
+		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true, nil)
+		
+		_, mapOrientationActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_MAPORIENTATION', self, DashboardLive.MAPORIENTATION, false, true, false, true, nil)		
 		
 		if g_server ~= nil then 
 			if DashboardLive.editMode and DashboardLive.editSymbol ~= nil and self:getIsActiveForInput(true) and spec ~= nil then 
@@ -623,6 +627,23 @@ function DashboardLive:CHANGEPAGE(actionName, keyStatus, arg3, arg4, arg5)
 		spec.pageGroups[spec.actPageGroup].actPage = pageNum
 		dbgprint("CHANGEPAGE : NewPage = "..tostring(spec.pageGroups[spec.actPageGroup].actPage), 2)
 	end
+end
+
+function DashboardLive:MAPORIENTATION(actionName, keyStatus, arg3, arg4, arg5)
+	dbgprint("MAPORIENTATION: "..tostring(actionName), 2)
+	local spec = self.spec_DashboardLive
+	local index = 1
+	while spec.orientation ~= spec.orientations[index] do
+		index = index + 1
+		if spec.orientations[index] == nil then
+			Logging.xmlFatal(vehicle.xmlFile, "Map orientation mismatch")
+			break
+		end
+	end
+	index = index + 1
+	if spec.orientations[index] == nil then index = 1 end
+	spec.orientation = spec.orientations[index]
+	dbgprint("MAPORIENTATION: set to "..tostring(spec.orientation), 2)
 end
 
 function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
@@ -2179,7 +2200,7 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 		print("no dashboard node for minimap given")
 		return false 
 	end
-	local cmd = dashboard.dblCommand
+	local cmd = spec.orientation
 	
 	local node = self.steeringAxleNode or self.rootNode
 	local x, _, z = localToWorld(node, 0, 0, 0)

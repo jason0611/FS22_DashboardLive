@@ -639,7 +639,7 @@ end
 function DashboardLive:startEditorMode(node, index)
 	if g_server ~= nil then
 		if tostring(node) ~= nil and tonumber(index) ~= nil then
-			DashboardUtils.createEditorNode(g_currentMission.controlledVehicle, tostring(node), tonumber(index))
+			DashboardUtils.createEditorNode(g_currentMission.controlledVehicle, tostring(node), tonumber(index), false)
 			DashboardLive.editMode = true
 			print("DBL Editor Mode enabled")
 		else
@@ -655,6 +655,26 @@ function DashboardLive:startEditorMode(node, index)
 	end
 end
 addConsoleCommand("dblEditorMode", "Glowins Mod Smithery: Enable Editor Mode: dblEditorMode [<node>]", "startEditorMode", DashboardLive)
+
+function DashboardLive:startEditorModeAddMiniMap(node)
+	if g_server ~= nil then
+		if tostring(node) ~= nil then
+			DashboardUtils.createEditorNode(g_currentMission.controlledVehicle, tostring(node), 0, true)
+			DashboardLive.editMode = true
+			print("DBL Editor Mode enabled")
+		else
+			if DashboardLive.editSymbol ~= nil then
+				setVisibility(DashboardLive.editSymbol, false)
+			end
+			DashboardLive.editSymbol = nil
+			DashboardLive.editMode = false
+			print("Usage: dblEditorMode <node>")
+		end
+	else
+		print("Editor Mode requires SinglePlayer or MultiPlayer Host")
+	end
+end
+addConsoleCommand("dblEditorModeAddMinimap", "Glowins Mod Smithery: Enable Editor Mode with MiniMap: dblEditorModeAddMinimap [<node>]", "startEditorModeAddMiniMap", DashboardLive)
 
 function DashboardLive:MOVESYMBOL(actionName, keyStatus)
 	dbgprint("MOVESYMBOL", 4)

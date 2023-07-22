@@ -7,14 +7,16 @@
 
   <Files>
     <File fileId="2" filename="../../shader/minimap.xml"/>
+    <File fileId="1" filename="dashboardSymbols_diffuse.dds"/>
   </Files>
 
 
   <Materials>
-    <Material name="miniMap" materialId="4746" diffuseColor="1 1 1 1" customShaderId="2">
+    <Material name="miniMap" materialId="5" customShaderId="2">
+      <Texture fileId="1"/>
       <CustomParameter name="lightControl" value="0.2 0 0 0"/>
     </Material>
-    <Material name="UnnamedMaterial" materialId="4750" diffuseColor="1 1 1 1">
+    <Material name="UnnamedMaterial" materialId="6" diffuseColor="1 1 1 1">
     </Material>
   </Materials>
 
@@ -27,8 +29,8 @@
   </Dynamics>
 
   <Scene>
-      <Shape shapeId="1" name="dbl_mapPlane" translation="-0.52694 3.30842 0.285964" rotation="-111.523 39.3984 164.658" scale="0.21 0.01 0.17" nodeId="5991" materialIds="4746" distanceBlending="false">
-        <Shape shapeId="1" name="dbl_position" translation="0 0.39 0" scale="0.02 0.02 0.02" nodeId="5992" materialIds="4750" distanceBlending="false"/>
+      <Shape shapeId="1" name="dbl_mapPlane" nodeId="9" materialIds="5" distanceBlending="false">
+        <Shape shapeId="1" name="dbl_position" translation="0 0.001 0" scale="0.02 0.02 0.02" nodeId="10" materialIds="6" distanceBlending="false"/>
       </Shape>
   </Scene>
 

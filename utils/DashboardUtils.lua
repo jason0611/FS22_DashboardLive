@@ -54,6 +54,9 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 						if index == nil then
 							Logging.xmlWarning(xmlFile, "No symbol given, setting to 0|1")
 							index = "0|1"
+						elseif index == "map" then
+							index = "0"
+							i3dLibFile = i3dMinimapFile
 						end
 
 						local nx, ny, nz = 0, 0, 0
@@ -116,13 +119,16 @@ function DashboardUtils.createEditorNode(vehicle, node, symbolIndex, createMinim
 	
 	local i3dLibPath = DashboardLive.MOD_PATH.."utils/DBL_MeshLibary"
 	local i3dLibFile
+	local index
 	if createMinimap == true then
 	   i3dLibFile = "DBL_minimap_plane.i3d"
+	   index = "0"
 	else
 	   i3dLibFile = "DBL_MeshLibary.i3d"
+	   index = "0|"..tostring(symbolIndex)
 	end
 	
-	local index = "0|"..tostring(symbolIndex)
+	--local index = "0|"..tostring(symbolIndex)
 					
 	local i3d = g_i3DManager:loadSharedI3DFile(i3dLibPath.."/"..i3dLibFile, false, false)
 	local symbol = I3DUtil.indexToObject(i3d, index)
@@ -140,7 +146,6 @@ function DashboardUtils.createEditorNode(vehicle, node, symbolIndex, createMinim
 	g_i3DManager:releaseSharedI3DFile(i3d, false)
 	delete(i3d)
 end
-
 
 --[[
 -- Giant's stuff adopted to read xml-value before any schema is usable

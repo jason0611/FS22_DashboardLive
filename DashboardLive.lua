@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -2207,6 +2207,7 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 	local zoom = (spec.zoomValue + 0.25 * zoomFactor) / (width/2048)
 	--setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * spec.mapZoom, heading)
 	setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * zoom, heading)
+	dbgprint("getDashboardLiveMiniMap : Finished with Pos "..tostring(x/quotient)..","..tostring(z/quotient).." / scale "..tostring(scale * zoom).. " / heading "..tostring(heading), 4)
 	returnvalue = true
 end
 

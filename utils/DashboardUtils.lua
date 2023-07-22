@@ -10,6 +10,7 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 	
 	local i3dLibPath = DashboardLive.MOD_PATH.."utils/DBL_MeshLibary"
 	local i3dLibFile = "DBL_MeshLibary.i3d"
+	local i3dMinimapFile = "DBL_minimap_plane.i3d"
 	
 	-- Inject extended Dashboard Symbols into Vanilla Vehicles
 	dbgprint("createVanillaNodes : vehicle: "..vehicle:getName(), 2)
@@ -110,11 +111,16 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 	end
 end
 
-function DashboardUtils.createEditorNode(vehicle, node, symbolIndex)
+function DashboardUtils.createEditorNode(vehicle, node, symbolIndex, createMinimap)
 	local spec = vehicle.spec_DashboardLive
 	
 	local i3dLibPath = DashboardLive.MOD_PATH.."utils/DBL_MeshLibary"
-	local i3dLibFile = "DBL_MeshLibary.i3d"
+	local i3dLibFile
+	if createMinimap == true then
+	   i3dLibFile = "DBL_minimap_plane.i3d"
+	else
+	   i3dLibFile = "DBL_MeshLibary.i3d"
+	end
 	
 	local index = "0|"..tostring(symbolIndex)
 					
@@ -134,6 +140,7 @@ function DashboardUtils.createEditorNode(vehicle, node, symbolIndex)
 	g_i3DManager:releaseSharedI3DFile(i3d, false)
 	delete(i3d)
 end
+
 
 --[[
 -- Giant's stuff adopted to read xml-value before any schema is usable

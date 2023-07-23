@@ -2233,10 +2233,10 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 		heading = 0
 	elseif cmd == "overview" then
 		heading = 0
-		zoom = 1
-		scale = 1
-		x = 0
-		z = 0
+		zoom = (2048/width)
+		scale = 0.5
+		--x = 0
+		--z = 0
 	end
 	
 	setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * zoom, heading)

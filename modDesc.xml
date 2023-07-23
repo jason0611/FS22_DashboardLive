@@ -386,6 +386,11 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
             <de>Zoom</de>
 			<br>Zoom fixo</br>
         </text>
+        <text name="input_DBL_MAPORIENTATION">
+            <en>MiniMap: Display mode</en>
+            <de>MiniMap: Anzeigemodus</de>
+			<br>MiniMap: Modo de exibição</br>
+        </text>
         
         <text name="input_DBL_XUP">
         	<en>DBL: Editor Mode: X-</en>

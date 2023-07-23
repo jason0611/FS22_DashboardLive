@@ -352,7 +352,7 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_rshift KEY_space" neutralInput="0" index="1" />
 		</actionBinding>
 		<actionBinding action="DBL_MAPORIENTATION">
-			<binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_9" neutralInput="0" index="1" />
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_9" neutralInput="0" index="1" />
 		</actionBinding>
 	</inputBinding>
 	<l10n>

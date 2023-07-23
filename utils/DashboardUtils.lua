@@ -127,8 +127,6 @@ function DashboardUtils.createEditorNode(vehicle, node, symbolIndex, createMinim
 	   i3dLibFile = "DBL_MeshLibary.i3d"
 	   index = "0|"..tostring(symbolIndex)
 	end
-	
-	--local index = "0|"..tostring(symbolIndex)
 					
 	local i3d = g_i3DManager:loadSharedI3DFile(i3dLibPath.."/"..i3dLibFile, false, false)
 	local symbol = I3DUtil.indexToObject(i3d, index)

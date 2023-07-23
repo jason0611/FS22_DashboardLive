@@ -1776,22 +1776,22 @@ end
 
 -- minimap
 function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
-	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd")) or "rotation"
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd")) or "map"
 	dashboard.scale = xmlFile:getValue(key .. "#scale") or DashboardLive.scale
 	dashboard.node = xmlFile:getValue(key .. "#node", nil, self.components, self.i3dMappings)
 	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / command = "..tostring(dashboard.dblCommand).." / scale = "..tostring(dashboard.scale), 2)
-	
+
 	local mapTexture = g_currentMission.mapImageFilename
 	if dashboard.node == nil then
-        Logging.xmlWarning(self.xmlFile, "Missing 'node' for dashboard '%s'", key)
-        return false
-    else
+		Logging.xmlWarning(self.xmlFile, "Missing 'node' for dashboard '%s'", key)
+		return false
+	elseif dashboard.dblCommand == "map" then
 		local materialId = getMaterial(dashboard.node, 0)
 		materialId = setMaterialDiffuseMapFromFile(materialId, mapTexture, true, true, false)
 		setMaterial(dashboard.node, materialId, 0)
 		dbgprint("getDBLAttributesMiniMap: MiniMap Material set to "..tostring(materialId).." / texture set to "..mapTexture, 2)
 	end
-	
+
 	return true
 end
 
@@ -2195,53 +2195,74 @@ end
 
 function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 	dbgprint("getDashboardLiveMiniMap : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	
 	local spec = self.spec_DashboardLive
 	if spec == nil or dashboard.node == nil then 
 		print("no dashboard node for minimap given")
 		return false 
 	end
-	local cmd = spec.orientation
 	
+	local cmd = dashboard.dblCommand
+	
+	-- position
 	local node = self.steeringAxleNode or self.rootNode
 	local x, _, z = localToWorld(node, 0, 0, 0)
 	local xf, _, zf = localToWorld(node, 0, 0, 1)
 	local dx, dz = xf - x, zf - z
-	local heading = math.atan2(dx, dz) + math.pi
 	local quotient = 2 * g_currentMission.mapWidth
+
+	-- heading
+	local heading = math.atan2(dx, dz) + math.pi
+
+	if cmd == "map" then
+		-- zoom
+		local speed = self:getLastSpeed()
+		local width = g_currentMission.mapWidth
+		local scale = DashboardLive.scale
+		local zoomFactor = MathUtil.clamp(speed / 50, 0, 1)
+		local zoomTarget
 	
-	local speed = self:getLastSpeed()
-	local width = g_currentMission.mapWidth
-	local scale = DashboardLive.scale
-	local zoomFactor = MathUtil.clamp(speed / 50, 0, 1)
-	local zoomTarget
+		-- zoom-in on field
+		local onField = FSDensityMapUtil.getFieldDataAtWorldPosition(x, 0, z)
+		if onField then 
+			zoomTarget = 0.33 --* (width/2048) 
+		else
+			zoomTarget = 1
+		end
 	
-	local onField = FSDensityMapUtil.getFieldDataAtWorldPosition(x, 0, z)
-	if onField then 
-		zoomTarget = 0.33 --* (width/2048) 
-	else
-		zoomTarget = 1
+		--smooth zoom
+		if zoomTarget - 0.02 > spec.zoomValue then
+			spec.zoomValue = spec.zoomValue + 0.02
+		elseif zoomTarget + 0.02 < spec.zoomValue then
+			spec.zoomValue = spec.zoomValue - 0.02
+		end
+		local zoom = (spec.zoomValue + 0.25 * zoomFactor) / (width/2048)
+	
+		--orientations
+		if spec.orientation == "north" then
+			heading = 0
+		elseif spec.orientation == "overview" then
+			heading = 0
+			zoom = (2048/width)
+			scale = 0.5
+			--x = 0
+			--z = 0
+		end
+	
+		setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * zoom, heading)
+		dbgprint("getDashboardLiveMiniMap : Finished with Pos "..tostring(x/quotient)..","..tostring(z/quotient).." / scale "..tostring(scale * zoom).. " / heading "..tostring(heading), 4)
+		
+		return true
+		
+	elseif cmd == "posmarker" then
+		if spec.orientation == "rotate" then 
+			heading = 0
+		end			
+		setRotation(dashboard.node, 0, heading, 0)
+		dbgprint("getDashboardLiveMiniMap : Finished with heading "..tostring(heading), 4)
+		return true
 	end
-	
-	if zoomTarget - 0.02 > spec.zoomValue then
-		spec.zoomValue = spec.zoomValue + 0.02
-	elseif zoomTarget + 0.02 < spec.zoomValue then
-		spec.zoomValue = spec.zoomValue - 0.02
-	end
-	local zoom = (spec.zoomValue + 0.25 * zoomFactor) / (width/2048)
-	
-	if cmd == "north" then
-		heading = 0
-	elseif cmd == "overview" then
-		heading = 0
-		zoom = (2048/width)
-		scale = 0.5
-		--x = 0
-		--z = 0
-	end
-	
-	setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * zoom, heading)
-	dbgprint("getDashboardLiveMiniMap : Finished with Pos "..tostring(x/quotient)..","..tostring(z/quotient).." / scale "..tostring(scale * zoom).. " / heading "..tostring(heading), 4)
-	returnvalue = true
+	return false
 end
 
 function DashboardLive.getDashboardLiveCombine(self, dashboard)

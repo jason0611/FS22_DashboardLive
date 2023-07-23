@@ -190,7 +190,8 @@
 			<node name="dbl_miniMap" node="0>0|13|2" symbol="map" moveTo="0.0011 0.0039 -0.0041" rotate="-122 0 180" scale="0.237 0.102 0.114"/>
 		</nodes>
 		<dashboardLive>
-			<dashboard valueType="miniMap" cmd="rotate" node="0>0|13|2|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+			<dashboard valueType="miniMap" cmd="map" node="0>0|13|2|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+			<dashboard valueType="miniMap" cmd="posMarker" node="0>0|13|2|0|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
 		</dashboardLive>
 	</vanillaDashboard>
 </vanillaDashboards>

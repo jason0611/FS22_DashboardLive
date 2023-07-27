@@ -1140,8 +1140,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "hastypedesc" then
 				resultValue = false
 				local vehicle = findSpecializationImplement(implement.object, "spec_attachable", t)
-				if vehicle ~= nil then
-					local options = element.dblOption
+				local options = element.dblOption
+				if vehicle ~= nil and options ~= nil then
 					local option = string.split(options, " ")
 					for _, c in ipairs(option) do
 						local typeDesc = vehicle.typeDesc or ""
@@ -1513,7 +1513,7 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
     dbgprint("loadDashboardGroupFromXML : dblCommand: "..tostring(group.dblCommand), 2)
 	
 	if group.dblCommand == "page" then
-		group.dblPage = xmlFile:getValue(key .. "#page")
+		group.dblPage = xmlFile:getValue(key .. "#page") or 0
 		group.dblPageGroup = xmlFile:getValue(key .. "#group") or 1
 		dbgprint("loadDashboardGroupFromXML : page: "..tostring(group.dblPage), 2)
 	end
@@ -1559,7 +1559,11 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 
 	-- page
 	elseif group.dblCommand == "page" and group.dblPage ~= nil and group.dblPageGroup ~= nil then 
-		returnValue = group.dblPage == spec.pageGroups[group.dblPageGroup].actPage
+		if group.dblPage > 0 then 
+			returnValue = group.dblPage == spec.pageGroups[group.dblPageGroup].actPage
+		else
+			returnValue = group.dblPageGroup == spec.actPageGroup
+		end
 	
 	-- vanilla game selector
 	elseif group.dblCommand == "base_selector" and group.dblSelection ~= nil then

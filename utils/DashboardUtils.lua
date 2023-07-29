@@ -29,6 +29,11 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 			
 				local vanillaFile = xmlFile:getString(xmlRootPath .. "#fileName")
 				dbgprint("createVanillaNodes : vanillaFile: "..tostring(vanillaFile), 2)
+				
+				if string.sub(vanillaFile, 1, 2) == "FS" then
+					vanillaFile = g_modsDirectory .. vanillaFile
+					dbgprint("createVanillaNodes : vanillaFile changed to: "..tostring(vanillaFile), 2)
+				end
 			
 				if vanillaFile == xmlPath then
 					dbgprint("createVanillaNodes : found vehicle in "..tostring(xmlFile.objectName), 2)

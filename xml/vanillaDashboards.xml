@@ -189,7 +189,7 @@
 	</vanillaDashboard>
 	<vanillaDashboard name="Pickup 2017" fileName="data/vehicles/lizard/pickup2017/pickup2017.xml" >
 		<nodes>
-			<node name="dbl_miniMap" node="0>0|13|2" symbol="map" moveTo="0.0011 0.0039 -0.0041" rotate="-122 0 180" scale="0.237 0.102 0.114"/>
+			<node name="dbl_miniMap" node="0>0|13|2" symbol="map" moveTo="0.001 0.003 -0.003" rotate="-124 0 180" scale="0.237 0.102 0.114"/>
 		</nodes>
 		<dashboardLive>
 			<dashboard valueType="miniMap" cmd="map" node="0>0|13|2|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>

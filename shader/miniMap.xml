@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-// Buildt by Glowins Modschmiede using parts of Giants' vehicleShader.xml and Giants' glowShader.xml
-// Free to be used in mod vehicles to implement DashboardLive's MiniMap
 <CustomShader version="5">
     <Parameters>
 		<Parameter name = "map"          target = "map"          type = "float4" group="base"   defaultValue="0 0 0.2 0"/>

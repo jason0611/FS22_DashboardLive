@@ -20,6 +20,7 @@
 			<node name="trailer" node="0>0|6|0|5|11" symbol="0|83" moveTo="0.0428 -0.0307 -0.0001" rotate="86 0 0" scale="1.181 1.181 1.181"/>
 			<node name="lowered" node="0>0|6|0|5|11" symbol="0|53" moveTo="0.0339 -0.0305 0.0004" rotate="86 0 0" scale="1 1 1"/>
 			<node name="tipping" node="0>0|6|0|5|11" symbol="0|65" moveTo="0.0252 -0.0305 0.0004" rotate="75 0 0" scale="1 1 1"/>
+			<node name="miniMap" node="0>0|6|0|5|11" symbol="map" moveTo="0.3988 -0.109 0.076" rotate="89 -9 -1" scale="0.149 0.147 0.09"/>
 		</nodes>
 		<dashboardLive>
 			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|2" groups="MOTOR_ACTIVE" />
@@ -32,6 +33,7 @@
 			<dashboard valueType="base" cmd="tipping" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|5" baseColor="DARK_GREY" emitColor="YELLOW" intensity="0.5" groups="MOTOR_ACTIVE" />
 			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|6|0|5|11|1" groups="MOTOR_ACTIVE" />
 			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|6|0|5|11|1" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="miniMap" cmd="map" displayType="VISIBILITY" node="0>0|6|0|5|11|6" groups="MOTOR_ACTIVE"/>
 		</dashboardLive>
 	</vanillaDashboard>
 	<vanillaDashboard name="Fastrac 4220" fileName="data/vehicles/jcb/fastrac4220/fastrac4220.xml" >

@@ -196,24 +196,6 @@
 			<dashboard valueType="miniMap" cmd="posMarker" node="0>0|13|2|0|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
 		</dashboardLive>
 	</vanillaDashboard>
-	<vanillaDashboard name="Vario 311" fileName="data/vehicles/fendt/vario300/vario300.xml" >
-        <nodes>
-            <node name="dbl_miniMap" node="0>0|7|9|14" symbol="map" moveTo="-0.3289 0.2863 -0.1667" rotate="-9 -1 -96" scale="0.057 0.151 0.17"/>
-        </nodes>
-    	<dashboardLive>
-            <dashboard valueType="miniMap" cmd="map" node="0>0|7|9|14|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
-            <dashboard valueType="miniMap" cmd="posMarker" node="0>0|7|9|14|0|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
-    	</dashboardLive>
-    </vanillaDashboard>
-    <vanillaDashboard name="MF 7S.155" fileName="data/vehicles/masseyFerguson/series7S/series7S.xml" >
-		<nodes>
-			<node name="dbl_miniMap" node="0>0|7|7|4|0" symbol="map" moveTo="-0.4912 1.1274 0.1917" rotate="-24 4 -79" scale="0.101 0.236 0.185"/>
-		</nodes>
-		<dashboardLive>
-			<dashboard valueType="miniMap" cmd="map" node="0>0|7|7|4|0|3" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
-			<dashboard valueType="miniMap" cmd="posMarker" node="0>0|7|7|4|0|3|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
-		</dashboardLive>
-	</vanillaDashboard>
 	<vanillaDashboard name="TGS 18.500 4x4" fileName="FS22_MaizePlus/data/manTGS_FAedit/man/tgs18500_stade.xml" >
 		<nodes>
 			<node name="vcaPark" node="0>0|6|0|5|11" symbol="0|1" moveTo="0.0361 -0.0066 0.0002" rotate="91 0 0" scale="1.445 1.445 1.445"/>
@@ -260,4 +242,22 @@
 			<dashboard valueType="miniMap" cmd="map" displayType="VISIBILITY" node="0>0|6|0|5|11|6" groups="MOTOR_ACTIVE"/>
 		</dashboardLive>
 	</vanillaDashboard>
+	<vanillaDashboard name="Vario 311" fileName="data/vehicles/fendt/vario300/vario300.xml" >
+        <nodes>
+            <node name="dbl_miniMap" node="0>0|7|9|14" symbol="map" moveTo="-0.331 0.286 -0.165" rotate="-85.182 81.589 179.215" scale="0.172 1 0.058"/>
+        </nodes>
+        <dashboardLive>
+            <dashboard valueType="miniMap" cmd="map" node="0>0|7|9|14|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+            <dashboard valueType="miniMap" cmd="posMarker" node="0>0|7|9|14|0|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+        </dashboardLive>
+    </vanillaDashboard>
+    <vanillaDashboard name="MF 7S.155" fileName="data/vehicles/masseyFerguson/series7S/series7S.xml" >
+        <nodes>
+            <node name="dbl_miniMap" node="0>0|7|7|4|0" symbol="map" moveTo="-0.507 1.128 0.185" rotate="-99.305 65.344 -178.69" scale="0.212 1 0.106"/>
+        </nodes>
+        <dashboardLive>
+            <dashboard valueType="miniMap" cmd="map" node="0>0|7|7|4|0|3" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+            <dashboard valueType="miniMap" cmd="posMarker" node="0>0|7|7|4|0|3|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+        </dashboardLive>
+    </vanillaDashboard>
 </vanillaDashboards>

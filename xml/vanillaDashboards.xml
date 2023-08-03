@@ -20,6 +20,7 @@
 			<node name="trailer" node="0>0|6|0|5|11" symbol="0|83" moveTo="0.0428 -0.0307 -0.0001" rotate="86 0 0" scale="1.181 1.181 1.181"/>
 			<node name="lowered" node="0>0|6|0|5|11" symbol="0|53" moveTo="0.0339 -0.0305 0.0004" rotate="86 0 0" scale="1 1 1"/>
 			<node name="tipping" node="0>0|6|0|5|11" symbol="0|65" moveTo="0.0252 -0.0305 0.0004" rotate="75 0 0" scale="1 1 1"/>
+			<node name="miniMap" node="0>0|6|0|5|11" symbol="map" moveTo="0.3988 -0.109 0.076" rotate="89 -9 -1" scale="0.149 0.147 0.09"/>
 		</nodes>
 		<dashboardLive>
 			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|2" groups="MOTOR_ACTIVE" />
@@ -32,6 +33,7 @@
 			<dashboard valueType="base" cmd="tipping" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|5" baseColor="DARK_GREY" emitColor="YELLOW" intensity="0.5" groups="MOTOR_ACTIVE" />
 			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|6|0|5|11|1" groups="MOTOR_ACTIVE" />
 			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|6|0|5|11|1" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="miniMap" cmd="map" displayType="VISIBILITY" node="0>0|6|0|5|11|6" groups="MOTOR_ACTIVE"/>
 		</dashboardLive>
 	</vanillaDashboard>
 	<vanillaDashboard name="Fastrac 4220" fileName="data/vehicles/jcb/fastrac4220/fastrac4220.xml" >
@@ -185,4 +187,77 @@
 			<dashboard valueType="vca" cmd="park"						displayType="EMITTER"		node="0>0|6|4|4|14"	emitColor="RED"	intensity="0.8" groups="MOTOR_ACTIVE" />
 		</dashboardLive>
 	</vanillaDashboard>
+	<vanillaDashboard name="Pickup 2017" fileName="data/vehicles/lizard/pickup2017/pickup2017.xml" >
+		<nodes>
+			<node name="dbl_miniMap" node="0>0|13|2" symbol="map" moveTo="0.001 0.003 -0.003" rotate="-124 0 180" scale="0.237 0.102 0.114"/>
+		</nodes>
+		<dashboardLive>
+			<dashboard valueType="miniMap" cmd="map" node="0>0|13|2|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+			<dashboard valueType="miniMap" cmd="posMarker" node="0>0|13|2|0|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+		</dashboardLive>
+	</vanillaDashboard>
+	<vanillaDashboard name="TGS 18.500 4x4" fileName="FS22_MaizePlus/data/manTGS_FAedit/man/tgs18500_stade.xml" >
+		<nodes>
+			<node name="vcaPark" node="0>0|6|0|5|11" symbol="0|1" moveTo="0.0361 -0.0066 0.0002" rotate="91 0 0" scale="1.445 1.445 1.445"/>
+			<node name="pto1" node="0>0|6|0|5|11" symbol="0|125" moveTo="0.0162 -0.0308 0.0003" rotate="91 0 0" scale="1.4 1.4 1.4"/>
+			<node name="trailer" node="0>0|6|0|5|11" symbol="0|83" moveTo="0.0428 -0.0307 -0.0001" rotate="86 0 0" scale="1.181 1.181 1.181"/>
+			<node name="lowered" node="0>0|6|0|5|11" symbol="0|53" moveTo="0.0339 -0.0305 0.0004" rotate="86 0 0" scale="1 1 1"/>
+			<node name="tipping" node="0>0|6|0|5|11" symbol="0|65" moveTo="0.0252 -0.0305 0.0004" rotate="75 0 0" scale="1 1 1"/>
+			<node name="miniMap" node="0>0|6|0|5|11" symbol="map" moveTo="0.3988 -0.109 0.076" rotate="89 -9 -1" scale="0.149 0.147 0.09"/>
+		</nodes>
+		<dashboardLive>
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|2" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|2" baseColor="DARK_GREY" emitColor="NEWHOLLAND_ORANGE1" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|3" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="connected" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|3" baseColor="DARK_GREY" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|4" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|4" baseColor="DARK_GREY" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="tipping" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|5" baseColor="DARK_GREY" emitColor="YELLOW" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|6|0|5|11|1" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|6|0|5|11|1" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="miniMap" cmd="map" displayType="VISIBILITY" node="0>0|6|0|5|11|6" groups="MOTOR_ACTIVE"/>
+		</dashboardLive>
+	</vanillaDashboard>
+	<vanillaDashboard name="TGS 18.500 4x4" fileName="FS22_MaizePlus/data/manTGS_FAedit/man/tgs18500_deuka.xml" >
+		<nodes>
+			<node name="vcaPark" node="0>0|6|0|5|11" symbol="0|1" moveTo="0.0361 -0.0066 0.0002" rotate="91 0 0" scale="1.445 1.445 1.445"/>
+			<node name="pto1" node="0>0|6|0|5|11" symbol="0|125" moveTo="0.0162 -0.0308 0.0003" rotate="91 0 0" scale="1.4 1.4 1.4"/>
+			<node name="trailer" node="0>0|6|0|5|11" symbol="0|83" moveTo="0.0428 -0.0307 -0.0001" rotate="86 0 0" scale="1.181 1.181 1.181"/>
+			<node name="lowered" node="0>0|6|0|5|11" symbol="0|53" moveTo="0.0339 -0.0305 0.0004" rotate="86 0 0" scale="1 1 1"/>
+			<node name="tipping" node="0>0|6|0|5|11" symbol="0|65" moveTo="0.0252 -0.0305 0.0004" rotate="75 0 0" scale="1 1 1"/>
+			<node name="miniMap" node="0>0|6|0|5|11" symbol="map" moveTo="0.3988 -0.109 0.076" rotate="89 -9 -1" scale="0.149 0.147 0.09"/>
+		</nodes>
+		<dashboardLive>
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|2" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="pto" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|2" baseColor="DARK_GREY" emitColor="NEWHOLLAND_ORANGE1" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|3" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="connected" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|3" baseColor="DARK_GREY" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|4" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="lowered" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|4" baseColor="DARK_GREY" emitColor="GREEN" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" displayType="VISIBILITY" node="0>0|6|0|5|11|5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="base" cmd="tipping" option="any" joints="1 2 3" displayType="EMITTER" node="0>0|6|0|5|11|5" baseColor="DARK_GREY" emitColor="YELLOW" intensity="0.5" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park" displayType="VISIBILITY" node="0>0|6|0|5|11|1" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="vca" cmd="park" displayType="EMITTER" node="0>0|6|0|5|11|1" emitColor="RED" intensity="0.8" groups="MOTOR_ACTIVE" />
+			<dashboard valueType="miniMap" cmd="map" displayType="VISIBILITY" node="0>0|6|0|5|11|6" groups="MOTOR_ACTIVE"/>
+		</dashboardLive>
+	</vanillaDashboard>
+	<vanillaDashboard name="Vario 311" fileName="data/vehicles/fendt/vario300/vario300.xml" >
+        <nodes>
+            <node name="dbl_miniMap" node="0>0|7|9|14" symbol="map" moveTo="-0.331 0.286 -0.165" rotate="-85.182 81.589 179.215" scale="0.172 1 0.058"/>
+        </nodes>
+        <dashboardLive>
+            <dashboard valueType="miniMap" cmd="map" node="0>0|7|9|14|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+            <dashboard valueType="miniMap" cmd="posMarker" node="0>0|7|9|14|0|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+        </dashboardLive>
+    </vanillaDashboard>
+    <vanillaDashboard name="MF 7S.155" fileName="data/vehicles/masseyFerguson/series7S/series7S.xml" >
+        <nodes>
+            <node name="dbl_miniMap" node="0>0|7|7|4|0" symbol="map" moveTo="-0.507 1.128 0.185" rotate="-99.305 65.344 -178.69" scale="0.212 1 0.106"/>
+        </nodes>
+        <dashboardLive>
+            <dashboard valueType="miniMap" cmd="map" node="0>0|7|7|4|0|3" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+            <dashboard valueType="miniMap" cmd="posMarker" node="0>0|7|7|4|0|3|0" displayType="VISIBILITY" groups="MOTOR_ACTIVE"/>
+        </dashboardLive>
+    </vanillaDashboard>
 </vanillaDashboards>

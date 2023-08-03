@@ -30,6 +30,16 @@ DashboardLive.editMode = false
 
 DashboardLive.vanillaSchema = nil
 
+DashboardLive.scale = 0.1
+
+-- Console
+function DashboardLive:editParameter(scale)
+	local scale = tonumber(scale) or DashboardLive.scale
+	print("DBL Parameter: Scale = "..tostring(scale))
+	DashboardLive.scale = scale
+end
+addConsoleCommand("dblParameter", "DBL: Change scale parameter", "editParameter", DashboardLive)
+
 -- Standards / Basics
 
 function DashboardLive.prerequisitesPresent(specializations)
@@ -41,6 +51,7 @@ function DashboardLive.initSpecialization()
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dbl", "DashboardLive command")
     schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#op", "DashboardLive operator")
 	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#page", "DashboardLive page")
+	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#group", "DashboardLive pages group")
 	schema:register(XMLValueType.BOOL, Dashboard.GROUP_XML_KEY .. "#dblActiveWithoutImplement", "return 'true' without implement")
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblAttacherJointIndices")
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblSelection")
@@ -60,7 +71,10 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#stateText", "stateText")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#trailer", "trailer number")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#partition", "trailer partition")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#page", "choosen page")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#group", "choosen page group")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#option", "Option")
+	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#scale", "Minimap minimum scale factor")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#max", "Maximum")
@@ -81,6 +95,7 @@ function DashboardLive.initSpecialization()
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#trailer", "trailer number")
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#partition", "partition number")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#stateText", "stateText")
+	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#scale", "scale")
 	dbgprint("initSpecialization : vanillaSchema element options registered", 2)
 end
 
@@ -119,16 +134,25 @@ function DashboardLive:onLoad(savegame)
 	
 	-- management data
 	spec.dirtyFlag = self:getNextDirtyFlag()
-	spec.actPage = 1
 	spec.maxPage = 1
-	spec.groups = {}
-	spec.groups[1] = true
+	spec.actPageGroup = 1
+	spec.maxPageGroup = 1
+	spec.pageGroups = {}
+	spec.pageGroups[1] = {}
+	spec.pageGroups[1].pages = {}
+	spec.pageGroups[1].pages[1] = true
+	spec.pageGroups[1].actPage = 1
 	spec.updateTimer = 0
 	
 	-- zoom data
 	spec.zoomed = false
 	spec.zoomPressed = false
 	spec.zoomPerm = false
+	
+	--miniMap
+	spec.zoomValue = 1
+	spec.orientations = {"rotate", "north", "overview"}
+	spec.orientation = "rotate"
 	
 	-- selector data
 	spec.selectorActive = 0
@@ -150,6 +174,23 @@ function DashboardLive:onLoad(savegame)
 	if self.loadDashboardsFromXML ~= nil then
 		local dashboardData
 		dbgprint("onLoad : loadDashboardsFromXML", 2)
+        -- page
+        dashboardData = {
+        					valueTypeToLoad = "page",
+        					valueObject = self,
+        					valueFunc = DashboardLive.getDashboardLivePage,
+        					additionalAttributesFunc = DashboardLive.getDBLAttributesPage
+        				}
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <page>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <page>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
+        
         -- base
         dashboardData = {	
         					valueTypeToLoad = "base",
@@ -164,6 +205,23 @@ function DashboardLive:onLoad(savegame)
         end
         if spec.modIntegration then
         	dbgprint("onLoad : ModIntegration <base>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
+        
+        -- miniMap
+        dashboardData = {	
+        					valueTypeToLoad = "miniMap",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveMiniMap,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesMiniMap
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <miniMap>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <miniMap>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
         
@@ -381,7 +439,7 @@ end
 
 function DashboardLive:onPostLoad(savegame)
     local spec = self.spec_DashboardLive
-	dbgprint("onPostLoad: "..self:getName(), 2)
+	dbgprint("onPostLoad : "..self:getName(), 2)
 
 	-- Check if Mod GuidanceSteering exists
 	spec.modGuidanceSteeringFound = self.spec_globalPositioningSystem ~= nil
@@ -401,13 +459,25 @@ function DashboardLive:onPostLoad(savegame)
     local dashboard = self.spec_dashboard
     for _, group in pairs(dashboard.groups) do
     	if group.dblPage ~= nil then
+			spec.maxPageGroup = math.max(spec.maxPageGroup, group.dblPageGroup)
     		spec.maxPage = math.max(spec.maxPage, group.dblPage)
-    		spec.groups[group.dblPage] = true
+    		if spec.pageGroups[group.dblPageGroup] == nil then 
+    			spec.pageGroups[group.dblPageGroup] = {}
+    		end
+    		if spec.pageGroups[group.dblPageGroup].pages == nil then
+    			spec.pageGroups[group.dblPageGroup].pages = {}
+    		end
+    		if spec.pageGroups[group.dblPageGroup].actPage == nil then
+    			spec.pageGroups[group.dblPageGroup].actPage = 1
+    		end
+    		spec.pageGroups[group.dblPageGroup].pages[group.dblPage] = true
+    		dbgprint("onPostLoad : maxPageGroup set to "..tostring(spec.maxPageGroup), 2)
     		dbgprint("onPostLoad : maxPage set to "..tostring(spec.maxPage), 2)
     	else
     		dbgprint("onPostLoad : no pages found in group "..group.name, 2)
     	end
     end
+    dbgprint_r(spec.pageGroups, 4, 3)
 end
 
 -- Network stuff to synchronize engine data not synced by the game itself
@@ -467,15 +537,28 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 		if self:getIsActiveForInput(true) and spec ~= nil then 
 			local actionEventId
 			local sk = spec.maxPage > 1
-			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
-			g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
-			g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
-			_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
-			g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
-			g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+			local sg = spec.maxPageGroup > 1
+			if sg then
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEGRPUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sg)
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEGRPDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sg)
+			end
+			if sk then
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+			end
 		end	
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM', self, DashboardLive.ZOOM, false, true, true, true, nil)	
-		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true, nil)	
+		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true, nil)
+		
+		_, mapOrientationActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_MAPORIENTATION', self, DashboardLive.MAPORIENTATION, false, true, false, true, nil)		
 		
 		if g_server ~= nil then 
 			if DashboardLive.editMode and DashboardLive.editSymbol ~= nil and self:getIsActiveForInput(true) and spec ~= nil then 
@@ -506,26 +589,61 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 end
 
 function DashboardLive:CHANGEPAGE(actionName, keyStatus, arg3, arg4, arg5)
-	dbgprint("CHANGEPAGE", 4)
+	dbgprint("CHANGEPAGE: "..tostring(actionName), 2)
 	local spec = self.spec_DashboardLive
+	if actionName == "DBL_PAGEGRPUP" then
+		local pageGroupNum = spec.actPageGroup + 1
+		while spec.pageGroups[pageGroupNum] == nil do
+			pageGroupNum = pageGroupNum + 1
+			if pageGroupNum > spec.maxPageGroup then pageGroupNum = 1 end
+		end
+		spec.actPageGroup = pageGroupNum
+		dbgprint("CHANGEPAGE : NewPageGroup = "..tostring(spec.actPageGroup), 2)
+	end
+	if actionName == "DBL_PAGEGRPDN" then
+		local pageGroupNum = spec.actPageGroup - 1
+		while spec.pageGroups[pageGroupNum] == nil do
+			pageGroupNum = pageGroupNum - 1
+			if pageGroupNum < 1 then pageGroupNum = spec.maxPageGroup end
+		end
+		spec.actPageGroup = pageGroupNum
+		dbgprint("CHANGEPAGE : NewPageGroup = "..tostring(spec.actPageGroup), 2)
+	end
 	if actionName == "DBL_PAGEUP" then
-		local pageNum = spec.actPage + 1
-		while not spec.groups[pageNum] do
+		local pageNum = spec.pageGroups[spec.actPageGroup].actPage + 1
+		while not spec.pageGroups[spec.actPageGroup].pages[pageNum] do
 			pageNum = pageNum + 1
 			if pageNum > spec.maxPage then pageNum = 1 end
 		end
-		spec.actPage = pageNum
-		dbgprint("CHANGEPAGE : NewPage = "..spec.actPage, 2)
+		spec.pageGroups[spec.actPageGroup].actPage = pageNum
+		dbgprint("CHANGEPAGE : NewPage = "..tostring(spec.pageGroups[spec.actPageGroup].actPage), 2)
 	end
 	if actionName == "DBL_PAGEDN" then
-		local pageNum = spec.actPage - 1
-		while not spec.groups[pageNum] do
+		local pageNum = spec.pageGroups[spec.actPageGroup].actPage - 1
+		while not spec.pageGroups[spec.actPageGroup].pages[pageNum] do
 			pageNum = pageNum - 1
 			if pageNum < 1 then pageNum = spec.maxPage end
 		end
-		spec.actPage = pageNum
-		dbgprint("CHANGEPAGE : NewPage = "..spec.actPage, 2)
+		spec.pageGroups[spec.actPageGroup].actPage = pageNum
+		dbgprint("CHANGEPAGE : NewPage = "..tostring(spec.pageGroups[spec.actPageGroup].actPage), 2)
 	end
+end
+
+function DashboardLive:MAPORIENTATION(actionName, keyStatus, arg3, arg4, arg5)
+	dbgprint("MAPORIENTATION: "..tostring(actionName), 2)
+	local spec = self.spec_DashboardLive
+	local index = 1
+	while spec.orientation ~= spec.orientations[index] do
+		index = index + 1
+		if spec.orientations[index] == nil then
+			Logging.xmlFatal(vehicle.xmlFile, "Map orientation mismatch")
+			break
+		end
+	end
+	index = index + 1
+	if spec.orientations[index] == nil then index = 1 end
+	spec.orientation = spec.orientations[index]
+	dbgprint("MAPORIENTATION: set to "..tostring(spec.orientation), 2)
 end
 
 function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
@@ -542,7 +660,7 @@ end
 function DashboardLive:startEditorMode(node, index)
 	if g_server ~= nil then
 		if tostring(node) ~= nil and tonumber(index) ~= nil then
-			DashboardUtils.createEditorNode(g_currentMission.controlledVehicle, tostring(node), tonumber(index))
+			DashboardUtils.createEditorNode(g_currentMission.controlledVehicle, tostring(node), tonumber(index), false)
 			DashboardLive.editMode = true
 			print("DBL Editor Mode enabled")
 		else
@@ -558,6 +676,26 @@ function DashboardLive:startEditorMode(node, index)
 	end
 end
 addConsoleCommand("dblEditorMode", "Glowins Mod Smithery: Enable Editor Mode: dblEditorMode [<node>]", "startEditorMode", DashboardLive)
+
+function DashboardLive:startEditorModeAddMiniMap(node)
+	if g_server ~= nil then
+		if tostring(node) ~= nil then
+			DashboardUtils.createEditorNode(g_currentMission.controlledVehicle, tostring(node), 0, true)
+			DashboardLive.editMode = true
+			print("DBL Editor Mode enabled")
+		else
+			if DashboardLive.editSymbol ~= nil then
+				setVisibility(DashboardLive.editSymbol, false)
+			end
+			DashboardLive.editSymbol = nil
+			DashboardLive.editMode = false
+			print("Usage: dblEditorMode <node>")
+		end
+	else
+		print("Editor Mode requires SinglePlayer or MultiPlayer Host")
+	end
+end
+addConsoleCommand("dblEditorModeAddMinimap", "Glowins Mod Smithery: Enable Editor Mode with MiniMap: dblEditorModeAddMinimap [<node>]", "startEditorModeAddMiniMap", DashboardLive)
 
 function DashboardLive:MOVESYMBOL(actionName, keyStatus)
 	dbgprint("MOVESYMBOL", 4)
@@ -1002,8 +1140,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "hastypedesc" then
 				resultValue = false
 				local vehicle = findSpecializationImplement(implement.object, "spec_attachable", t)
-				if vehicle ~= nil then
-					local options = element.dblOption
+				local options = element.dblOption
+				if vehicle ~= nil and options ~= nil then
 					local option = string.split(options, " ")
 					for _, c in ipairs(option) do
 						local typeDesc = vehicle.typeDesc or ""
@@ -1063,7 +1201,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "folded" then
 				local foldable, foldableImplement = recursiveCheck(implement, getIsFoldable, t == nil, true, t) --isFoldable(implement, true, true, t)
 				--local implement = subImplement or implement
-				resultValue = foldable and foldableImplement.object.getIsUnfolded ~= nil and not foldableImplement.object:getIsUnfolded() and foldableImplement.object.spec_foldable.foldAnimTime == 1 or false
+				resultValue = foldable and foldableImplement.object.getIsUnfolded ~= nil and not foldableImplement.object:getIsUnfolded() and (foldableImplement.object.spec_foldable.foldAnimTime == 1 or foldableImplement.object.spec_foldable.foldAnimTime == 0) or false
             	dbgprint(implement.object:getFullName().." folded: "..tostring(resultValue), 4)
             	
             elseif mode == "unfolded" then
@@ -1322,8 +1460,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					local len = string.len(element.textMask or "xxxx")
 					local alignment = element.textAlignment
 					resultValue = trim(fillType.title, len, alignment)
-					resultValue = string.gsub(resultValue,"Ã¼","u")
-					resultValue = string.gsub(resultValue,"Ã–","O")
+					resultValue = string.gsub(resultValue,"Ÿ","u")
+					resultValue = string.gsub(resultValue,"…","O")
 				end
             elseif mode == "connected" then
             	resultValue = true
@@ -1375,7 +1513,8 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
     dbgprint("loadDashboardGroupFromXML : dblCommand: "..tostring(group.dblCommand), 2)
 	
 	if group.dblCommand == "page" then
-		group.dblPage = xmlFile:getValue(key .. "#page")
+		group.dblPage = xmlFile:getValue(key .. "#page") or 0
+		group.dblPageGroup = xmlFile:getValue(key .. "#group") or 1
 		dbgprint("loadDashboardGroupFromXML : page: "..tostring(group.dblPage), 2)
 	end
 	
@@ -1419,8 +1558,12 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		return superFunc(self, group)
 
 	-- page
-	elseif group.dblCommand == "page" and group.dblPage ~= nil then 
-		returnValue = spec.actPage == group.dblPage
+	elseif group.dblCommand == "page" and group.dblPage ~= nil and group.dblPageGroup ~= nil then 
+		if group.dblPage > 0 then 
+			returnValue = group.dblPage == spec.pageGroups[group.dblPageGroup].actPage
+		else
+			returnValue = group.dblPageGroup == spec.actPageGroup
+		end
 	
 	-- vanilla game selector
 	elseif group.dblCommand == "base_selector" and group.dblSelection ~= nil then
@@ -1579,6 +1722,17 @@ end
 -- base fillType vca hlm gps gps_lane gps_width proseed selector
 
 -- readAttributes
+-- page
+function DashboardLive.getDBLAttributesPage(self, xmlFile, key, dashboard)
+	dashboard.dblPage = lower(xmlFile:getValue(key .. "#page"))
+	dbgprint("getDBLAttributesPage : page: "..tostring(dashboard.dblPage), 2)
+	
+	dashboard.dblPageGroup = lower(xmlFile:getValue(key .. "#group"))
+	dbgprint("getDBLAttributesPage : group: "..tostring(dashboard.dblPageGroup), 2)
+	
+	return true
+end
+
 -- base
 function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 
@@ -1624,7 +1778,28 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	return true
 end
 
--- base
+-- minimap
+function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd")) or "map"
+	dashboard.scale = xmlFile:getValue(key .. "#scale") or DashboardLive.scale
+	dashboard.node = xmlFile:getValue(key .. "#node", nil, self.components, self.i3dMappings)
+	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / command = "..tostring(dashboard.dblCommand).." / scale = "..tostring(dashboard.scale), 2)
+
+	local mapTexture = g_currentMission.mapImageFilename
+	if dashboard.node == nil then
+		Logging.xmlWarning(self.xmlFile, "Missing 'node' for dashboard '%s'", key)
+		return false
+	elseif dashboard.dblCommand == "map" then
+		local materialId = getMaterial(dashboard.node, 0)
+		materialId = setMaterialDiffuseMapFromFile(materialId, mapTexture, true, true, false)
+		setMaterial(dashboard.node, materialId, 0)
+		dbgprint("getDBLAttributesMiniMap: MiniMap Material set to "..tostring(materialId).." / texture set to "..mapTexture, 2)
+	end
+
+	return true
+end
+
+-- combine
 function DashboardLive.getDBLAttributesCombine(self, xmlFile, key, dashboard)
 
 	local min = xmlFile:getValue(key .. "#min")
@@ -1816,6 +1991,22 @@ function DashboardLive.getDBLAttributesFrontloader(self, xmlFile, key, dashboard
 end
 
 -- get states
+function DashboardLive.getDashboardLivePage(self, dashboard)
+	dbgprint("getDashboardLivePage : dblPage: "..tostring(dashboard.dblPage)..", dblPageGroup: "..tostring(dashboard.dblPageGroup), 4)
+	local spec = self.spec_DashboardLive
+	local groupNum = tonumber(dashboard.dblPageGroup)
+	local pageNum = tonumber(dashboard.dblPage)
+	local returnValue = false
+	
+	if groupNum ~= nil and pageNum == nil then
+		returnValue = groupNum == spec.actPageGroup
+	elseif pageNum ~= nil then
+		groupNum = groupNum or 1 -- it makes no sense without given group, but maybe there are no groups so let set it to 1 in his case
+		returnValue = pageNum == spec.pageGroups[groupNum].actPage
+	end
+	
+	return returnValue
+end
 
 function DashboardLive.getDashboardLiveBase(self, dashboard)
 	dbgprint("getDashboardLiveBase : dblCommand: "..tostring(dashboard.dblCommand), 4)
@@ -2003,6 +2194,78 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		return returnValue
 	end
 	
+	return false
+end
+
+function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
+	dbgprint("getDashboardLiveMiniMap : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	
+	local spec = self.spec_DashboardLive
+	if spec == nil or dashboard.node == nil then 
+		print("no dashboard node for minimap given")
+		return false 
+	end
+	
+	local cmd = dashboard.dblCommand
+	
+	-- position
+	local node = self.steeringAxleNode or self.rootNode
+	local x, _, z = localToWorld(node, 0, 0, 0)
+	local xf, _, zf = localToWorld(node, 0, 0, 1)
+	local dx, dz = xf - x, zf - z
+	local quotient = 2 * g_currentMission.mapWidth
+
+	-- heading
+	local heading = math.atan2(dx, dz) + math.pi
+
+	if cmd == "map" then
+		-- zoom
+		local speed = self:getLastSpeed()
+		local width = g_currentMission.mapWidth
+		local scale = DashboardLive.scale
+		local zoomFactor = MathUtil.clamp(speed / 50, 0, 1)
+		local zoomTarget
+	
+		-- zoom-in on field
+		local onField = FSDensityMapUtil.getFieldDataAtWorldPosition(x, 0, z)
+		if onField then 
+			zoomTarget = 0.33 --* (width/2048) 
+		else
+			zoomTarget = 1
+		end
+	
+		--smooth zoom
+		if zoomTarget - 0.02 > spec.zoomValue then
+			spec.zoomValue = spec.zoomValue + 0.02
+		elseif zoomTarget + 0.02 < spec.zoomValue then
+			spec.zoomValue = spec.zoomValue - 0.02
+		end
+		local zoom = (spec.zoomValue + 0.25 * zoomFactor) / (width/2048)
+	
+		--orientations
+		if spec.orientation == "north" then
+			heading = 0
+		elseif spec.orientation == "overview" then
+			heading = 0
+			zoom = (2048/width)
+			scale = 0.5
+			--x = 0
+			--z = 0
+		end
+	
+		setShaderParameter(dashboard.node, "map", x/quotient, -z/quotient, scale * zoom, heading)
+		dbgprint("getDashboardLiveMiniMap : Finished with Pos "..tostring(x/quotient)..","..tostring(z/quotient).." / scale "..tostring(scale * zoom).. " / heading "..tostring(heading), 4)
+		
+		return true
+		
+	elseif cmd == "posmarker" then
+		if spec.orientation == "rotate" then 
+			heading = 0
+		end			
+		setRotation(dashboard.node, 0, heading, 0)
+		dbgprint("getDashboardLiveMiniMap : Finished with heading "..tostring(heading), 4)
+		return true
+	end
 	return false
 end
 
@@ -2220,6 +2483,41 @@ function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
 			returnValue = gsValue > 0.02
 		end		
 	end
+	
+	--[[
+	if o == "map" then
+		local spec = self.spec_DashboardLive
+		if spec == nil then return false; end
+		
+		local x, _, z = localToWorld(self.rootNode, 0, 0, 0)
+		local xf, _, zf = localToWorld(self.rootNode, 0, 0, 1)
+		local dx, dz = xf - x, zf - z
+		local heading = math.atan2(dx, dz) + math.pi
+		local scale = DashboardLive.scale
+		local quotient = 2 * g_currentMission.mapWidth
+		local zoomTarget = 1
+		
+		local speed = self:getLastSpeed()
+		if speed > 50 then
+			zoomTarget = 5
+		elseif speed > 30 then 
+			zoomTarget = 4
+		elseif speed > 20 then
+			zoomTarget = 3
+		elseif speed > 10 then
+			zoomTarget = 2
+		end
+		if spec.mapZoom < zoomTarget then
+			spec.mapZoom = spec.mapZoom + 0.1
+		elseif spec.mapZoom > zoomTarget then
+			spec.mapZoom = spec.mapZoom - 0.1
+		end
+
+		local mapNode = I3DUtil.indexToObject(self.components, "dbl_mapPlane", self.i3dMappings)
+		setShaderParameter(mapNode, "map", x/quotient, -z/quotient, scale * spec.mapZoom, heading)
+		returnvalue = true
+	end
+	--]]
 	
 	if o == "headingdelta" then
 		local x1, y1, z1 = localToWorld(self.rootNode, 0, 0, 0)

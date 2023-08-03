@@ -10,6 +10,7 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 	
 	local i3dLibPath = DashboardLive.MOD_PATH.."utils/DBL_MeshLibary"
 	local i3dLibFile = "DBL_MeshLibary.i3d"
+	local i3dMinimapFile = "DBL_minimap_plane.i3d"
 	
 	-- Inject extended Dashboard Symbols into Vanilla Vehicles
 	dbgprint("createVanillaNodes : vehicle: "..vehicle:getName(), 2)
@@ -28,6 +29,11 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 			
 				local vanillaFile = xmlFile:getString(xmlRootPath .. "#fileName")
 				dbgprint("createVanillaNodes : vanillaFile: "..tostring(vanillaFile), 2)
+				
+				if string.sub(vanillaFile, 1, 2) == "FS" then
+					vanillaFile = g_modsDirectory .. vanillaFile
+					dbgprint("createVanillaNodes : vanillaFile changed to: "..tostring(vanillaFile), 2)
+				end
 			
 				if vanillaFile == xmlPath then
 					dbgprint("createVanillaNodes : found vehicle in "..tostring(xmlFile.objectName), 2)
@@ -53,6 +59,9 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 						if index == nil then
 							Logging.xmlWarning(xmlFile, "No symbol given, setting to 0|1")
 							index = "0|1"
+						elseif index == "map" then
+							index = "0"
+							i3dLibFile = i3dMinimapFile
 						end
 
 						local nx, ny, nz = 0, 0, 0
@@ -110,13 +119,19 @@ function DashboardUtils.createVanillaNodes(vehicle, xmlVanillaFile, xmlModFile)
 	end
 end
 
-function DashboardUtils.createEditorNode(vehicle, node, symbolIndex)
+function DashboardUtils.createEditorNode(vehicle, node, symbolIndex, createMinimap)
 	local spec = vehicle.spec_DashboardLive
 	
 	local i3dLibPath = DashboardLive.MOD_PATH.."utils/DBL_MeshLibary"
-	local i3dLibFile = "DBL_MeshLibary.i3d"
-	
-	local index = "0|"..tostring(symbolIndex)
+	local i3dLibFile
+	local index
+	if createMinimap == true then
+	   i3dLibFile = "DBL_minimap_plane.i3d"
+	   index = "0"
+	else
+	   i3dLibFile = "DBL_MeshLibary.i3d"
+	   index = "0|"..tostring(symbolIndex)
+	end
 					
 	local i3d = g_i3DManager:loadSharedI3DFile(i3dLibPath.."/"..i3dLibFile, false, false)
 	local symbol = I3DUtil.indexToObject(i3d, index)

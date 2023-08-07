@@ -860,32 +860,16 @@ end
 
 local function findSpecialization(device, specName, iteration, iterationStep)
 	iterationStep = iterationStep or 0 -- initialization
+	
 	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
-		return device[specName]
+		return device[specName], device
+		
 	elseif (iteration == nil or iterationStep < iteration) and device.getAttachedImplements ~= nil then
 		local implements = device:getAttachedImplements()
 		for _,implement in pairs(implements) do
-			local device = implement.object
-			local spec = findSpecialization(device, specName, iteration, iterationStep + 1)
+			local spec, device = findSpecialization(implement.object, specName, iteration, iterationStep + 1)
 			if spec ~= nil then 
 				return spec, device
-			end
-		end
-	else 
-		return nil
-	end
-end
-
-local function findSpecializationImplement(device, specName, iteration, iterationStep)
-	iterationStep = iterationStep or 0 -- initialization
-	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
-		return device
-	elseif (iteration == nil or iterationStep < iteration) and device.getAttachedImplements ~= nil then
-		local implements = device:getAttachedImplements()
-		for _,implement in pairs(implements) do
-			local device = findSpecializationImplement(implement.object, specName, iteration, iterationStep + 1)
-			if device ~= nil then 
-				return device 
 			end
 		end
 	else 
@@ -1012,7 +996,8 @@ end
 
 local function recursiveTrailerSearch(vehicle, trailer, step)
 	dbgprint("recursiveTrailerSearch", 4)
-	return findSpecializationImplement(vehicle, "spec_fillUnit", trailer)
+	local _, specVehicle = findSpecialization(vehicle, "spec_fillUnit", trailer)
+	return specVehicle
 end
 
 -- returns fillLevel {pct, abs, max, absKg}
@@ -1030,11 +1015,11 @@ local function getFillLevelTable(vehicle, ftIndex, ftPartition, ftType)
 		return fillLevelTable
 	end
 	
-	local device = findSpecializationImplement(vehicle, "spec_fillUnit", ftIndex)
+	local _, device = findSpecialization(vehicle, "spec_fillUnit", ftIndex)
 	if device ~= nil then
 		fillLevelTable = getChoosenFillLevelState(device, ftPartition, ftType)
 	else
-		device = findSpecializationImplement(vehicle, "spec_dynamicMountAttacher", ftIndex)
+		_, device = findSpecialization(vehicle, "spec_dynamicMountAttacher", ftIndex)
 		if device ~= nil then 
 			fillLevelTable = getChoosenAttacherState(device, ftType)
 		end
@@ -1155,7 +1140,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				
 			elseif mode == "hastypedesc" then
 				resultValue = false
-				local vehicle = findSpecializationImplement(implement.object, "spec_attachable", t)
+				local _, vehicle = findSpecialization(implement.object, "spec_attachable", t)
 				local options = element.dblOption
 				if vehicle ~= nil and options ~= nil then
 					local option = string.split(options, " ")
@@ -1265,7 +1250,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	resultValue = specTR ~= nil and specTR:getTipState() > 0
             	
             elseif mode == "tippingstate" then
-            	local specImplement = findSpecializationImplement(implement.object, "spec_trailer", t)
+            	local _, specImplement = findSpecialization(implement.object, "spec_trailer", t)
 
             	if specImplement ~= nil and specImplement.spec_trailer:getTipState() > 0 then
             		local specTR = specImplement.spec_trailer

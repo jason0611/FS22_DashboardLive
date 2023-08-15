@@ -164,6 +164,9 @@ function DashboardLive:onLoad(savegame)
 	-- selector data
 	spec.selectorActive = 0
 	
+	-- dark mode
+	spec.darkMode = false
+	
 	-- engine data
 	spec.motorTemperature = 20
 	spec.fanEnabled = false

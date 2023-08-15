@@ -78,6 +78,9 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#max", "Maximum")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#baseColorDarkMode", "Base color for dark mode")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#emitColorDarkMode", "Emit color for dark mode")
+	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#intensityDarkMode", "Intensity for dark mode")
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
 	
 	DashboardLive.vanillaSchema = XMLSchema.new("vanillaIntegration")
@@ -116,6 +119,7 @@ end
 function DashboardLive.registerOverwrittenFunctions(vehicleType)
 	SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsDashboardGroupActive", DashboardLive.getIsDashboardGroupActive)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadEmitterDashboardFromXML", DashboardLive.addDarkModeToLoadEmitterDashboardFromXML)
 end
 
 function DashboardLive:onPreLoad(savegame)
@@ -1500,6 +1504,17 @@ function DashboardLive:catchBooleanForDashboardStateFunc(superfunc, dashboard, n
 end
 Dashboard.defaultAnimationDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultAnimationDashboardStateFunc, DashboardLive.catchBooleanForDashboardStateFunc)
 Dashboard.defaultSliderDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultSliderDashboardStateFunc, DashboardLive.catchBooleanForDashboardStateFunc)
+
+-- Overwritten function loadEmitterDashboardFromXML to enable dark mode setting
+function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFile, key, dashboard)
+	dbgprint("addDarkModeToLoadEmitterDashboardFromXML : loadEmitterDashboardFromXML overwritten", 2)
+	
+	dashboard.baseColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#baseColorDarkMode"))
+	dashboard.emitColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#emitColorDarkMode"))
+	dashboard.intensityDM = xmlFile:getValue(key .. "#intensityDarkMode", 1)
+	
+	return superfunc(xmlFile, key, dashboard)
+end
 
 -- GROUPS
 

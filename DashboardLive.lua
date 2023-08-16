@@ -2354,7 +2354,7 @@ function DashboardLive.getDashboardLiveCombine(self, dashboard)
 			return spec.workedHectars
 			
 		elseif c == "cutheight" then
-			local specCutter = findspecialization(self, "spec_cutter")
+			local specCutter = findSpecialization(self, "spec_cutter")
 			if specCutter ~= nil then
 				return specCutter.currentCutHeight
 			end

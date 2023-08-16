@@ -19,7 +19,7 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 ```
 -- Feature-Backlog: (+) realized | (-) planned | (?) found no way until now | (%) impossible
 
-== Planned for next ModHub update ==
+== Realized and available at ModHub
 + tippingState (text/number): percent number)
 + tipSide (boolean / text)
 + headingText1 (text): N/E/S/W
@@ -38,12 +38,14 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + hasSpec (boolean): test if specialization is present (thanks to HiPhi77)
 + hasTypeDesc (boolean): test if vehicle or implement is of wanted type
 + front loader state
++ mini-map integration
 
-== Planned for later ModHub updates ==
+== Planned for next ModHub update ==
 - CVT-Addon
 - precisionFarming
 - cutter turn rate
-? mini-map integration
+
+== Planned for later ModHub updates ==
 ? camera integration
 - ISO-Bus: activate dedicated terminal depending on connected implement
 - Generic spec access (functions/values)
@@ -56,7 +58,8 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + Fendt 700 series (thanks to HiPhi)
 
 -- Internal improvements
++ fix for lua error while using "cutHeight"
 + trim-function to adapt texts to given length
-- generalization of recursive functions
++ generalization of recursive functions
 + remove case-sensibility from commands
 ```

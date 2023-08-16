@@ -418,6 +418,22 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : ModIntegration <frontLoader>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
+		-- precision Farming
+		dashboardData = {
+			valueTypeToLoad = "precfarming",
+			valueObject = self,
+			valueFunc = DashboardLive.getDashboardLivePrecisionFarming,
+			additionalAttributesFunc = DashboardLive.getDBLAttributesPrecisionFarming
+		}
+		self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData) 
+		if spec.vanillaIntegration then
+			dbgprint("onLoad : VanillaIntegration <precisionfarming>", 2)
+			self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+		end
+		if spec.modIntegration then
+			dbgprint("onLoad : ModIntegration <precisionfarming>", 2)
+			self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+		end
         -- print
         dashboardData = {	
         					valueTypeToLoad = "print",
@@ -844,32 +860,16 @@ end
 
 local function findSpecialization(device, specName, iteration, iterationStep)
 	iterationStep = iterationStep or 0 -- initialization
+	
 	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
-		return device[specName]
+		return device[specName], device
+		
 	elseif (iteration == nil or iterationStep < iteration) and device.getAttachedImplements ~= nil then
 		local implements = device:getAttachedImplements()
 		for _,implement in pairs(implements) do
-			local device = implement.object
-			local spec = findSpecialization(device, specName, iteration, iterationStep + 1)
+			local spec, device = findSpecialization(implement.object, specName, iteration, iterationStep + 1)
 			if spec ~= nil then 
-				return spec 
-			end
-		end
-	else 
-		return nil
-	end
-end
-
-local function findSpecializationImplement(device, specName, iteration, iterationStep)
-	iterationStep = iterationStep or 0 -- initialization
-	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
-		return device
-	elseif (iteration == nil or iterationStep < iteration) and device.getAttachedImplements ~= nil then
-		local implements = device:getAttachedImplements()
-		for _,implement in pairs(implements) do
-			local device = findSpecializationImplement(implement.object, specName, iteration, iterationStep + 1)
-			if device ~= nil then 
-				return device 
+				return spec, device
 			end
 		end
 	else 
@@ -996,7 +996,8 @@ end
 
 local function recursiveTrailerSearch(vehicle, trailer, step)
 	dbgprint("recursiveTrailerSearch", 4)
-	return findSpecializationImplement(vehicle, "spec_fillUnit", trailer)
+	local _, specVehicle = findSpecialization(vehicle, "spec_fillUnit", trailer)
+	return specVehicle
 end
 
 -- returns fillLevel {pct, abs, max, absKg}
@@ -1014,11 +1015,11 @@ local function getFillLevelTable(vehicle, ftIndex, ftPartition, ftType)
 		return fillLevelTable
 	end
 	
-	local device = findSpecializationImplement(vehicle, "spec_fillUnit", ftIndex)
+	local _, device = findSpecialization(vehicle, "spec_fillUnit", ftIndex)
 	if device ~= nil then
 		fillLevelTable = getChoosenFillLevelState(device, ftPartition, ftType)
 	else
-		device = findSpecializationImplement(vehicle, "spec_dynamicMountAttacher", ftIndex)
+		_, device = findSpecialization(vehicle, "spec_dynamicMountAttacher", ftIndex)
 		if device ~= nil then 
 			fillLevelTable = getChoosenAttacherState(device, ftType)
 		end
@@ -1139,7 +1140,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				
 			elseif mode == "hastypedesc" then
 				resultValue = false
-				local vehicle = findSpecializationImplement(implement.object, "spec_attachable", t)
+				local _, vehicle = findSpecialization(implement.object, "spec_attachable", t)
 				local options = element.dblOption
 				if vehicle ~= nil and options ~= nil then
 					local option = string.split(options, " ")
@@ -1249,7 +1250,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	resultValue = specTR ~= nil and specTR:getTipState() > 0
             	
             elseif mode == "tippingstate" then
-            	local specImplement = findSpecializationImplement(implement.object, "spec_trailer", t)
+            	local _, specImplement = findSpecialization(implement.object, "spec_trailer", t)
 
             	if specImplement ~= nil and specImplement.spec_trailer:getTipState() > 0 then
             		local specTR = specImplement.spec_trailer
@@ -1987,6 +1988,29 @@ function DashboardLive.getDBLAttributesFrontloader(self, xmlFile, key, dashboard
     if max ~= nil then dashboard.dblMax = max end
     
 	
+	return true
+end
+
+-- precisionFarming
+function DashboardLive.getDBLAttributesPrecisionFarming(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd", "")) -- rotation,  minmax
+    dbgprint("getDBLAttributesFrontloader : command: "..tostring(dashboard.dblCommand), 2)
+    
+	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
+	dbgprint("getDBLAttributesFrontloader : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
+
+	dashboard.dblOption = xmlFile:getValue(key .. "#option", "1") -- number of tool
+
+	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1") -- factor
+
+	--dashboard.dblStateText = xmlFile:getValue(key .. "#stateText","origin")
+
+	local min = xmlFile:getValue(key .. "#min")
+	local max = xmlFile:getValue(key .. "#max")
+	
+	if min ~= nil then dashboard.dblMin = min end
+    if max ~= nil then dashboard.dblMax = max end
+
 	return true
 end
 
@@ -2749,6 +2773,150 @@ function DashboardLive.getDashboardLiveFrontloader(self, dashboard)
 		returnValue = getAttachedStatus(self, dashboard,"istoolrotation")
 		dbgprint("getDashboardLiveFrontloader : istoolrotation: returnValue: "..tostring(returnValue), 4)
 	end
+	return returnValue
+end
+
+-- from ExtendedSprayerHUDExtension - can be accessed directly?
+local function getFillTypeSourceVehicle(sprayer)
+    -- check the valid sprayer if he has a fill type source to consume from, otherwise hide the display
+    if sprayer:getFillUnitFillLevel(sprayer:getSprayerFillUnitIndex()) <= 0 then
+        local spec = sprayer.spec_sprayer
+        for _, supportedSprayType in ipairs(spec.supportedSprayTypes) do
+            for _, src in ipairs(spec.fillTypeSources[supportedSprayType]) do
+                local vehicle = src.vehicle
+                if vehicle:getFillUnitFillType(src.fillUnitIndex) == supportedSprayType and vehicle:getFillUnitFillLevel(src.fillUnitIndex) > 0 then
+                    return vehicle, src.fillUnitIndex
+                end
+            end
+        end
+    end
+
+    return sprayer, sprayer:getSprayerFillUnitIndex()
+end
+
+function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
+	dbgprint("getDashboardLivePrecisionFarming : dblCommand: "..tostring(dashboard.dblCommand), 3)
+	local c = dashboard.dblCommand
+	local returnValue = 0
+	-- lets find any attached vehicle with a extendedSprayer specialization.
+	-- in the end, we can only deal with one of them (same as precision farming dlc content)
+	local specEnhancedSprayer, vehicle = findSpecialization(self,"spec_extendedSprayer")
+	if specEnhancedSprayer ~= nil then
+		dbgprint("found spec spec_extendedSprayer",3)
+
+		-- SoilType 
+		local soilTypeName = ""
+
+		if specEnhancedSprayer.lastTouchedSoilType ~= 0 and specEnhancedSprayer.soilMap ~= nil then
+			local soilType = specEnhancedSprayer.soilMap:getSoilTypeByIndex(specEnhancedSprayer.lastTouchedSoilType)
+			if soilType ~= nil then
+				soilTypeName = soilType.name
+			end
+		end
+		
+		local hasLimeLoaded = false
+		local applicationRate = 0
+		local applicationRateStr = "%.2f t/ha"
+   		local fillTypeDesc
+		local sourceVehicle, fillUnitIndex = getFillTypeSourceVehicle(vehicle)
+		local sprayFillType = sourceVehicle:getFillUnitFillType(fillUnitIndex)
+		fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(sprayFillType)
+		local massPerLiter = (fillTypeDesc.massPerLiter / FillTypeManager.MASS_SCALE)
+		if sprayFillType == FillType.LIME then
+			hasLimeLoaded = true
+		end
+		
+		local isFertilizing = specEnhancedSprayer.isFertilizing
+		local isLiming = specEnhancedSprayer.isLiming
+		local sprayAmountAutoMode = specEnhancedSprayer.sprayAmountAutoMode
+        -- Lime part
+		if hasLimeLoaded then
+			local pHMap = specEnhancedSprayer.pHMap
+            local pHActualInt = specEnhancedSprayer.phActualBuffer:get()
+            local pHTargetInt = specEnhancedSprayer.phTargetBuffer:get()
+            local pHActual = pHMap:getPhValueFromInternalValue(pHActualInt)
+            local pHTarget = pHMap:getPhValueFromInternalValue(pHTargetInt)
+			
+			local pHChanged = 0
+			if specEnhancedSprayer.sprayAmountAutoMode then
+                pHChanged = pHTarget - pHActual
+				applicationRate = specEnhancedSprayer.lastLitersPerHectar * massPerLiter
+			else 
+				local requiredLitersPerHa = pHMap:getLimeUsageByStateChange(specEnhancedSprayer.sprayAmountManual)
+            	pHChanged = pHMap:getPhValueFromChangedStates(specEnhancedSprayer.sprayAmountManual)
+				applicationRate = requiredLitersPerHa * massPerLiter
+			end
+			if c=="phactual" then 
+				returnValue = pHActual
+			elseif c=="phtarget" then
+				returnValue = pHTarget
+			elseif c=="phchanged" then
+				returnValue = pHChanged
+			end
+            --dbgrender("pHActual: "..tostring(pHActual),3,2)
+            --dbgrender("pHTarget: "..tostring(pHTarget),4,2)
+            --dbgrender("pHChanged: "..tostring(pHChanged),5,2)
+            --dbgrender("sprayAmountAutoMode: "..tostring(sprayAmountAutoMode),6,2)
+			--dbgrender("applicationRate: "..tostring(applicationRate),7,2)
+		-- fertilizer part
+		else
+			local litersPerHectar = specEnhancedSprayer.lastLitersPerHectar
+			local nitrogenChanged = 0
+			local nitrogenMap = specEnhancedSprayer.nitrogenMap
+			if not specEnhancedSprayer.sprayAmountAutoMode then
+				litersPerHectar = nitrogenMap:getFertilizerUsageByStateChange(specEnhancedSprayer.sprayAmountManual, sprayFillType)
+				nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(specEnhancedSprayer.sprayAmountManual)
+			end
+			
+			if specEnhancedSprayer.isSolidFertilizerSprayer then
+				applicationRateStr = "%d kg/ha"
+				applicationRate = litersPerHectar * massPerLiter * 1000
+			elseif specEnhancedSprayer.isLiquidFertilizerSprayer then
+				applicationRateStr = "%d l/ha"
+				applicationRate = litersPerHectar
+			elseif specEnhancedSprayer.isSlurryTanker then
+				applicationRateStr = "%.1f m³/ha"
+				applicationRate = litersPerHectar / 1000
+			elseif specEnhancedSprayer.isManureSpreader then
+				applicationRateStr = "%.1f t/ha"
+				applicationRate = litersPerHectar * massPerLiter
+			end
+
+			local nActualInt = specEnhancedSprayer.nActualBuffer:get()
+			local nTargetInt = specEnhancedSprayer.nTargetBuffer:get()
+			local nActual = nitrogenMap:getNitrogenValueFromInternalValue(nActualInt)
+			local nTarget = nitrogenMap:getNitrogenValueFromInternalValue(nTargetInt)
+			if specEnhancedSprayer.sprayAmountAutoMode then
+                nitrogenChanged = nTarget - nActual
+			else 
+            	nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(spec.sprayAmountManual)
+			end
+			if c=="nactual" then 
+				returnValue = nActual
+			elseif c=="ntarget" then
+				returnValue = nTarget
+			elseif c=="nchanged" then
+				returnValue = nitrogenChanged
+			end
+            --dbgrender("nActual: "..tostring(nActual),3,2)
+            --dbgrender("nTarget: "..tostring(nTarget),4,2)
+            --dbgrender("nChanged: "..tostring(nitrogenChanged),5,2)
+            --dbgrender("sprayAmountAutoMode: "..tostring(sprayAmountAutoMode),6,2)
+			--dbgrender("applicationRate: "..tostring(applicationRate),7,2)
+        end
+
+		if c=="sprayamountautomode" then 
+			returnValue = sprayAmountAutoMode
+		elseif c=="applicationrate" then
+			returnValue = applicationRate
+		elseif c=="applicationratestr" then
+			returnValue = string.format(applicationRateStr, applicationRate)
+		elseif c=="soiltype" then
+			returnValue = soilTypeName
+		end
+
+	end
+
 	return returnValue
 end
 	

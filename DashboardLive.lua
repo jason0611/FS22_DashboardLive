@@ -166,6 +166,7 @@ function DashboardLive:onLoad(savegame)
 	
 	-- dark mode
 	spec.darkMode = false
+	spec.darkModeLast = false
 	
 	-- engine data
 	spec.motorTemperature = 20
@@ -562,7 +563,7 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 		DashboardLive.actionEvents = {} 
 		if self:getIsActiveForInput(true) and spec ~= nil then 
 			local actionEventId
-			local sk = spec.maxPage > 1
+			local sp = spec.maxPage > 1
 			local sg = spec.maxPageGroup > 1
 			if sg then
 				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEGRPUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
@@ -572,13 +573,13 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
 				g_inputBinding:setActionEventTextVisibility(actionEventId, sg)
 			end
-			if sk then
+			if sp then
 				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
 				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
-				g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sp)
 				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
 				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
-				g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sp)
 			end
 		end	
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM', self, DashboardLive.ZOOM, false, true, true, true, nil)	
@@ -1525,12 +1526,54 @@ Dashboard.registerDashboardXMLPaths = Utils.appendedFunction(Dashboard.registerD
 function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFile, key, dashboard)
 	dbgprint("addDarkModeToLoadEmitterDashboardFromXML : loadEmitterDashboardFromXML overwritten", 2)
 	
+	local returnValue = superfunc(self, xmlFile, key, dashboard)
+	
+	-- Back up light mode values
+	dashboard.baseColorLM = dashboard.baseColor
+	dashboard.emitColorLM = dashboard.emitColor
+	dashboard.intensityLM = dashboard.intensity
+	-- Read dark mode values
 	dashboard.baseColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#baseColorDarkMode"))
 	dashboard.emitColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#emitColorDarkMode"))
-	dashboard.intensityDM = xmlFile:getValue(key .. "#intensityDarkMode", 1)
+	dashboard.intensityDM = xmlFile:getValue(key .. "#intensityDarkMode")
 	
-	return superfunc(self, xmlFile, key, dashboard)
+	return returnValue
 end
+
+-- Prepended function defaultEmitterDashboardStateFunc to enable dark mode
+function Dashboard:addDarkModeToDefaultEmitterDashboardStateFunc(dashboard, newValue, minValue, maxValue, isActive)
+	dbgprint("addDarkModeToLoadEmitterDashboardFromXML : defaultEmitterDashboardStateFunc prepended", 2)
+	local spec = self.spec_DashboardLive
+	if spec = nil and spec.darkMode ~= spec.darkModeLast then
+		if spec.darkMode then
+			dbgprint("switching to dark mode: "..tostring(self:getName()), 2)
+			if dashboard.baseColorDM ~= nil then 
+				dashboard.baseColor = dashboard.baseColorDM
+			end
+			if dashboard.emitColorDM ~= nil then 
+				dashboard.emitColor = dashboard.emitColorDM
+			end
+			if dashboard.intensityDM ~= nil then
+				dashboard.intensity = dashboard.intensityDM
+			end
+		else	
+			dbgprint("switching to light mode: "..tostring(self:getName()), 2)
+			if dashboard.baseColorLM ~= nil then 
+				dashboard.baseColor = dashboard.baseColorLM
+			end
+			if dashboard.emitColorLM ~= nil then 
+				dashboard.emitColor = dashboard.emitColorLM
+			end
+			if dashboard.intensityLM ~= nil then
+				dashboard.intensity = dashboard.intensityLM
+			end
+		end
+		setShaderParameter(dashboard.node, "baseColor", dashboard.baseColor[1], dashboard.baseColor[2], dashboard.baseColor[3], 1, false)
+		setShaderParameter(dashboard.node, "emitColor", dashboard.emitColor[1], dashboard.emitColor[2], dashboard.emitColor[3], 1, false)
+		spec.darkModeLast = spec.darkMode
+	end
+end
+Dashboard.defaultEmitterDashboardStateFunc = Utils.prependedFunction(Dashboard.defaultEmitterDashboardStateFunc, DashboardLive.addDarkModeToDefaultEmitterDashboardStateFunc)
 
 -- GROUPS
 
@@ -1548,6 +1591,10 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 		group.dblPage = xmlFile:getValue(key .. "#page") or 0
 		group.dblPageGroup = xmlFile:getValue(key .. "#group") or 1
 		dbgprint("loadDashboardGroupFromXML : page: "..tostring(group.dblPage), 2)
+	end
+	
+	if group.dblCommand == "darkmode" then
+		group.dmEnabled = "true"
 	end
 	
 	group.dblOperator = lower(xmlFile:getValue(key .. "#op", "and"))
@@ -1596,6 +1643,12 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		else
 			returnValue = group.dblPageGroup == spec.actPageGroup
 		end
+		
+	elseif group.dblCommand == "darkmode" then
+		returnValue = spec.darkMode
+		
+	elseif group.dblCommand == "lightmode" then
+		returnValue = not spec.darkMode
 	
 	-- vanilla game selector
 	elseif group.dblCommand == "base_selector" and group.dblSelection ~= nil then

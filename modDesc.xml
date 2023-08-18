@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="77">
 	<author>Glowins Modschmiede</author>
-	<version>a.2.1.0</version>
+	<version>a.2.1.1</version>
 	<contributors>AgrarPlay und LUWZ, Farming Duds, Myiamoto86, HiPhi77, NickiJF15</contributors>
 	<title>
 		<en>Dashboard Live</en>
@@ -306,11 +306,12 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
  	<actions>
 		<action name="DBL_PAGEUP" 		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_PAGEDN" 		category="VEHICLE" ignoreComboMask="false" />
-		<action name="DBL_PAGEGRPUP" 		category="VEHICLE" ignoreComboMask="false" />
-		<action name="DBL_PAGEGRPDN" 		category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_PAGEGRPUP" 	category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_PAGEGRPDN" 	category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZOOM"   		category="VEHICLE" ignoreComboMask="false" />
 		<action name="DBL_ZOOM_PERM"	category="VEHICLE" ignoreComboMask="false" />
-		<action name="DBL_MAPORIENTATION"	category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_MAPORIENTATION" category="VEHICLE" ignoreComboMask="false" />
+		<action name="DBL_DARKMODE"		category="VEHICLE"	ignoreComboMask="false" />
 		
 		<!-- Editor Mode only -->
 		<action name="DBL_XUP" 			category="VEHICLE" ignoreComboMask="false" />
@@ -357,6 +358,9 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
 		<actionBinding action="DBL_MAPORIENTATION">
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_9" neutralInput="0" index="1" />
 		</actionBinding>
+		<actionBinding action="DBL_DARKMODE">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_rshift KEY_0" neutralInput="0" index="1" />
+		</actionBinding>
 	</inputBinding>
 	<l10n>
 		<text name="input_DBL_PAGEUP">
@@ -394,6 +398,10 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
             <de>MiniMap: Anzeigemodus</de>
 			<br>MiniMap: Modo de exibição</br>
         </text>
+        <text name="input_DBL_DARKMODE">
+        	<en>Switch Dark Mode</en>
+        	<de>Dark Mode an/aus</de>
+        	<br>Alternar Dark Mode</br>
         
         <text name="input_DBL_XUP">
         	<en>DBL: Editor Mode: X-</en>

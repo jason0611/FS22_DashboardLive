@@ -585,7 +585,8 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM', self, DashboardLive.ZOOM, false, true, true, true, nil)	
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true, nil)
 		
-		_, mapOrientationActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_MAPORIENTATION', self, DashboardLive.MAPORIENTATION, false, true, false, true, nil)		
+		_, mapOrientationActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_MAPORIENTATION', self, DashboardLive.MAPORIENTATION, false, true, false, true, nil)	
+		_, darkModeActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_DARKMODE', self, DashboardLive.DARKMODE, false, true, false, true, nil)		
 		
 		if g_server ~= nil then 
 			if DashboardLive.editMode and DashboardLive.editSymbol ~= nil and self:getIsActiveForInput(true) and spec ~= nil then 
@@ -1077,17 +1078,6 @@ local function getIsFoldable(device)
 	return spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
 end
 
---[[
-local function isFoldable(implement, search, getFoldableImplement, t)
-	local foldable, returnImplement = recursiveCheck(implement, getIsFoldable, t == nil, getFoldableImplement, t)
-	if getFoldableImplement then
-		return foldable, returnImplement
-	else
-		return foldable
-	end
-end
---]]
-
 local function getAttachedStatus(vehicle, element, mode, default)
 	
 	if element.dblAttacherJointIndices == nil then
@@ -1514,8 +1504,7 @@ Dashboard.defaultSliderDashboardStateFunc = Utils.overwrittenFunction(Dashboard.
 
 -- Append schema definitions to registerDashboardXMLPath function 
 function DashboardLive.addDarkModeToRegisterDashboardXMLPaths(schema, basePath, availableValueTypes)
-	dbgprint("addDarkModeToLoadEmitterDashboardFromXML : registerDashboardXMLPaths appended", 2)
-	
+	dbgprint("addDarkModeToLoadEmitterDashboardFromXML : registerDashboardXMLPaths appended to "..basePath, 2)
 	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#baseColorDarkMode", "Base color for dark mode")
 	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#emitColorDarkMode", "Emit color for dark mode")
 	schema:register(XMLValueType.FLOAT, basePath .. ".dashboard(?)#intensityDarkMode", "Intensity for dark mode")
@@ -1524,8 +1513,6 @@ Dashboard.registerDashboardXMLPaths = Utils.appendedFunction(Dashboard.registerD
 
 -- Overwritten function loadEmitterDashboardFromXML to enable dark mode setting
 function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFile, key, dashboard)
-	dbgprint("addDarkModeToLoadEmitterDashboardFromXML : loadEmitterDashboardFromXML overwritten", 2)
-	
 	local returnValue = superfunc(self, xmlFile, key, dashboard)
 	
 	-- Back up light mode values
@@ -1542,7 +1529,6 @@ end
 
 -- Prepended function defaultEmitterDashboardStateFunc to enable dark mode
 function DashboardLive:addDarkModeToDefaultEmitterDashboardStateFunc(dashboard, newValue, minValue, maxValue, isActive)
-	dbgprint("addDarkModeToLoadEmitterDashboardFromXML : defaultEmitterDashboardStateFunc prepended", 2)
 	local spec = self.spec_DashboardLive
 	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
 		if spec.darkMode then
@@ -1582,7 +1568,7 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
         dbgprint("loadDashboardGroupFromXML : superfunc failed for group "..tostring(group.name), 2)
         return false
     end
-    dbgprint("loadDashboardGroupFromXML : group: "..tostring(group.name), 2)
+    dbgprint("loadDashboardGroupFromXML : "..self:getName()..": group: "..tostring(group.name), 2)
     
     group.dblCommand = lower(xmlFile:getValue(key .. "#dbl"))
     dbgprint("loadDashboardGroupFromXML : dblCommand: "..tostring(group.dblCommand), 2)

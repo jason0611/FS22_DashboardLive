@@ -1541,10 +1541,10 @@ function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFi
 end
 
 -- Prepended function defaultEmitterDashboardStateFunc to enable dark mode
-function Dashboard:addDarkModeToDefaultEmitterDashboardStateFunc(dashboard, newValue, minValue, maxValue, isActive)
+function DashboardLive:addDarkModeToDefaultEmitterDashboardStateFunc(dashboard, newValue, minValue, maxValue, isActive)
 	dbgprint("addDarkModeToLoadEmitterDashboardFromXML : defaultEmitterDashboardStateFunc prepended", 2)
 	local spec = self.spec_DashboardLive
-	if spec = nil and spec.darkMode ~= spec.darkModeLast then
+	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
 		if spec.darkMode then
 			dbgprint("switching to dark mode: "..tostring(self:getName()), 2)
 			if dashboard.baseColorDM ~= nil then 

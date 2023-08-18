@@ -165,6 +165,7 @@ function DashboardLive:onLoad(savegame)
 	spec.selectorActive = 0
 	
 	-- dark mode
+	spec.darkModeExists = false
 	spec.darkMode = false
 	spec.darkModeLast = false
 	
@@ -586,7 +587,10 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true, nil)
 		
 		_, mapOrientationActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_MAPORIENTATION', self, DashboardLive.MAPORIENTATION, false, true, false, true, nil)	
-		_, darkModeActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_DARKMODE', self, DashboardLive.DARKMODE, false, true, false, true, nil)		
+		
+		if spec.darkModeExists then
+			_, darkModeActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_DARKMODE', self, DashboardLive.DARKMODE, false, true, false, true, nil)		
+		end
 		
 		if g_server ~= nil then 
 			if DashboardLive.editMode and DashboardLive.editSymbol ~= nil and self:getIsActiveForInput(true) and spec ~= nil then 
@@ -681,6 +685,13 @@ function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
 		spec.zoomPerm = not spec.zoomPerm
 	end
 	spec.zoomPressed = true
+end
+
+function DashboardLive:DARKMODE(actionName, keyStatus, arg3, arg4, arg5)
+	dbgprint("DARKMODE", 4)
+	local spec = self.spec_DashboardLive
+	spec.darkMode = not spec.darkMode
+	dbgprint("DARKMODE: set to "..tostring(spec.darkMode), 2)
 end
 
 -- Dashboard Editor Mode
@@ -1580,7 +1591,8 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 	end
 	
 	if group.dblCommand == "darkmode" then
-		group.dmEnabled = "true"
+		local spec = self.spec_DashboardLive
+		if spec ~= nil then spec.darkModeExists = "true" end
 	end
 	
 	group.dblOperator = lower(xmlFile:getValue(key .. "#op", "and"))

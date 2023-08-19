@@ -1525,6 +1525,7 @@ Dashboard.registerDashboardXMLPaths = Utils.appendedFunction(Dashboard.registerD
 -- Overwritten function loadEmitterDashboardFromXML to enable dark mode setting
 function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFile, key, dashboard)
 	local returnValue = superfunc(self, xmlFile, key, dashboard)
+	local spec = self.spec_DashboardLive
 	
 	-- Back up light mode values
 	dashboard.baseColorLM = dashboard.baseColor
@@ -1534,6 +1535,10 @@ function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFi
 	dashboard.baseColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#baseColorDarkMode"))
 	dashboard.emitColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#emitColorDarkMode"))
 	dashboard.intensityDM = xmlFile:getValue(key .. "#intensityDarkMode")
+	
+	if dashboard.baseColorDM ~= nil or dashboard.emitColorDM ~= nil or dashboard.intensityDM ~= nil then
+		spec.darkModeExists = "true"
+	end
 	
 	return returnValue
 end

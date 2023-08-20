@@ -168,6 +168,7 @@ function DashboardLive:onLoad(savegame)
 	spec.darkModeExists = false
 	spec.darkMode = false
 	spec.darkModeLast = false
+	spec.isDirty = false
 	
 	-- engine data
 	spec.motorTemperature = 20
@@ -691,6 +692,7 @@ function DashboardLive:DARKMODE(actionName, keyStatus, arg3, arg4, arg5)
 	dbgprint("DARKMODE", 4)
 	local spec = self.spec_DashboardLive
 	spec.darkMode = not spec.darkMode
+	spec.isDirty = true
 	dbgprint("DARKMODE: set to "..tostring(spec.darkMode), 2)
 end
 
@@ -1537,6 +1539,7 @@ function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFi
 	dashboard.intensityDM = xmlFile:getValue(key .. "#intensityDarkMode")
 	
 	if dashboard.baseColorDM ~= nil or dashboard.emitColorDM ~= nil or dashboard.intensityDM ~= nil then
+		dbgprint("loadEmitterDashboardFromXML : Setting dark mode for "..self:getName(), 2)
 		spec.darkModeExists = "true"
 	end
 	
@@ -1549,30 +1552,21 @@ function DashboardLive:addDarkModeToDefaultEmitterDashboardStateFunc(dashboard, 
 	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
 		if spec.darkMode then
 			dbgprint("switching to dark mode: "..tostring(self:getName()), 2)
-			if dashboard.baseColorDM ~= nil then 
-				dashboard.baseColor = dashboard.baseColorDM
-			end
-			if dashboard.emitColorDM ~= nil then 
-				dashboard.emitColor = dashboard.emitColorDM
-			end
-			if dashboard.intensityDM ~= nil then
-				dashboard.intensity = dashboard.intensityDM
-			end
+			dashboard.baseColor = dashboard.baseColorDM
+			dashboard.emitColor = dashboard.emitColorDM
+			dashboard.intensity = dashboard.intensityDM
 		else	
 			dbgprint("switching to light mode: "..tostring(self:getName()), 2)
-			if dashboard.baseColorLM ~= nil then 
-				dashboard.baseColor = dashboard.baseColorLM
-			end
-			if dashboard.emitColorLM ~= nil then 
-				dashboard.emitColor = dashboard.emitColorLM
-			end
-			if dashboard.intensityLM ~= nil then
-				dashboard.intensity = dashboard.intensityLM
-			end
+			dashboard.baseColor = dashboard.baseColorLM
+			dashboard.emitColor = dashboard.emitColorLM
+			dashboard.intensity = dashboard.intensityLM
 		end
-		setShaderParameter(dashboard.node, "baseColor", dashboard.baseColor[1], dashboard.baseColor[2], dashboard.baseColor[3], 1, false)
-		setShaderParameter(dashboard.node, "emitColor", dashboard.emitColor[1], dashboard.emitColor[2], dashboard.emitColor[3], 1, false)
-		spec.darkModeLast = spec.darkMode
+		if dashboard.baseColor ~= nil then 
+			setShaderParameter(dashboard.node, "baseColor", dashboard.baseColor[1], dashboard.baseColor[2], dashboard.baseColor[3], 1, false)
+		end
+		if dashboard.emitColor ~= nil then
+			setShaderParameter(dashboard.node, "emitColor", dashboard.emitColor[1], dashboard.emitColor[2], dashboard.emitColor[3], 1, false)
+		end
 	end
 end
 Dashboard.defaultEmitterDashboardStateFunc = Utils.prependedFunction(Dashboard.defaultEmitterDashboardStateFunc, DashboardLive.addDarkModeToDefaultEmitterDashboardStateFunc)
@@ -3009,6 +3003,7 @@ end
 	
 function DashboardLive:onUpdate(dt)
 	local spec = self.spec_DashboardLive
+	local dspec = self.spec_dashboard
 	local mspec = self.spec_motorized
 	
 	if self:getIsActiveForInput(true) then
@@ -3058,6 +3053,13 @@ function DashboardLive:onUpdate(dt)
 		mspec.lastFuelUsage = spec.lastFuelUsage
 		mspec.lastDefUsage = spec.lastDefUsage
 		mspec.lastAirUsage = spec.lastAirUsage
+	end
+	
+	-- switch light/dark mode
+	if spec.isDirty then
+		self:updateDashboards(dspec.dashboards, dt, true)
+		spec.isDirty = false
+		spec.darkModeLast = spec.darkMode
 	end
 end
 

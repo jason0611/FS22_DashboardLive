@@ -447,6 +447,22 @@ function DashboardLive:onLoad(savegame)
 			dbgprint("onLoad : ModIntegration <precisionfarming>", 2)
 			self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
 		end
+		-- CVTaddon
+		dashboardData = {
+			valueTypeToLoad = "cvt",
+			valueObject = self,
+			valueFunc = DashboardLive.getDashboardLiveCVT,
+			additionalAttributesFunc = DashboardLive.getDBLAttributesCVT
+		}
+		self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData) 
+		if spec.vanillaIntegration then
+			dbgprint("onLoad : VanillaIntegration <CVTaddon>", 2)
+			self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+		end
+		if spec.modIntegration then
+			dbgprint("onLoad : ModIntegration <CVTaddon>", 2)
+			self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+		end
         -- print
         dashboardData = {	
         					valueTypeToLoad = "print",
@@ -1091,8 +1107,25 @@ local function getIsFoldable(device)
 	return spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
 end
 
+-- from ExtendedSprayerHUDExtension - can be accessed directly?
+local function getFillTypeSourceVehicle(sprayer)
+    -- check the valid sprayer if he has a fill type source to consume from, otherwise hide the display
+    if sprayer:getFillUnitFillLevel(sprayer:getSprayerFillUnitIndex()) <= 0 then
+        local spec = sprayer.spec_sprayer
+        for _, supportedSprayType in ipairs(spec.supportedSprayTypes) do
+            for _, src in ipairs(spec.fillTypeSources[supportedSprayType]) do
+                local vehicle = src.vehicle
+                if vehicle:getFillUnitFillType(src.fillUnitIndex) == supportedSprayType and vehicle:getFillUnitFillLevel(src.fillUnitIndex) > 0 then
+                    return vehicle, src.fillUnitIndex
+                end
+            end
+        end
+    end
+
+    return sprayer, sprayer:getSprayerFillUnitIndex()
+end
+
 local function getAttachedStatus(vehicle, element, mode, default)
-	
 	if element.dblAttacherJointIndices == nil then
 		if element.attacherJointIndices ~= nil then
 			element.dblAttacherJointIndices = element.attacherJointIndices
@@ -2095,6 +2128,17 @@ function DashboardLive.getDBLAttributesPrecisionFarming(self, xmlFile, key, dash
 	return true
 end
 
+-- CVTaddon
+function DashboardLive.getDBLAttributesCVT(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd", ""))
+    dbgprint("getDBLAttributesCVT : command: "..tostring(dashboard.dblCommand), 2)
+    
+    dashboard.dblState = xmlFile:getValue(key .. "#state")
+	dbgprint("getDBLAttributesCVT : state: "..tostring(dashboard.dblState), 2)
+	
+	return true
+end
+
 -- get states
 function DashboardLive.getDashboardLivePage(self, dashboard)
 	dbgprint("getDashboardLivePage : dblPage: "..tostring(dashboard.dblPage)..", dblPageGroup: "..tostring(dashboard.dblPageGroup), 4)
@@ -2857,26 +2901,8 @@ function DashboardLive.getDashboardLiveFrontloader(self, dashboard)
 	return returnValue
 end
 
--- from ExtendedSprayerHUDExtension - can be accessed directly?
-local function getFillTypeSourceVehicle(sprayer)
-    -- check the valid sprayer if he has a fill type source to consume from, otherwise hide the display
-    if sprayer:getFillUnitFillLevel(sprayer:getSprayerFillUnitIndex()) <= 0 then
-        local spec = sprayer.spec_sprayer
-        for _, supportedSprayType in ipairs(spec.supportedSprayTypes) do
-            for _, src in ipairs(spec.fillTypeSources[supportedSprayType]) do
-                local vehicle = src.vehicle
-                if vehicle:getFillUnitFillType(src.fillUnitIndex) == supportedSprayType and vehicle:getFillUnitFillLevel(src.fillUnitIndex) > 0 then
-                    return vehicle, src.fillUnitIndex
-                end
-            end
-        end
-    end
-
-    return sprayer, sprayer:getSprayerFillUnitIndex()
-end
-
 function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
-	dbgprint("getDashboardLivePrecisionFarming : dblCommand: "..tostring(dashboard.dblCommand), 3)
+	dbgprint("getDashboardLivePrecisionFarming : dblCommand: "..tostring(dashboard.dblCommand), 2)
 	local c = dashboard.dblCommand
 	local returnValue = 0
 	-- lets find any attached vehicle with a extendedSprayer specialization.
@@ -2999,6 +3025,27 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 	end
 
 	return returnValue
+end
+
+function DashboardLive.getDashboardLiveCVT(self, dashboard)
+	dbgprint("getDashboardLiveCVT : dblCommand: "..tostring(dashboard.dblCommand), 2)
+	dbgprint("getDashboardLiveCVT : dblState: "..tostring(dashboard.dblState), 2)
+	local c = dashboard.dblCommand
+	local s = dashboard.dblState
+	
+	local spec = self.spec_CVTaddon
+	if spec ~= nil and type(c)=="string" then
+		local cvtValue = "forDBL_"..c
+		dbgprint(cvtValue, 2)
+		local returnValue = spec[cvtValue]
+		dbgprint(returnValue, 2)
+		if s ~= nil then
+			returnValue = tostring(returnValue) == tostring(s)
+		end
+		dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 2)
+		return returnValue or false
+	end
+	return false
 end
 	
 function DashboardLive:onUpdate(dt)

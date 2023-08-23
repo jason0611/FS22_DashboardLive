@@ -2869,6 +2869,9 @@ function DashboardLive.getDashboardLiveCXP(self, dashboard)
 			returnValue = mr.engineLoad * mr.loadMultiplier * f
 		elseif c == "yield" then
 			returnValue = mr.yield
+			if returnValue ~= returnValue then
+				returnValue = 0
+			end
 		elseif c == "highmoisture" then
 			returnValue = mr.highMoisture
 		end

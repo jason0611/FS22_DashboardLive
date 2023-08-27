@@ -44,6 +44,7 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 - CVT-Addon
 - precisionFarming
 - cutter turn rate
+- RDA
 
 == Planned for later ModHub updates ==
 ? camera integration

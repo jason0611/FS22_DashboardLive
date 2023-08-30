@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, false)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -78,6 +78,9 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#max", "Maximum")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#baseColorDarkMode", "Base color for dark mode")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#emitColorDarkMode", "Emit color for dark mode")
+	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#intensityDarkMode", "Intensity for dark mode")
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
 	
 	DashboardLive.vanillaSchema = XMLSchema.new("vanillaIntegration")
@@ -96,6 +99,9 @@ function DashboardLive.initSpecialization()
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#partition", "partition number")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#stateText", "stateText")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#scale", "scale")
+	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#baseColorDarkMode", "Base color for dark mode")
+	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#emitColorDarkMode", "Emit color for dark mode")
+	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#intensityDarkMode", "Intensity for dark mode")
 	dbgprint("initSpecialization : vanillaSchema element options registered", 2)
 end
 
@@ -116,6 +122,7 @@ end
 function DashboardLive.registerOverwrittenFunctions(vehicleType)
 	SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsDashboardGroupActive", DashboardLive.getIsDashboardGroupActive)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadEmitterDashboardFromXML", DashboardLive.addDarkModeToLoadEmitterDashboardFromXML)
 end
 
 function DashboardLive:onPreLoad(savegame)
@@ -156,6 +163,12 @@ function DashboardLive:onLoad(savegame)
 	
 	-- selector data
 	spec.selectorActive = 0
+	
+	-- dark mode
+	spec.darkModeExists = false
+	spec.darkMode = false
+	spec.darkModeLast = false
+	spec.isDirty = false
 	
 	-- engine data
 	spec.motorTemperature = 20
@@ -434,6 +447,22 @@ function DashboardLive:onLoad(savegame)
 			dbgprint("onLoad : ModIntegration <precisionfarming>", 2)
 			self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
 		end
+		-- CVTaddon
+		dashboardData = {
+			valueTypeToLoad = "cvt",
+			valueObject = self,
+			valueFunc = DashboardLive.getDashboardLiveCVT,
+			additionalAttributesFunc = DashboardLive.getDBLAttributesCVT
+		}
+		self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData) 
+		if spec.vanillaIntegration then
+			dbgprint("onLoad : VanillaIntegration <CVTaddon>", 2)
+			self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+		end
+		if spec.modIntegration then
+			dbgprint("onLoad : ModIntegration <CVTaddon>", 2)
+			self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+		end
         -- print
         dashboardData = {	
         					valueTypeToLoad = "print",
@@ -552,7 +581,7 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 		DashboardLive.actionEvents = {} 
 		if self:getIsActiveForInput(true) and spec ~= nil then 
 			local actionEventId
-			local sk = spec.maxPage > 1
+			local sp = spec.maxPage > 1
 			local sg = spec.maxPageGroup > 1
 			if sg then
 				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEGRPUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
@@ -562,19 +591,23 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
 				g_inputBinding:setActionEventTextVisibility(actionEventId, sg)
 			end
-			if sk then
+			if sp then
 				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
 				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
-				g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sp)
 				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
 				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
-				g_inputBinding:setActionEventTextVisibility(actionEventId, sk)
+				g_inputBinding:setActionEventTextVisibility(actionEventId, sp)
 			end
 		end	
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM', self, DashboardLive.ZOOM, false, true, true, true, nil)	
 		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true, nil)
 		
-		_, mapOrientationActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_MAPORIENTATION', self, DashboardLive.MAPORIENTATION, false, true, false, true, nil)		
+		_, mapOrientationActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_MAPORIENTATION', self, DashboardLive.MAPORIENTATION, false, true, false, true, nil)	
+		
+		if spec.darkModeExists then
+			_, darkModeActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_DARKMODE', self, DashboardLive.DARKMODE, false, true, false, true, nil)		
+		end
 		
 		if g_server ~= nil then 
 			if DashboardLive.editMode and DashboardLive.editSymbol ~= nil and self:getIsActiveForInput(true) and spec ~= nil then 
@@ -669,6 +702,14 @@ function DashboardLive:ZOOM(actionName, keyStatus, arg3, arg4, arg5)
 		spec.zoomPerm = not spec.zoomPerm
 	end
 	spec.zoomPressed = true
+end
+
+function DashboardLive:DARKMODE(actionName, keyStatus, arg3, arg4, arg5)
+	dbgprint("DARKMODE", 4)
+	local spec = self.spec_DashboardLive
+	spec.darkMode = not spec.darkMode
+	spec.isDirty = true
+	dbgprint("DARKMODE: set to "..tostring(spec.darkMode), 2)
 end
 
 -- Dashboard Editor Mode
@@ -1066,19 +1107,25 @@ local function getIsFoldable(device)
 	return spec ~= nil and spec.foldingParts ~= nil and #spec.foldingParts > 0
 end
 
---[[
-local function isFoldable(implement, search, getFoldableImplement, t)
-	local foldable, returnImplement = recursiveCheck(implement, getIsFoldable, t == nil, getFoldableImplement, t)
-	if getFoldableImplement then
-		return foldable, returnImplement
-	else
-		return foldable
-	end
+-- from ExtendedSprayerHUDExtension - can be accessed directly?
+local function getFillTypeSourceVehicle(sprayer)
+    -- check the valid sprayer if he has a fill type source to consume from, otherwise hide the display
+    if sprayer:getFillUnitFillLevel(sprayer:getSprayerFillUnitIndex()) <= 0 then
+        local spec = sprayer.spec_sprayer
+        for _, supportedSprayType in ipairs(spec.supportedSprayTypes) do
+            for _, src in ipairs(spec.fillTypeSources[supportedSprayType]) do
+                local vehicle = src.vehicle
+                if vehicle:getFillUnitFillType(src.fillUnitIndex) == supportedSprayType and vehicle:getFillUnitFillLevel(src.fillUnitIndex) > 0 then
+                    return vehicle, src.fillUnitIndex
+                end
+            end
+        end
+    end
+
+    return sprayer, sprayer:getSprayerFillUnitIndex()
 end
---]]
 
 local function getAttachedStatus(vehicle, element, mode, default)
-	
 	if element.dblAttacherJointIndices == nil then
 		if element.attacherJointIndices ~= nil then
 			element.dblAttacherJointIndices = element.attacherJointIndices
@@ -1501,6 +1548,62 @@ end
 Dashboard.defaultAnimationDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultAnimationDashboardStateFunc, DashboardLive.catchBooleanForDashboardStateFunc)
 Dashboard.defaultSliderDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultSliderDashboardStateFunc, DashboardLive.catchBooleanForDashboardStateFunc)
 
+-- Append schema definitions to registerDashboardXMLPath function 
+function DashboardLive.addDarkModeToRegisterDashboardXMLPaths(schema, basePath, availableValueTypes)
+	dbgprint("addDarkModeToLoadEmitterDashboardFromXML : registerDashboardXMLPaths appended to "..basePath, 2)
+	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#baseColorDarkMode", "Base color for dark mode")
+	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#emitColorDarkMode", "Emit color for dark mode")
+	schema:register(XMLValueType.FLOAT, basePath .. ".dashboard(?)#intensityDarkMode", "Intensity for dark mode")
+end
+Dashboard.registerDashboardXMLPaths = Utils.appendedFunction(Dashboard.registerDashboardXMLPaths, DashboardLive.addDarkModeToRegisterDashboardXMLPaths)
+
+-- Overwritten function loadEmitterDashboardFromXML to enable dark mode setting
+function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFile, key, dashboard)
+	local returnValue = superfunc(self, xmlFile, key, dashboard)
+	local spec = self.spec_DashboardLive
+	
+	-- Back up light mode values
+	dashboard.baseColorLM = dashboard.baseColor
+	dashboard.emitColorLM = dashboard.emitColor
+	dashboard.intensityLM = dashboard.intensity
+	-- Read dark mode values
+	dashboard.baseColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#baseColorDarkMode"))
+	dashboard.emitColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#emitColorDarkMode"))
+	dashboard.intensityDM = xmlFile:getValue(key .. "#intensityDarkMode")
+	
+	if dashboard.baseColorDM ~= nil or dashboard.emitColorDM ~= nil or dashboard.intensityDM ~= nil then
+		dbgprint("loadEmitterDashboardFromXML : Setting dark mode for "..self:getName(), 2)
+		spec.darkModeExists = "true"
+	end
+	
+	return returnValue
+end
+
+-- Prepended function defaultEmitterDashboardStateFunc to enable dark mode
+function DashboardLive:addDarkModeToDefaultEmitterDashboardStateFunc(dashboard, newValue, minValue, maxValue, isActive)
+	local spec = self.spec_DashboardLive
+	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
+		if spec.darkMode then
+			dbgprint("switching to dark mode: "..tostring(self:getName()), 2)
+			dashboard.baseColor = dashboard.baseColorDM
+			dashboard.emitColor = dashboard.emitColorDM
+			dashboard.intensity = dashboard.intensityDM
+		else	
+			dbgprint("switching to light mode: "..tostring(self:getName()), 2)
+			dashboard.baseColor = dashboard.baseColorLM
+			dashboard.emitColor = dashboard.emitColorLM
+			dashboard.intensity = dashboard.intensityLM
+		end
+		if dashboard.baseColor ~= nil then 
+			setShaderParameter(dashboard.node, "baseColor", dashboard.baseColor[1], dashboard.baseColor[2], dashboard.baseColor[3], 1, false)
+		end
+		if dashboard.emitColor ~= nil then
+			setShaderParameter(dashboard.node, "emitColor", dashboard.emitColor[1], dashboard.emitColor[2], dashboard.emitColor[3], 1, false)
+		end
+	end
+end
+Dashboard.defaultEmitterDashboardStateFunc = Utils.prependedFunction(Dashboard.defaultEmitterDashboardStateFunc, DashboardLive.addDarkModeToDefaultEmitterDashboardStateFunc)
+
 -- GROUPS
 
 function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
@@ -1508,7 +1611,7 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
         dbgprint("loadDashboardGroupFromXML : superfunc failed for group "..tostring(group.name), 2)
         return false
     end
-    dbgprint("loadDashboardGroupFromXML : group: "..tostring(group.name), 2)
+    dbgprint("loadDashboardGroupFromXML : "..self:getName()..": group: "..tostring(group.name), 2)
     
     group.dblCommand = lower(xmlFile:getValue(key .. "#dbl"))
     dbgprint("loadDashboardGroupFromXML : dblCommand: "..tostring(group.dblCommand), 2)
@@ -1517,6 +1620,11 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
 		group.dblPage = xmlFile:getValue(key .. "#page") or 0
 		group.dblPageGroup = xmlFile:getValue(key .. "#group") or 1
 		dbgprint("loadDashboardGroupFromXML : page: "..tostring(group.dblPage), 2)
+	end
+	
+	if group.dblCommand == "darkmode" then
+		local spec = self.spec_DashboardLive
+		if spec ~= nil then spec.darkModeExists = "true" end
 	end
 	
 	group.dblOperator = lower(xmlFile:getValue(key .. "#op", "and"))
@@ -1565,6 +1673,12 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 		else
 			returnValue = group.dblPageGroup == spec.actPageGroup
 		end
+		
+	elseif group.dblCommand == "darkmode" then
+		returnValue = spec.darkMode
+		
+	elseif group.dblCommand == "lightmode" then
+		returnValue = not spec.darkMode
 	
 	-- vanilla game selector
 	elseif group.dblCommand == "base_selector" and group.dblSelection ~= nil then
@@ -2011,6 +2125,17 @@ function DashboardLive.getDBLAttributesPrecisionFarming(self, xmlFile, key, dash
 	if min ~= nil then dashboard.dblMin = min end
     if max ~= nil then dashboard.dblMax = max end
 
+	return true
+end
+
+-- CVTaddon
+function DashboardLive.getDBLAttributesCVT(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd", ""))
+    dbgprint("getDBLAttributesCVT : command: "..tostring(dashboard.dblCommand), 2)
+    
+    dashboard.dblState = xmlFile:getValue(key .. "#state")
+	dbgprint("getDBLAttributesCVT : state: "..tostring(dashboard.dblState), 2)
+	
 	return true
 end
 
@@ -2744,6 +2869,9 @@ function DashboardLive.getDashboardLiveCXP(self, dashboard)
 			returnValue = mr.engineLoad * mr.loadMultiplier * f
 		elseif c == "yield" then
 			returnValue = mr.yield
+			if returnValue ~= returnValue then
+				returnValue = 0
+			end
 		elseif c == "highmoisture" then
 			returnValue = mr.highMoisture
 		end
@@ -2776,26 +2904,8 @@ function DashboardLive.getDashboardLiveFrontloader(self, dashboard)
 	return returnValue
 end
 
--- from ExtendedSprayerHUDExtension - can be accessed directly?
-local function getFillTypeSourceVehicle(sprayer)
-    -- check the valid sprayer if he has a fill type source to consume from, otherwise hide the display
-    if sprayer:getFillUnitFillLevel(sprayer:getSprayerFillUnitIndex()) <= 0 then
-        local spec = sprayer.spec_sprayer
-        for _, supportedSprayType in ipairs(spec.supportedSprayTypes) do
-            for _, src in ipairs(spec.fillTypeSources[supportedSprayType]) do
-                local vehicle = src.vehicle
-                if vehicle:getFillUnitFillType(src.fillUnitIndex) == supportedSprayType and vehicle:getFillUnitFillLevel(src.fillUnitIndex) > 0 then
-                    return vehicle, src.fillUnitIndex
-                end
-            end
-        end
-    end
-
-    return sprayer, sprayer:getSprayerFillUnitIndex()
-end
-
 function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
-	dbgprint("getDashboardLivePrecisionFarming : dblCommand: "..tostring(dashboard.dblCommand), 3)
+	dbgprint("getDashboardLivePrecisionFarming : dblCommand: "..tostring(dashboard.dblCommand), 2)
 	local c = dashboard.dblCommand
 	local returnValue = 0
 	-- lets find any attached vehicle with a extendedSprayer specialization.
@@ -2919,9 +3029,31 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 
 	return returnValue
 end
+
+function DashboardLive.getDashboardLiveCVT(self, dashboard)
+	dbgprint("getDashboardLiveCVT : dblCommand: "..tostring(dashboard.dblCommand), 2)
+	dbgprint("getDashboardLiveCVT : dblState: "..tostring(dashboard.dblState), 2)
+	local c = dashboard.dblCommand
+	local s = dashboard.dblState
+	
+	local spec = self.spec_CVTaddon
+	if spec ~= nil and type(c)=="string" then
+		local cvtValue = "forDBL_"..c
+		dbgprint(cvtValue, 2)
+		local returnValue = spec[cvtValue]
+		dbgprint(returnValue, 2)
+		if s ~= nil then
+			returnValue = tostring(returnValue) == tostring(s)
+		end
+		dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 2)
+		return returnValue or false
+	end
+	return false
+end
 	
 function DashboardLive:onUpdate(dt)
 	local spec = self.spec_DashboardLive
+	local dspec = self.spec_dashboard
 	local mspec = self.spec_motorized
 	
 	if self:getIsActiveForInput(true) then
@@ -2971,6 +3103,13 @@ function DashboardLive:onUpdate(dt)
 		mspec.lastFuelUsage = spec.lastFuelUsage
 		mspec.lastDefUsage = spec.lastDefUsage
 		mspec.lastAirUsage = spec.lastAirUsage
+	end
+	
+	-- switch light/dark mode
+	if spec.isDirty then
+		self:updateDashboards(dspec.dashboards, dt, true)
+		spec.isDirty = false
+		spec.darkModeLast = spec.darkMode
 	end
 end
 

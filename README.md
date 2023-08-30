@@ -41,8 +41,8 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + mini-map integration
 
 == Planned for next ModHub update ==
-- CVT-Addon
-- precisionFarming
++ CVT-Addon
++ precisionFarming
 - cutter turn rate
 - RDA
 

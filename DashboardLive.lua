@@ -67,7 +67,7 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#joints")
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#selection")
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#selectionGroup")
-	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#state", "state")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#state", "state")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#stateText", "stateText")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#trailer", "trailer number")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#partition", "trailer partition")
@@ -90,7 +90,7 @@ function DashboardLive.initSpecialization()
 	
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#cmd", "DashboardLive command")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#joints")
-	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#state", "state")
+	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#state", "state")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#option", "Option")
 	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#factor", "Factor")
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#min", "Minimum")
@@ -2455,8 +2455,8 @@ function DashboardLive.getDashboardLiveCombine(self, dashboard)
 		
 		elseif c == "pipestate" then
 			local specPipe = self.spec_pipe
-			if specPipe ~= nil and sn ~= nil then
-				return specPipe.currentState == sn
+			if specPipe ~= nil and sn ~= nil and tonumber(sn) ~= nil then
+				return specPipe.currentState == tonumber(sn)
 			end
 			
 		elseif c == "pipefolding" then
@@ -2476,8 +2476,8 @@ function DashboardLive.getDashboardLiveCombine(self, dashboard)
 		elseif c == "overloading" then
 			local spec_dis = self.spec_dischargeable
 			if spec_dis ~= nil then
-				if sn ~= nil then
-					return spec_dis:getDischargeState() == sn
+				if sn ~= nil and tonumber(sn) ~= nil then
+					return spec_dis:getDischargeState() == tonumber(sn)
 				else
 					return spec_dis:getDischargeState() > 0
 				end
@@ -3050,7 +3050,7 @@ function DashboardLive.getDashboardLiveCVT(self, dashboard)
 			if tonumber(s) ~= nil then
 				returnValue = tostring(cvtValue) == tostring(s)
 			else
-				local states = unpack(s)
+				local states = string.split(tostring(s), " ")
 				if states ~= nil and type(states) == "table" then
 					for _, state in pairs(states) do
 						returnValue = returnValue or (tostring(cvtValue) == tostring(state))

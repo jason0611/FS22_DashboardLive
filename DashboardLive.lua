@@ -1543,7 +1543,7 @@ function DashboardLive:catchBooleanForDashboardStateFunc(superfunc, dashboard, n
 	if type(newValue)=="boolean" then
 		newValue = newValue and 1 or 0
 	end
-	return superfunc(self, dashboard, newValue, minValue, maxValue, isActive)
+	return superfunc(self, dashboard, tonumber(newValue) or 0, minValue, maxValue, isActive)
 end
 Dashboard.defaultAnimationDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultAnimationDashboardStateFunc, DashboardLive.catchBooleanForDashboardStateFunc)
 Dashboard.defaultSliderDashboardStateFunc = Utils.overwrittenFunction(Dashboard.defaultSliderDashboardStateFunc, DashboardLive.catchBooleanForDashboardStateFunc)
@@ -3057,6 +3057,8 @@ function DashboardLive.getDashboardLiveCVT(self, dashboard)
 					end
 				end
 			end
+		else 
+			returnValue = cvtValue or false
 		end
 		dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 2)
 		

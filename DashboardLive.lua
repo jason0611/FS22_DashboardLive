@@ -3040,13 +3040,27 @@ function DashboardLive.getDashboardLiveCVT(self, dashboard)
 	if spec ~= nil and type(c)=="string" then
 		local cvtValue = "forDBL_"..c
 		dbgprint(cvtValue, 2)
-		local returnValue = spec[cvtValue]
-		dbgprint(returnValue, 2)
+		
+		local cvtValue = spec[cvtValue]
+		dbgprint(cvtValue, 2)
+		
+		local returnValue = false
+		
 		if s ~= nil then
-			returnValue = tostring(returnValue) == tostring(s)
+			if tonumber(s) ~= nil then
+				returnValue = tostring(cvtValue) == tostring(s)
+			else
+				local states = unpack(s)
+				if states ~= nil and type(states) == "table" then
+					for _, state in pairs(states) do
+						returnValue = returnValue or (tostring(cvtValue) == tostring(state))
+					end
+				end
+			end
 		end
 		dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 2)
-		return returnValue or false
+		
+		return returnValue
 	end
 	return false
 end

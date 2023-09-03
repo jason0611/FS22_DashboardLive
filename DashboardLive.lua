@@ -3035,18 +3035,18 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 end
 
 function DashboardLive.getDashboardLiveCVT(self, dashboard)
-	dbgprint("getDashboardLiveCVT : dblCommand: "..tostring(dashboard.dblCommand), 2)
-	dbgprint("getDashboardLiveCVT : dblState: "..tostring(dashboard.dblState), 2)
+	dbgprint("getDashboardLiveCVT : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	dbgprint("getDashboardLiveCVT : dblState: "..tostring(dashboard.dblState), 4)
 	local c = dashboard.dblCommand
 	local s = dashboard.dblState
 	
 	local spec = self.spec_CVTaddon
 	if spec ~= nil and type(c)=="string" then
 		local cvtValue = "forDBL_"..c
-		dbgprint(cvtValue, 2)
+		dbgprint(cvtValue, 4)
 		
 		local cvtValue = spec[cvtValue]
-		dbgprint(cvtValue, 2)
+		dbgprint(cvtValue, 4)
 		
 		local returnValue = false
 		
@@ -3064,7 +3064,7 @@ function DashboardLive.getDashboardLiveCVT(self, dashboard)
 		else 
 			returnValue = cvtValue or false
 		end
-		dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 2)
+		dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 4)
 		
 		return returnValue
 	end

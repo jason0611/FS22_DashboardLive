@@ -2912,7 +2912,7 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 	-- in the end, we can only deal with one of them (same as precision farming dlc content)
 	local specEnhancedSprayer, vehicle = findSpecialization(self,"spec_extendedSprayer")
 	if specEnhancedSprayer ~= nil then
-		dbgprint("found spec spec_extendedSprayer",3)
+		dbgprint("found spec spec_extendedSprayer",4)
 
 		-- SoilType 
 		local soilTypeName = ""
@@ -2948,7 +2948,7 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
             local pHTarget = pHMap:getPhValueFromInternalValue(pHTargetInt)
 			
 			local pHChanged = 0
-			if specEnhancedSprayer.sprayAmountAutoMode then
+			if sprayAmountAutoMode then
                 pHChanged = pHTarget - pHActual
 				applicationRate = specEnhancedSprayer.lastLitersPerHectar * massPerLiter
 			else 
@@ -2963,17 +2963,17 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 			elseif c=="phchanged" then
 				returnValue = pHChanged
 			end
-            --dbgrender("pHActual: "..tostring(pHActual),3,2)
-            --dbgrender("pHTarget: "..tostring(pHTarget),4,2)
-            --dbgrender("pHChanged: "..tostring(pHChanged),5,2)
-            --dbgrender("sprayAmountAutoMode: "..tostring(sprayAmountAutoMode),6,2)
-			--dbgrender("applicationRate: "..tostring(applicationRate),7,2)
+            dbgrender("pHActual: "..tostring(pHActual),3,3)
+            dbgrender("pHTarget: "..tostring(pHTarget),4,3)
+            dbgrender("pHChanged: "..tostring(pHChanged),5,3)
+            dbgrender("sprayAmountAutoMode: "..tostring(sprayAmountAutoMode),6,3)
+			dbgrender("applicationRate: "..tostring(applicationRate),7,3)
 		-- fertilizer part
 		else
 			local litersPerHectar = specEnhancedSprayer.lastLitersPerHectar
 			local nitrogenChanged = 0
 			local nitrogenMap = specEnhancedSprayer.nitrogenMap
-			if not specEnhancedSprayer.sprayAmountAutoMode then
+			if not sprayAmountAutoMode then
 				litersPerHectar = nitrogenMap:getFertilizerUsageByStateChange(specEnhancedSprayer.sprayAmountManual, sprayFillType)
 				nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(specEnhancedSprayer.sprayAmountManual)
 			end
@@ -2996,10 +2996,10 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 			local nTargetInt = specEnhancedSprayer.nTargetBuffer:get()
 			local nActual = nitrogenMap:getNitrogenValueFromInternalValue(nActualInt)
 			local nTarget = nitrogenMap:getNitrogenValueFromInternalValue(nTargetInt)
-			if specEnhancedSprayer.sprayAmountAutoMode then
+			if sprayAmountAutoMode then
                 nitrogenChanged = nTarget - nActual
 			else 
-            	nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(spec.sprayAmountManual)
+            	nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(specEnhancedSprayer.sprayAmountManual)
 			end
 			if c=="nactual" then 
 				returnValue = nActual
@@ -3008,23 +3008,27 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 			elseif c=="nchanged" then
 				returnValue = nitrogenChanged
 			end
-            --dbgrender("nActual: "..tostring(nActual),3,2)
-            --dbgrender("nTarget: "..tostring(nTarget),4,2)
-            --dbgrender("nChanged: "..tostring(nitrogenChanged),5,2)
-            --dbgrender("sprayAmountAutoMode: "..tostring(sprayAmountAutoMode),6,2)
-			--dbgrender("applicationRate: "..tostring(applicationRate),7,2)
+            dbgrender("nActual: "..tostring(nActual),3,3)
+            dbgrender("nTarget: "..tostring(nTarget),4,3)
+            dbgrender("nChanged: "..tostring(nitrogenChanged),5,3)
+            dbgrender("sprayAmountAutoMode: "..tostring(sprayAmountAutoMode),6,3)
+			dbgrender("applicationRate: "..tostring(applicationRate),7,3)
         end
 
 		if c=="sprayamountautomode" then 
 			returnValue = sprayAmountAutoMode
 		elseif c=="applicationrate" then
 			returnValue = applicationRate
-		elseif c=="applicationratestr" then
-			returnValue = string.format(applicationRateStr, applicationRate)
 		elseif c=="soiltype" then
 			returnValue = soilTypeName
 		end
 
+	end
+	
+	if dashboard.textMask ~= nil then
+		local len = string.len(dashboard.textMask)
+		local alignment = dashboard.textAlignment or RenderText.ALIGN_RIGHT
+		returnValue = trim(returnValue, len, alignment)
 	end
 
 	return returnValue

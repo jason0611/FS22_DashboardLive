@@ -3039,17 +3039,12 @@ function DashboardLive.getDashboardLiveCVT(self, dashboard)
 	dbgprint("getDashboardLiveCVT : dblState: "..tostring(dashboard.dblState), 4)
 	local c = dashboard.dblCommand
 	local s = dashboard.dblState
+	local returnValue = false
 	
 	local spec = self.spec_CVTaddon
 	if spec ~= nil and type(c)=="string" then
-		local cvtValue = "forDBL_"..c
-		dbgprint(cvtValue, 4)
-		
-		local cvtValue = spec[cvtValue]
-		dbgprint(cvtValue, 4)
-		
-		local returnValue = false
-		
+		local cvtValueFunc = "forDBL_"..c
+		local cvtValue = spec[cvtValueFunc]
 		if s ~= nil then
 			if tonumber(s) ~= nil then
 				returnValue = tostring(cvtValue) == tostring(s)
@@ -3064,11 +3059,9 @@ function DashboardLive.getDashboardLiveCVT(self, dashboard)
 		else 
 			returnValue = cvtValue or false
 		end
-		dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 4)
-		
-		return returnValue
 	end
-	return false
+	dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 4)
+	return returnValue
 end
 	
 function DashboardLive:onUpdate(dt)

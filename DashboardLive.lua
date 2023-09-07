@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -2113,7 +2113,9 @@ function DashboardLive.getDBLAttributesPrecisionFarming(self, xmlFile, key, dash
 	dashboard.dblAttacherJointIndices = xmlFile:getValue(key .. "#joints")
 	dbgprint("getDBLAttributesFrontloader : joints: "..tostring(dashboard.dblAttacherJointIndices), 2)
 
-	dashboard.dblOption = xmlFile:getValue(key .. "#option", "1") -- number of tool
+	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option"))
+	
+	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- number of tool
 
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1") -- factor
 
@@ -2906,12 +2908,16 @@ end
 
 function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 	dbgprint("getDashboardLivePrecisionFarming : dblCommand: "..tostring(dashboard.dblCommand), 4)
-	local specExtendedSprayer, pfVehicle = findSpecialization(self,"spec_extendedSprayer")
+	
+	-- lets find any attached vehicle with a extendedSprayer specialization.
+	-- in the end, we can only deal with one of them (same as precision farming dlc content)	
+	local t = dashboard.dblTrailer
+	local specExtendedSprayer, pfVehicle = findSpecialization(self, "spec_extendedSprayer", t)
+
 	local returnValue = ""
 	
--- rewrite
 	if specExtendedSprayer ~= nil then
-		dbgprint("found spec spec_extendedSprayer",4)
+		dbgprint("found spec spec_extendedSprayer in "..tostring(pfVehicle:getName()), 4)
 
 		local sourceVehicle, fillUnitIndex = FS22_precisionFarming.ExtendedSprayer.getFillTypeSourceVehicle(pfVehicle)
 		local hasLimeLoaded, hasFertilizerLoaded = FS22_precisionFarming.ExtendedSprayer.getCurrentSprayerMode(pfVehicle)
@@ -2920,10 +2926,7 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 		local o = dashboard.dblOption
 		
 		local returnValueFormat = "%.2f t/ha"
-	
-		-- lets find any attached vehicle with a extendedSprayer specialization.
-		-- in the end, we can only deal with one of them (same as precision farming dlc content)	
-			
+		
 		-- soil type 
 		if c == "soiltype" then
 			if specExtendedSprayer.lastTouchedSoilType ~= 0 and specExtendedSprayer.soilMap ~= nil then
@@ -2945,6 +2948,7 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 		local sprayFillType = sourceVehicle:getFillUnitFillType(fillUnitIndex)
 		local fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(sprayFillType)
 		local massPerLiter = (fillTypeDesc.massPerLiter / FillTypeManager.MASS_SCALE)
+		local applicationRate = 0
 		
 		-- lime values
 		if hasLimeLoaded and (c == "phactual" or c == "phtarget" or c == "phchanged" or c == "applicationrate") then
@@ -2987,11 +2991,37 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 		
 		-- fertilizer part
 		elseif hasFertilizerLoaded and (c == "nactual" or c == "ntarget" or c == "nchanged" or c == "applicationrate") then
-			local litersPerHectar = specExtendedSprayer.lastLitersPerHectar
-			local nitrogenChanged = 0
 			
 			local nitrogenMap = specExtendedSprayer.nitrogenMap
-			litersPerHectar = nitrogenMap:getFertilizerUsageByStateChange(specExtendedSprayer.sprayAmountManual, sprayFillType)
+			local nActualInt = specExtendedSprayer.nActualBuffer:get()
+			local nTargetInt = specExtendedSprayer.nTargetBuffer:get()		
+			
+			local nActual = nitrogenMap:getNitrogenValueFromInternalValue(nActualInt)
+			if c == "nactual" then 
+				returnValue = nActual
+			end
+			
+			local nTarget = nitrogenMap:getNitrogenValueFromInternalValue(nTargetInt)
+			if c == "ntarget" then
+				returnValue = nTarget
+			end	
+			
+			local nitrogenChanged = 0
+			if sprayAmountAutoMode then
+                nitrogenChanged = nTarget - nActual
+			else 
+            	nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(specExtendedSprayer.sprayAmountManual)
+			end
+			if c == "nchanged" then
+				returnValue = nitrogenChanged
+			end
+			
+			local litersPerHectar
+			if sprayAmountAutoMode then
+				litersPerHectar = specExtendedSprayer.lastLitersPerHectar
+			else
+				litersPerHectar = nitrogenMap:getFertilizerUsageByStateChange(specExtendedSprayer.sprayAmountManual, sprayFillType)
+			end
 			
 			if specExtendedSprayer.isSolidFertilizerSprayer then
 				returnValueFormat = "%d kg/ha"
@@ -3009,27 +3039,6 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 			if c == "applicationrate" then
 				returnValue = applicationRate
 			end
-
-			local nActualInt = specExtendedSprayer.nActualBuffer:get()			
-			local nActual = nitrogenMap:getNitrogenValueFromInternalValue(nActualInt)
-			if c == "nactual" then 
-				returnValue = nActual
-			end
-			
-			local nTargetInt = specExtendedSprayer.nTargetBuffer:get()
-			local nTarget = nitrogenMap:getNitrogenValueFromInternalValue(nTargetInt)
-			if c == "ntarget" then
-				returnValue = nTarget
-			end
-			
-			if sprayAmountAutoMode then
-                nitrogenChanged = nTarget - nActual
-			else 
-            	nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(specExtendedSprayer.sprayAmountManual)
-			end
-			if c == "nchanged" then
-				returnValue = nitrogenChanged
-			end
 			
             dbgrender("nActual: "..tostring(nActual),13,3)
             dbgrender("nTarget: "..tostring(nTarget),14,3)
@@ -3038,7 +3047,7 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
             dbgrender("litersPerHectar: "..tostring(litersPerHectar),17,3)
 			dbgrender("applicationRate: "..tostring(applicationRate),18,3)
         end
-
+		
 		if o == "text" and type(returnValue) == "number" then
 			dbgprint("returnValueFormat: "..tostring(returnValueFormat), 4)
 			dbgprint("returnValue: "..tostring(returnValue), 4)
@@ -3051,133 +3060,9 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 			dbgprint("trimmed returnValue: "..tostring(returnValue), 4)
 			returnValue = trim(returnValue, len, alignment)
 		end
+		dbgrender("returnValue: "..tostring(returnValue), 19, 3)
 	end
 	return returnValue
-
-
--- end rewrite
---[[ original
-	dbgprint("getDashboardLivePrecisionFarming : dblCommand: "..tostring(dashboard.dblCommand), 2)
-	local c = dashboard.dblCommand
-	local returnValue = 0
-	-- lets find any attached vehicle with a extendedSprayer specialization.
-	-- in the end, we can only deal with one of them (same as precision farming dlc content)
-	local specEnhancedSprayer, vehicle = findSpecialization(self,"spec_extendedSprayer")
-	if specEnhancedSprayer ~= nil then
-		dbgprint("found spec spec_extendedSprayer",4)
-
-		-- SoilType 
-		local soilTypeName = ""
-
-		if specEnhancedSprayer.lastTouchedSoilType ~= 0 and specEnhancedSprayer.soilMap ~= nil then
-			local soilType = specEnhancedSprayer.soilMap:getSoilTypeByIndex(specEnhancedSprayer.lastTouchedSoilType)
-			if soilType ~= nil then
-				soilTypeName = soilType.name
-			end
-		end
-		
-		local hasLimeLoaded = false
-		local applicationRate = 0
-		local applicationRateStr = "%.2f t/ha"
-   		local fillTypeDesc
-		local sourceVehicle, fillUnitIndex = getFillTypeSourceVehicle(vehicle)
-		local sprayFillType = sourceVehicle:getFillUnitFillType(fillUnitIndex)
-		fillTypeDesc = g_fillTypeManager:getFillTypeByIndex(sprayFillType)
-		local massPerLiter = (fillTypeDesc.massPerLiter / FillTypeManager.MASS_SCALE)
-		if sprayFillType == FillType.LIME then
-			hasLimeLoaded = true
-		end
-		
-		local isFertilizing = specEnhancedSprayer.isFertilizing
-		local isLiming = specEnhancedSprayer.isLiming
-		local sprayAmountAutoMode = specEnhancedSprayer.sprayAmountAutoMode
-        -- Lime part
-		if hasLimeLoaded then
-			local pHMap = specEnhancedSprayer.pHMap
-            local pHActualInt = specEnhancedSprayer.phActualBuffer:get()
-            local pHTargetInt = specEnhancedSprayer.phTargetBuffer:get()
-            local pHActual = pHMap:getPhValueFromInternalValue(pHActualInt)
-            local pHTarget = pHMap:getPhValueFromInternalValue(pHTargetInt)
-			
-			local pHChanged = 0
-			if sprayAmountAutoMode then
-                pHChanged = pHTarget - pHActual
-				applicationRate = specEnhancedSprayer.lastLitersPerHectar * massPerLiter
-			else 
-				local requiredLitersPerHa = pHMap:getLimeUsageByStateChange(specEnhancedSprayer.sprayAmountManual)
-            	pHChanged = pHMap:getPhValueFromChangedStates(specEnhancedSprayer.sprayAmountManual)
-				applicationRate = requiredLitersPerHa * massPerLiter
-			end
-			if c=="phactual" then 
-				returnValue = pHActual
-			elseif c=="phtarget" then
-				returnValue = pHTarget
-			elseif c=="phchanged" then
-				returnValue = pHChanged
-			end
-            dbgrender("pHActual: "..tostring(pHActual),3,3)
-            dbgrender("pHTarget: "..tostring(pHTarget),4,3)
-            dbgrender("pHChanged: "..tostring(pHChanged),5,3)
-            dbgrender("sprayAmountAutoMode: "..tostring(sprayAmountAutoMode),6,3)
-			dbgrender("applicationRate: "..tostring(applicationRate),7,3)
-		-- fertilizer part
-		else
-			local litersPerHectar = specEnhancedSprayer.lastLitersPerHectar
-			local nitrogenChanged = 0
-			local nitrogenMap = specEnhancedSprayer.nitrogenMap
-			if not sprayAmountAutoMode then
-				litersPerHectar = nitrogenMap:getFertilizerUsageByStateChange(specEnhancedSprayer.sprayAmountManual, sprayFillType)
-				nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(specEnhancedSprayer.sprayAmountManual)
-			end
-			
-			if specEnhancedSprayer.isSolidFertilizerSprayer then
-				applicationRateStr = "%d kg/ha"
-				applicationRate = litersPerHectar * massPerLiter * 1000
-			elseif specEnhancedSprayer.isLiquidFertilizerSprayer then
-				applicationRateStr = "%d l/ha"
-				applicationRate = litersPerHectar
-			elseif specEnhancedSprayer.isSlurryTanker then
-				applicationRateStr = "%.1f m³/ha"
-				applicationRate = litersPerHectar / 1000
-			elseif specEnhancedSprayer.isManureSpreader then
-				applicationRateStr = "%.1f t/ha"
-				applicationRate = litersPerHectar * massPerLiter
-			end
-
-			local nActualInt = specEnhancedSprayer.nActualBuffer:get()
-			local nTargetInt = specEnhancedSprayer.nTargetBuffer:get()
-			local nActual = nitrogenMap:getNitrogenValueFromInternalValue(nActualInt)
-			local nTarget = nitrogenMap:getNitrogenValueFromInternalValue(nTargetInt)
-			if sprayAmountAutoMode then
-                nitrogenChanged = nTarget - nActual
-			else 
-            	nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(specEnhancedSprayer.sprayAmountManual)
-			end
-			if c=="nactual" then 
-				returnValue = nActual
-			elseif c=="ntarget" then
-				returnValue = nTarget
-			elseif c=="nchanged" then
-				returnValue = nitrogenChanged
-			end
-            dbgrender("nActual: "..tostring(nActual),3,3)
-            dbgrender("nTarget: "..tostring(nTarget),4,3)
-            dbgrender("nChanged: "..tostring(nitrogenChanged),5,3)
-            dbgrender("sprayAmountAutoMode: "..tostring(sprayAmountAutoMode),6,3)
-			dbgrender("applicationRate: "..tostring(applicationRate),7,3)
-        end
-
-		if c=="sprayamountautomode" then 
-			returnValue = sprayAmountAutoMode
-		elseif c=="applicationrate" then
-			returnValue = applicationRate
-		elseif c=="soiltype" then
-			returnValue = soilTypeName
-		end
-
-	end
-	return returnValue
--- end original --]]
 end
 
 function DashboardLive.getDashboardLiveCVT(self, dashboard)

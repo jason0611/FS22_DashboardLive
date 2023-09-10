@@ -709,7 +709,11 @@ end
 function DashboardLive:DARKMODE(actionName, keyStatus, arg3, arg4, arg5)
 	dbgprint("DARKMODE", 4)
 	local spec = self.spec_DashboardLive
-	spec.darkMode = not spec.darkMode
+	if spec.darkMode == spec.darkModeLast then
+		spec.darkMode = not spec.darkMode
+	else
+		dbgprint("Toggle Dark Mode: Skipped because last status was not synchronized completely", 1)
+	end
 	spec.isDirty = true
 	dbgprint("DARKMODE: set to "..tostring(spec.darkMode), 2)
 end

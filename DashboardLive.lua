@@ -123,6 +123,8 @@ function DashboardLive.registerOverwrittenFunctions(vehicleType)
 	SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadDashboardGroupFromXML", DashboardLive.loadDashboardGroupFromXML)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "getIsDashboardGroupActive", DashboardLive.getIsDashboardGroupActive)
     SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadEmitterDashboardFromXML", DashboardLive.addDarkModeToLoadEmitterDashboardFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadTextDashboardFromXML", DashboardLive.addDarkModeToLoadTextDashboardFromXML)
+    SpecializationUtil.registerOverwrittenFunction(vehicleType, "loadNumberDashboardFromXML", DashboardLive.addDarkModeToLoadNumberDashboardFromXML)
 end
 
 function DashboardLive:onPreLoad(savegame)
@@ -1554,6 +1556,9 @@ function DashboardLive.addDarkModeToRegisterDashboardXMLPaths(schema, basePath, 
 	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#baseColorDarkMode", "Base color for dark mode")
 	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#emitColorDarkMode", "Emit color for dark mode")
 	schema:register(XMLValueType.FLOAT, basePath .. ".dashboard(?)#intensityDarkMode", "Intensity for dark mode")
+	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#textColorDarkMode", "Text color for dark mode")
+	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#hiddenColorDarkMode", "Hidden color for dark mode")
+	schema:register(XMLValueType.STRING, basePath .. ".dashboard(?)#numberColorDarkMode", "Number color for dark mode")
 end
 Dashboard.registerDashboardXMLPaths = Utils.appendedFunction(Dashboard.registerDashboardXMLPaths, DashboardLive.addDarkModeToRegisterDashboardXMLPaths)
 
@@ -1573,6 +1578,44 @@ function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFi
 	
 	if dashboard.baseColorDM ~= nil or dashboard.emitColorDM ~= nil or dashboard.intensityDM ~= nil then
 		dbgprint("loadEmitterDashboardFromXML : Setting dark mode for "..self:getName(), 2)
+		spec.darkModeExists = "true"
+	end
+	
+	return returnValue
+end
+
+-- Overwritten function loadTextDashboardFromXML to enable dark mode setting
+function DashboardLive:addDarkModeToLoadTextDashboardFromXML(superfunc, xmlFile, key, dashboard)
+	local returnValue = superfunc(self, xmlFile, key, dashboard)
+	local spec = self.spec_DashboardLive
+	
+	-- Back up light mode values
+	dashboard.textColorLM = dashboard.textColor
+	dashboard.hiddenColorDM = dashboard.hiddenColor
+	-- Read dark mode values
+	dashboard.textColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#textColorDarkMode"))
+	dashboard.hiddenColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#hiddenColorDarkMode"))
+	
+	if dashboard.textColorDM ~= nil or dashboard.hiddenColorDM ~= nil then
+		dbgprint("loadTextDashboardFromXML : Setting dark mode for "..self:getName(), 2)
+		spec.darkModeExists = "true"
+	end
+	
+	return returnValue
+end
+
+-- Overwritten function loadNumberDashboardFromXML to enable dark mode setting
+function DashboardLive:addDarkModeToLoadNumberDashboardFromXML(superfunc, xmlFile, key, dashboard)
+	local returnValue = superfunc(self, xmlFile, key, dashboard)
+	local spec = self.spec_DashboardLive
+	
+	-- Back up light mode values
+	dashboard.numberColorLM = dashboard.numberColor
+	-- Read dark mode values
+	dashboard.numberColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#numberColorDarkMode"))
+	
+	if dashboard.numberColorDM ~= nil then
+		dbgprint("loadNumberDashboardFromXML : Setting dark mode for "..self:getName(), 2)
 		spec.darkModeExists = "true"
 	end
 	
@@ -1603,6 +1646,48 @@ function DashboardLive:addDarkModeToDefaultEmitterDashboardStateFunc(dashboard, 
 	end
 end
 Dashboard.defaultEmitterDashboardStateFunc = Utils.prependedFunction(Dashboard.defaultEmitterDashboardStateFunc, DashboardLive.addDarkModeToDefaultEmitterDashboardStateFunc)
+
+-- Prepended function defaultTextDashboardStateFunc to enable dark mode
+function DashboardLive:addDarkModeToDefaultTextDashboardStateFunc(dashboard, newValue, minValue, maxValue, isActive)
+	local spec = self.spec_DashboardLive
+	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
+		if spec.darkMode then
+			dbgprint("switching to dark mode: "..tostring(self:getName()), 2)
+			dashboard.textColor = dashboard.textColorDM
+			dashboard.hiddenColor = dashboard.hiddenColorDM
+		else	
+			dbgprint("switching to light mode: "..tostring(self:getName()), 2)
+			dashboard.textColor = dashboard.textColorLM
+			dashboard.hiddenColor = dashboard.hiddenColorLM
+		end
+		if dashboard.textColor ~= nil then
+			for _, char in pairs(dashboard.characterLine.characters) do
+				dashboard.fontMaterial:setFontCharacterColor(char, dashboard.textColor[1], dashboard.textColor[2], dashboard.textColor[3], 1, dashboard.characterLine.textEmissiveScale)
+			end
+		end
+	end
+end
+Dashboard.defaultTextDashboardStateFunc = Utils.prependedFunction(Dashboard.defaultTextDashboardStateFunc, DashboardLive.addDarkModeToDefaultTextDashboardStateFunc)
+
+-- Prepended function defaultNumberDashboardStateFunc to enable dark mode
+function DashboardLive:addDarkModeToDefaultNumberDashboardStateFunc(dashboard, newValue, minValue, maxValue, isActive)
+	local spec = self.spec_DashboardLive
+	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
+		if spec.darkMode then
+			dbgprint("defaultNumberDashboardStateFunc : switching to dark mode: "..tostring(self:getName()), 2)
+			dashboard.numberColor = dashboard.numberColorDM
+		else	
+			dbgprint("defaultNumberDashboardStateFunc : switching to light mode: "..tostring(self:getName()), 2)
+			dashboard.numberColor = dashboard.numberColorLM
+		end
+		if dashboard.numberColor ~= nil then
+			for _, numberNode in pairs(dashboard.numberNodes) do
+				dashboard.fontMaterial:setFontCharacterColor(numberNode, dashboard.numberColor[1], dashboard.numberColor[2], dashboard.numberColor[3], 1, dashboard.emissiveScale)
+            end
+        end
+	end
+end
+Dashboard.defaultNumberDashboardStateFunc = Utils.prependedFunction(Dashboard.defaultNumberDashboardStateFunc, DashboardLive.addDarkModeToDefaultNumberDashboardStateFunc)
 
 -- GROUPS
 

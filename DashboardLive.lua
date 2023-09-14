@@ -163,21 +163,6 @@ function DashboardLive:onLoad(savegame)
 	spec.orientations = {"rotate", "north", "overview"}
 	spec.orientation = "rotate"
 	
--- TEST AREA STARTS HERE --
-
-	-- camera data
-	spec.cam = {}
-	spec.cam.nodeName = "dbl_cam"
-	local camNode = I3DUtil.indexToObject(self.components, spec.cam.nodeName, self.i3dMappings)
-	
-	if camNode ~= nil then 
-		local overlayId = createRenderOverlay(camNode, getScreenAspectRatio(), 512, 512, true, 255, 16711680)
-		spec.cam.overlay = overlayId
-		spec.cam.node = camNode
-	end
-	
--- TEST AREA ENDS HERE --
-	
 	-- selector data
 	spec.selectorActive = 0
 	
@@ -1529,8 +1514,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					local len = string.len(element.textMask or "xxxx")
 					local alignment = element.textAlignment
 					resultValue = trim(fillType.title, len, alignment)
-					resultValue = string.gsub(resultValue,"ï¿½","u")
-					resultValue = string.gsub(resultValue,"ï¿½","O")
+					resultValue = string.gsub(resultValue,"Ÿ","u")
+					resultValue = string.gsub(resultValue,"…","O")
 				end
             elseif mode == "connected" then
             	resultValue = true
@@ -2005,7 +1990,6 @@ function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
 	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / command = "..tostring(dashboard.dblCommand).." / scale = "..tostring(dashboard.scale), 2)
 
 	local mapTexture = g_currentMission.mapImageFilename
-	
 	if dashboard.node == nil then
 		Logging.xmlWarning(self.xmlFile, "Missing 'node' for dashboard '%s'", key)
 		return false
@@ -2014,31 +1998,6 @@ function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
 		materialId = setMaterialDiffuseMapFromFile(materialId, mapTexture, true, true, false)
 		setMaterial(dashboard.node, materialId, 0)
 		dbgprint("getDBLAttributesMiniMap: MiniMap Material set to "..tostring(materialId).." / texture set to "..mapTexture, 2)
-	
--- TEST AREA STARTS HERE --
-
-	elseif dashboard.dblCommand == "cam" then
-		local spec = self.spec_DashboardLive
-		
-		if spec ~= nil and spec.cam ~= nil then
-			
-			--local dashboardCamNodeName = dashboard.node
-			local dashboardCamNode = dashboard.node --I3DUtil.indexToObject(self.components, dashboard.node, self.i3dMappings)
-			local cameraNode = spec.cam.node
-			--local cameraNode = self:getActiveCamera().cameraNode
-		
-			setReflectionMapObjectMasks(dashboardCamNode, 32896, 2147483648, true)
-				--table.insert(self.spec_enterable.mirrors, {node=dashboardCamNode, prio=1, cosAngle=1, parentNode=getParent(dashboardCamNode)})
-			table.insert(self.spec_enterable.mirrors, {node=cameraNode, prio=1, cosAngle=1, parentNode=dashboardCamNode})
-				--link(dashboardCamNode, spec.cam.overlay)
-				--renderOverlay(spec.cam.overlay, x, y, 0.21*size, 0.17*size)
-				--setOverlayRotation(spec.cam.overlay, math.pi*1/8, (0.166*size/2), (0.66*size/2))
-				--renderOverlay(spec.cam.overlay, x, y, 0.166*size, 0.166*size)
-			--end
-		end
-
--- TEST AREA ENDS HERE --
-
 	end
 
 	return true
@@ -2546,57 +2505,7 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 		setRotation(dashboard.node, 0, heading, 0)
 		dbgprint("getDashboardLiveMiniMap : Finished with heading "..tostring(heading), 4)
 		return true
-		
--- TEST AREA STARTS HERE --
-		
-	elseif cmd == "cam" then
-	
-		--local materialId = getMaterial(dashboard.node, 0)
-		--print(tostring(spec.cam.overlay))
-		--materialId = setMaterialDiffuseMapFromFile(materialId, spec.cam.overlay, true, true, false)
-		--setMaterial(dashboard.node, materialId, 0)
-		--setShaderParameter(dashboard.node, "map", 0, 0, 1, 0)
-		
-		--[[
-		if spec ~= nil and spec.cam ~= nil and self:getActiveCamera() ~= nil then
-			
-			if spec.cam.overlay ~= nil then 
-				--updateRenderOverlay(spec.cam.overlay)
-			end
-			
-			local dashboardCamNodeName = "dbl_mapPlane"
-			local dashboardCamNode = I3DUtil.indexToObject(self.components, dashboardCamNodeName, self.i3dMappings)
-			local cameraNode = self:getActiveCamera().cameraNode
-	
-			local wX, wY, wZ = getWorldTranslation(dashboardCamNode);
-			local cX, cY, cZ = getWorldTranslation(cameraNode);
-			local x, y, z = project(wX, wY, wZ)
-		
-			local dist = MathUtil.vector3Length(wX-cX, wY-cY, wZ-cZ); 
-			local size = 1 / dist;
-	
-			--if x > -1 and x < 2 and y > -1 and y < 2 and z <= 1 then
-				--setTextAlignment(RenderText.ALIGN_CENTER);
-				--setTextBold(false);
-				--setTextColor(r, g, b, 1.0);
-				--renderText(projectX, projectY, textSize, text);
-				--setTextAlignment(RenderText.ALIGN_LEFT);
-	
-				--setReflectionMapObjectMasks(dashboardCamNode, 32896, 2147483648, true)
-				--table.insert(self.spec_enterable.mirrors, {node=dashboardCamNode, prio=1, cosAngle=1, parentNode=getParent(dashboardCamNode)})
-				--table.insert(self.spec_enterable.mirrors, {node=cameraNode, prio=1, cosAngle=1, parentNode=dashboardCamNode})
-				--link(dashboardCamNode, spec.cam.overlay)
-				--renderOverlay(spec.cam.overlay, x, y, 0.21*size, 0.17*size)
-				--setOverlayRotation(spec.cam.overlay, math.pi*1/8, (0.166*size/2), (0.66*size/2))
-				--renderOverlay(spec.cam.overlay, x, y, 0.166*size, 0.166*size)
-			--end
-		end
-		--]]
-		
--- TEST AREA ENDS HERE --
-
 	end
-	
 	return false
 end
 
@@ -3302,12 +3211,6 @@ function DashboardLive:onUpdate(dt)
 	end
 	spec.zoomPressed = false
 	
-	--[[ camera
-	if spec.cam.overlay ~= nil then 
-		updateRenderOverlay(spec.cam.overlay)
-	end
-	--]]
-	
 	-- sync engine data with server
 	spec.updateTimer = spec.updateTimer + dt
 	if self.isServer and self.getIsMotorStarted ~= nil and self:getIsMotorStarted() then
@@ -3344,7 +3247,6 @@ function DashboardLive:onUpdate(dt)
 end
 
 function DashboardLive:onDraw()
-	local spec = self.spec_DashboardLive
 	if self.spec_combine ~= nil then
 		dbgrender("chopper: "..tostring(self.spec_combine.chopperPSenabled), 23, 3)
 		dbgrender("swath: "..tostring(self.spec_combine.strawPSenabled), 24, 3)

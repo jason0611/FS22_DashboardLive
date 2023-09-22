@@ -3045,7 +3045,7 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 		-- lime values
 		if hasLimeLoaded and (c == "phactual" or c == "phtarget" or c == "phchanged" or c == "applicationrate") then
 		
-			local phMap = specExtendedSprayer.phMap
+			local phMap = specExtendedSprayer.pHMap
             local phActualInt = specExtendedSprayer.phActualBuffer:get()
             local phTargetInt = specExtendedSprayer.phTargetBuffer:get()
             

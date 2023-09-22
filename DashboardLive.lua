@@ -3020,8 +3020,10 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 		if c == "soiltype" then
 			if specExtendedSprayer.lastTouchedSoilType ~= 0 and specExtendedSprayer.soilMap ~= nil then
 				local soilType = specExtendedSprayer.soilMap:getSoilTypeByIndex(specExtendedSprayer.lastTouchedSoilType)
-				if soilType ~= nil then
-					return soilType.name
+				if soilType ~= nil and soilType.name ~= nil then
+					local len = string.len(dashboard.textMask or "00.0")
+					local alignment = dashboard.textAlignment or RenderText.ALIGN_RIGHT
+					return trim(soilType.name, len, alignment)
 				else 
 					return false
 				end

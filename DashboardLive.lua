@@ -3049,7 +3049,7 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
             local pHActualInt = specExtendedSprayer.phActualBuffer:get()
             local pHTargetInt = specExtendedSprayer.phTargetBuffer:get()
             
-            local pHActual = pHMap:getPhValueFromInternalValue(pHActualInt) or 0
+            local phActual = pHMap:getPhValueFromInternalValue(pHActualInt) or 0
             if c == "phactual" then
             	returnValue = phActual
             end

@@ -874,7 +874,7 @@ end
 -- Supporting functions
 
 local function trim(text, textLength, alignment)
-	local l = string.len(text)
+	local l = string.len(text or "xxxx")
 	dbgprint("trim: alignment = "..tostring(alignment), 4)
 	if l == textLength then
 		return text
@@ -3021,11 +3021,12 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 			if specExtendedSprayer.lastTouchedSoilType ~= 0 and specExtendedSprayer.soilMap ~= nil then
 				local soilType = specExtendedSprayer.soilMap:getSoilTypeByIndex(specExtendedSprayer.lastTouchedSoilType)
 				if soilType ~= nil and soilType.name ~= nil then
-					local len = string.len(dashboard.textMask or "xxxx")
-					local alignment = dashboard.textAlignment or RenderText.ALIGN_RIGHT
-					return trim(soilType.name, len, alignment)
+					--local len = string.len(dashboard.textMask or "xxxx")
+					--local alignment = dashboard.textAlignment or RenderText.ALIGN_RIGHT
+					--return trim(soilType.name, len, alignment)
+					returnValue = soilType.name
 				else 
-					return false
+					returnValue = false
 				end
 			end
 		end	
@@ -3048,12 +3049,12 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
             local pHActualInt = specExtendedSprayer.phActualBuffer:get()
             local pHTargetInt = specExtendedSprayer.phTargetBuffer:get()
             
-            local pHActual = pHMap:getPhValueFromInternalValue(pHActualInt)
+            local pHActual = pHMap:getPhValueFromInternalValue(pHActualInt) or 0
             if c == "phactual" then
             	returnValue = phActual
             end
             
-            local pHTarget = pHMap:getPhValueFromInternalValue(pHTargetInt)			
+            local pHTarget = pHMap:getPhValueFromInternalValue(pHTargetInt)	or 0		
 			if c == "phtarget" then
             	returnValue = pHTarget
             end
@@ -3087,12 +3088,12 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 			local nActualInt = specExtendedSprayer.nActualBuffer:get()
 			local nTargetInt = specExtendedSprayer.nTargetBuffer:get()		
 			
-			local nActual = nitrogenMap:getNitrogenValueFromInternalValue(nActualInt)
+			local nActual = nitrogenMap:getNitrogenValueFromInternalValue(nActualInt) or 0
 			if c == "nactual" then 
 				returnValue = nActual
 			end
 			
-			local nTarget = nitrogenMap:getNitrogenValueFromInternalValue(nTargetInt)
+			local nTarget = nitrogenMap:getNitrogenValueFromInternalValue(nTargetInt) or 0
 			if c == "ntarget" then
 				returnValue = nTarget
 			end	
@@ -3101,7 +3102,7 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 			if sprayAmountAutoMode then
                 nitrogenChanged = nTarget - nActual
 			else 
-            	nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(specExtendedSprayer.sprayAmountManual)
+            	nitrogenChanged = nitrogenMap:getNitrogenFromChangedStates(specExtendedSprayer.sprayAmountManual) or 0
 			end
 			if c == "nchanged" then
 				returnValue = nitrogenChanged
@@ -3145,11 +3146,11 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 			returnValue = string.format(returnValueFormat, tostring(returnValue))
 		end
 	
-		if dashboard.textMask ~= nil then
+		if dashboard.textMask ~= nil and returnValue ~= nil then
 			local len = string.len(dashboard.textMask)
 			local alignment = dashboard.textAlignment or RenderText.ALIGN_RIGHT
 			dbgprint("trimmed returnValue: "..tostring(returnValue), 4)
-			returnValue = trim(returnValue, len, alignment)
+			returnValue = trim(tostring(returnValue), len, alignment)
 		end
 		dbgrender("returnValue: "..tostring(returnValue), 19, 3)
 	end

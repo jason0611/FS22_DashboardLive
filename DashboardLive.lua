@@ -3045,39 +3045,39 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 		-- lime values
 		if hasLimeLoaded and (c == "phactual" or c == "phtarget" or c == "phchanged" or c == "applicationrate") then
 		
-			local pHMap = specExtendedSprayer.pHMap
-            local pHActualInt = specExtendedSprayer.phActualBuffer:get()
-            local pHTargetInt = specExtendedSprayer.phTargetBuffer:get()
+			local phMap = specExtendedSprayer.phMap
+            local phActualInt = specExtendedSprayer.phActualBuffer:get()
+            local phTargetInt = specExtendedSprayer.phTargetBuffer:get()
             
-            local phActual = pHMap:getPhValueFromInternalValue(pHActualInt) or 0
+            local phActual = phMap:getPhValueFromInternalValue(phActualInt) or 0
             if c == "phactual" then
             	returnValue = phActual
             end
             
-            local pHTarget = pHMap:getPhValueFromInternalValue(pHTargetInt)	or 0		
+            local phTarget = phMap:getPhValueFromInternalValue(phTargetInt)	or 0		
 			if c == "phtarget" then
-            	returnValue = pHTarget
+            	returnValue = phTarget
             end
             
-			local pHChanged = 0
+			local phChanged = 0
 			if sprayAmountAutoMode then
-                pHChanged = pHTarget - pHActual
+                phChanged = phTarget - phActual
 				applicationRate = specExtendedSprayer.lastLitersPerHectar * massPerLiter
 			else 
-				local requiredLitersPerHa = pHMap:getLimeUsageByStateChange(specExtendedSprayer.sprayAmountManual)
-            	pHChanged = pHMap:getPhValueFromChangedStates(specExtendedSprayer.sprayAmountManual)
+				local requiredLitersPerHa = phMap:getLimeUsageByStateChange(specExtendedSprayer.sprayAmountManual)
+            	phChanged = phMap:getPhValueFromChangedStates(specExtendedSprayer.sprayAmountManual)
 				applicationRate = requiredLitersPerHa * massPerLiter
 			end
 			if c == "applicationrate" then
 				returnValue = applicationRate
 			end
 			if c == "phchanged" then
-				returnValue = pHChanged
+				returnValue = phChanged
 			end
 			
-            dbgrender("pHActual: "..tostring(pHActual),13,3)
-            dbgrender("pHTarget: "..tostring(pHTarget),14,3)
-            dbgrender("pHChanged: "..tostring(pHChanged),15,3)
+            dbgrender("phActual: "..tostring(phActual),13,3)
+            dbgrender("phTarget: "..tostring(phTarget),14,3)
+            dbgrender("phChanged: "..tostring(phChanged),15,3)
             dbgrender("sprayAmountAutoMode: "..tostring(sprayAmountAutoMode),16,3)
 			dbgrender("applicationRate: "..tostring(applicationRate),17,3)
 		

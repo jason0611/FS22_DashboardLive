@@ -256,7 +256,22 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : ModIntegration <combine>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
-        
+        -- rda
+        dashboardData = {	
+        					valueTypeToLoad = "rda",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveRDA,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesRDA
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <rda>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <rda>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
         -- vca
         dashboardData = {	
         					valueTypeToLoad = "vca",
@@ -2028,7 +2043,22 @@ function DashboardLive.getDBLAttributesCombine(self, xmlFile, key, dashboard)
 	return true
 end
 
---vca
+-- rda
+function DashboardLive.getDBLAttributesRDA(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd"))
+    dbgprint("getDBLAttributesRDA : cmd: "..tostring(dashboard.dblCommand), 2)
+    if dashboard.dblCommand == nil then 
+    	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'rda'")
+    	return false
+    end
+    
+    dashboard.dblOption = lower(xmlFile:getValue(key .. "#option"))
+    dbgprint("getDBLAttributesRDA : option: "..tostring(dashboard.dblCommand), 2)
+
+	return true
+end
+
+-- vca
 function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
 	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd"))
     dbgprint("getDBLAttributesVCA : cmd: "..tostring(dashboard.dblCommand), 2)
@@ -2041,7 +2071,7 @@ function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
 	return true
 end
 
---HLM
+-- hlm
 function DashboardLive.getDBLAttributesHLM(self, xmlFile, key, dashboard)
 	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option"))
     dbgprint("getDBLAttributesHLM : option: "..tostring(dashboard.dblOption), 2)
@@ -2049,7 +2079,7 @@ function DashboardLive.getDBLAttributesHLM(self, xmlFile, key, dashboard)
     return true
 end
 
---  gps
+-- gps
 function DashboardLive.getDBLAttributesGPS(self, xmlFile, key, dashboard)
 
 	local min = xmlFile:getValue(key .. "#min")
@@ -2579,6 +2609,33 @@ function DashboardLive.getDashboardLiveCombine(self, dashboard)
 	--return false
 end
 
+function DashboardLive.getDashboardLiveRDA(self, dashboard)
+	dbgprint("getDashboardLiveVCA : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	local specRDA = self.spec_tirePressure
+	
+	if specRDA ~= nil and dashboard.dblCommand ~= nil then
+		local c = dashboard.dblCommand
+		local o = dashboard.dblOption
+		if c == "inflating" then
+			return specRDA.isInflating
+			
+		elseif c == "pressure" then
+			if o == "target" then
+				return specRDA.inflationPressureTarget
+			elseif o == "min" then
+				return specRDA.pressureMin
+			elseif o == "max" then
+				return specRDA.pressureMax
+			else
+				return specRDA.inflationPressure
+			end
+			
+		elseif c == "maxSpeed" then
+			return specRDA.maxSpeed
+		end
+	end
+end
+
 function DashboardLive.getDashboardLiveVCA(self, dashboard)
 	dbgprint("getDashboardLiveVCA : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	if dashboard.dblCommand ~= nil then
@@ -3000,20 +3057,30 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 	
 	-- lets find any attached vehicle with a extendedSprayer specialization.
 	-- in the end, we can only deal with one of them (same as precision farming dlc content)	
+	local c = dashboard.dblCommand
+	local o = dashboard.dblOption
 	local t = dashboard.dblTrailer
-	local specExtendedSprayer, pfVehicle = findSpecialization(self, "spec_extendedSprayer", t)
-
+	
 	local returnValue = ""
 	
+	local specCropSensor = findSpecialization(self, "spec_cropSensor", t or 1)
+	if c == "cropsensor" then
+		if specCropSensor ~= nil then
+			dbgprint("cropSensor: returnValue: "..tostring(specCropSensor.isActive), 4)
+			return specCropSensor.isActive
+		else
+			dbgprint("cropSensor: returnValue: set to false", 4)
+			return false
+		end
+	end
+	
+	local specExtendedSprayer, pfVehicle = findSpecialization(self, "spec_extendedSprayer", t)
 	if specExtendedSprayer ~= nil then
 		dbgprint("found spec spec_extendedSprayer in "..tostring(pfVehicle:getName()), 4)
 
 		local sourceVehicle, fillUnitIndex = FS22_precisionFarming.ExtendedSprayer.getFillTypeSourceVehicle(pfVehicle)
 		local hasLimeLoaded, hasFertilizerLoaded = FS22_precisionFarming.ExtendedSprayer.getCurrentSprayerMode(pfVehicle)
 	
-		local c = dashboard.dblCommand
-		local o = dashboard.dblOption
-		
 		local returnValueFormat = "%.2f t/ha"
 		
 		-- soil type 

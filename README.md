@@ -43,11 +43,11 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 == Planned for next ModHub update ==
 + CVT-Addon
 + precisionFarming
-? cutter turn rate
-- RDA
++ RDA
 
 == Planned for later ModHub updates ==
 ? camera integration
+? cutter turn rate
 - ISO-Bus: activate dedicated terminal depending on connected implement
 - Generic spec access (functions/values)
 

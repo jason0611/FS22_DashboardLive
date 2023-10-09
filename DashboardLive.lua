@@ -56,7 +56,7 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblAttacherJointIndices")
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblSelection")
 	schema:register(XMLValueType.VECTOR_N, Dashboard.GROUP_XML_KEY .. "#dblSelectionGroup")
-	schema:register(XMLValueType.INT, Dashboard.GROUP_XML_KEY .. "#dblRidgeMarker", "Ridgemarker state")
+	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dblRidgeMarker", "Ridgemarker state")
 	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dblOption", "DBL Option")
 	schema:register(XMLValueType.STRING, Dashboard.GROUP_XML_KEY .. "#dblTrailer", "DBL Trailer")
 	dbgprint("initSpecialization : DashboardLive group options registered", 2)
@@ -1330,7 +1330,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
             	dbgprint(implement.object:getFullName().." tippingState (trailer "..tostring(t).."): "..tostring(resultValue), 4)
             	
 			elseif mode == "tipside" or mode == "tipsidetext" then
-				local s = element.dblStateText
+				local s = element.dblStateText or element.dblState
 				local specTR = findSpecialization(implement.object, "spec_trailer", t)     
 				if specTR ~= nil then
 					local trailerTipSide = specTR.preferedTipSideIndex or 0
@@ -1480,7 +1480,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode == "toolrotation" or mode=="istoolrotation" then
 				local factor = element.dblFactor or 1
 				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
-				local s = element.dblStateText
+				local s = element.dblStateText or element.dblState
 				dbgprint(implement.object:getFullName().." : frontLoader - " .. mode .. " - " .. s,3)
 				resultValue = 0
 				if specCyl ~= nil then
@@ -1501,13 +1501,14 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			elseif mode=="swathstate" then
 				local specWM =  findSpecialization(implement.object,"spec_workMode",t)
 				local states
-				if type(element.dblStateText) == "number" then
+				local s = element.dblStateText or element.dblState
+				if type(s) == "number" then
 					states = {}
-					states[1] = element.dblStateText
-				elseif type(element.dblStateText) == "table" then
-					states = element.dblStateText
+					states[1] = s
+				elseif type(s) == "table" then
+					states = s
 				else
-					states = string.split(element.dblStateText, " ")
+					states = string.split(s, " ")
 				end
 				resultValue = false
 				for _, state in ipairs(states) do
@@ -2213,6 +2214,7 @@ function DashboardLive.getDBLAttributesFrontloader(self, xmlFile, key, dashboard
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1") -- factor
 
 	dashboard.dblStateText = xmlFile:getValue(key .. "#stateText","origin")
+	dashboard.dblState = xmlFile:getValue(key .. "#state","origin")
 
 	local min = xmlFile:getValue(key .. "#min")
 	local max = xmlFile:getValue(key .. "#max")
@@ -2237,8 +2239,6 @@ function DashboardLive.getDBLAttributesPrecisionFarming(self, xmlFile, key, dash
 	dashboard.dblTrailer = xmlFile:getValue(key .. "#trailer") -- number of tool
 
 	dashboard.dblFactor = xmlFile:getValue(key .. "#factor", "1") -- factor
-
-	--dashboard.dblStateText = xmlFile:getValue(key .. "#stateText","origin")
 
 	local min = xmlFile:getValue(key .. "#min")
 	local max = xmlFile:getValue(key .. "#max")
@@ -2283,7 +2283,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 	if dashboard.dblCommand ~= nil then
 		local specWM = self.spec_workMode
 		local specRM = self.spec_ridgeMarker
-		local cmds, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblState, dashboard.dblOption
+		local cmds, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblStateText or dashboard.dblState, dashboard.dblOption
 		local cmd = string.split(cmds, " ")
 		local returnValue = false
 		
@@ -2489,7 +2489,7 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 	local heading = math.atan2(dx, dz) + math.pi
 
 	if cmd == "map" then
-		if self:getIsActiveForInput(true) then
+		if self == g_currentMission.controlledVehicle then
 			-- zoom
 			local speed = self:getLastSpeed()
 			local width = g_currentMission.mapWidth
@@ -2530,7 +2530,7 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 		return true
 		
 	elseif cmd == "posmarker" then
-		if self:getIsActiveForInput(true) then
+		if self == g_currentMission.controlledVehicle then
 			if spec.orientation == "rotate" then 
 				heading = 0
 			end			
@@ -2548,20 +2548,19 @@ function DashboardLive.getDashboardLiveCombine(self, dashboard)
 	if dashboard.dblCommand ~= nil and spec ~= nil then
 		
 		local c = dashboard.dblCommand
-		local st = dashboard.dblStateText
-		local sn = dashboard.dblState
+		local s = dashboard.dblStateText or dashboard.dblState
 		
 		if c == "chopper" then
-			if st == "enabled" then
+			if s == "enabled" then
 				return not spec.isSwathActive
-			elseif st == "active" then
+			elseif s == "active" then
 				return spec.chopperPSenabled
 			end
 			
 		elseif c == "swath" then
-			if st == "enabled" then 
+			if s == "enabled" then 
 				return spec.isSwathActive
-			elseif st == "active" then
+			elseif s == "active" then
 				return spec.strawPSenabled
 			end
 			
@@ -2579,8 +2578,8 @@ function DashboardLive.getDashboardLiveCombine(self, dashboard)
 		
 		elseif c == "pipestate" then
 			local specPipe = self.spec_pipe
-			if specPipe ~= nil and sn ~= nil and tonumber(sn) ~= nil then
-				return specPipe.currentState == tonumber(sn)
+			if specPipe ~= nil and s ~= nil and tonumber(s) ~= nil then
+				return specPipe.currentState == tonumber(s)
 			end
 			
 		elseif c == "pipefolding" then
@@ -2600,8 +2599,8 @@ function DashboardLive.getDashboardLiveCombine(self, dashboard)
 		elseif c == "overloading" then
 			local spec_dis = self.spec_dischargeable
 			if spec_dis ~= nil then
-				if sn ~= nil and tonumber(sn) ~= nil then
-					return spec_dis:getDischargeState() == tonumber(sn)
+				if s ~= nil and tonumber(s) ~= nil then
+					return spec_dis:getDischargeState() == tonumber(s)
 				else
 					return spec_dis:getDischargeState() > 0
 				end

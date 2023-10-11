@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -81,6 +81,11 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#baseColorDarkMode", "Base color for dark mode")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#emitColorDarkMode", "Emit color for dark mode")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#intensityDarkMode", "Intensity for dark mode")
+	
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#audioFile", "Path to audio file")
+	schema:register(XMLValueType.BOOL, DashboardLive.DBL_XML_KEY .. "#loop", "repeat sound if true")
+	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#volume", "sound volume")
+	
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
 	
 	DashboardLive.vanillaSchema = XMLSchema.new("vanillaIntegration")
@@ -1708,6 +1713,63 @@ function DashboardLive:addDarkModeToDefaultNumberDashboardStateFunc(dashboard, n
 	end
 end
 Dashboard.defaultNumberDashboardStateFunc = Utils.prependedFunction(Dashboard.defaultNumberDashboardStateFunc, DashboardLive.addDarkModeToDefaultNumberDashboardStateFunc)
+
+function DashboardLive:loadAudioDashboardFromXML(xmlFile, key, dashboard)
+	print("Audio: loadAudioDashboardFromXML")
+    dashboard.dblSoundFile = xmlFile:getValue(key .. "#audioFile")
+    if dashboard.dblSoundFile == nil then
+    	Logging.xmlWarning(self.xmlFile, "Audio Dashboard without soundFile!")
+    	return false
+    end
+    dbgprint("loadAudioDashboardFromXML : audioFile: "..tostring(dashboard.dblSoundFile), 2)
+    local soundFile = Utils.getFilename(dashboard.dblSoundFile, self.baseDirectory)
+    dashboard.dblSoundSample = createSample("DBLAUDIO")
+	loadSample(dashboard.dblSoundSample, soundFile, false)
+    	
+    dashboard.dblSoundLoop = xmlFile:getValue(key .. "#loop", false)
+    dbgprint("loadAudioDashboardFromXML : loop: "..tostring(dashboard.dblSoundLoop), 2)
+    
+    dashboard.dblSoundVolume = xmlFile:getValue(key .. "#volume", 1)
+    dbgprint("loadAudioDashboardFromXML : volume: "..tostring(dashboard.dblSoundVolume), 2)
+    
+    return true
+end
+
+function DashboardLive.defaultAudioStateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
+	if type(newValue) == "number" then
+        newValue = newValue > 0.5 and true or false
+    end
+	if newValue == nil then
+        newValue = isActive
+    else
+        newValue = newValue and isActive
+    end
+	if newValue then
+		playSample(dashboard.dblSoundSample, 1, dashboard.dblSoundVolume, 0, 0, 0)
+	end
+end
+
+-- Overwritten function loadDashboardFromXML to load displayType="AUDIO"
+function DashboardLive:overWrittenLoadDashboardFromXML(superfunc, xmlFile, key, dashboard, dashboardData)
+	if superfunc(self, xmlFile, key, dashboard, dashboardData) then
+		dbgprint("loadDashboardFromXML : Audio", 2)
+		if dashboard.displayTypeIndex == Dashboard.TYPES.AUDIO then
+			dbgprint("Audio: displayType found", 2)
+			if not DashboardLive.loadAudioDashboardFromXML(self, xmlFile, key, dashboard) then
+				return false
+			end
+			dbgprint("loadDashboardFromXML : Audio loaded succesfully", 2)
+		end
+		if dashboardData.additionalAttributesFunc ~= nil then
+			if not dashboardData.additionalAttributesFunc(self, xmlFile, key, dashboard) then
+				return false
+			end
+		end
+		dashboard.stateFunc = DashboardLive.defaultAudioStateFunc
+		return true
+	end
+end
+Dashboard.loadDashboardFromXML = Utils.overwrittenFunction(Dashboard.loadDashboardFromXML, DashboardLive.overWrittenLoadDashboardFromXML)
 
 -- GROUPS
 

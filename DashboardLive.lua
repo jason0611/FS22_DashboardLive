@@ -1530,8 +1530,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					local len = string.len(element.textMask or "xxxx")
 					local alignment = element.textAlignment
 					resultValue = trim(fillType.title, len, alignment)
-					resultValue = string.gsub(resultValue,"ï¿½","u")
-					resultValue = string.gsub(resultValue,"ï¿½","O")
+					resultValue = string.gsub(resultValue,"Ÿ","u")
+					resultValue = string.gsub(resultValue,"…","O")
 				end
             elseif mode == "connected" then
             	resultValue = true

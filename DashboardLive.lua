@@ -1530,8 +1530,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					local len = string.len(element.textMask or "xxxx")
 					local alignment = element.textAlignment
 					resultValue = trim(fillType.title, len, alignment)
-					resultValue = string.gsub(resultValue,"Ÿ","u")
-					resultValue = string.gsub(resultValue,"…","O")
+					resultValue = string.gsub(resultValue,"ï¿½","u")
+					resultValue = string.gsub(resultValue,"ï¿½","O")
 				end
             elseif mode == "connected" then
             	resultValue = true
@@ -2006,6 +2006,14 @@ function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
 	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / command = "..tostring(dashboard.dblCommand).." / scale = "..tostring(dashboard.scale), 2)
 
 	local mapTexture = g_currentMission.mapImageFilename
+	local mapName = g_currentMission.missionInfo.map.title
+	local customTexturePath = DashboardLive.MODSETTINGSDIR..mapName.."/overview.dds"
+
+	if fileExists(DashboardLive.MODSETTINGSDIR..mapName.."/overview.dds") then
+		dbgprint("getDBLAttributesMiniMap: Custom MiniMap found. Set Texture to "..customTexturePath, 2)
+		mapTexture = customTexturePath
+	end
+
 	if dashboard.node == nil then
 		Logging.xmlWarning(self.xmlFile, "Missing 'node' for dashboard '%s'", key)
 		return false

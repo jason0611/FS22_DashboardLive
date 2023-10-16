@@ -68,7 +68,7 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#selection")
 	schema:register(XMLValueType.VECTOR_N, DashboardLive.DBL_XML_KEY .. "#selectionGroup")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#state", "state")
-	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#stateText", "stateText")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#stateText", "OBSOLETE: stateText")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#trailer", "trailer number")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#partition", "trailer partition")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#page", "choosen page")
@@ -78,9 +78,17 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#max", "Maximum")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#comp", "Maximum")
+	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#compValue", "Maximum")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#baseColorDarkMode", "Base color for dark mode")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#emitColorDarkMode", "Emit color for dark mode")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#intensityDarkMode", "Intensity for dark mode")
+	
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#audioFile", "Path to audio file")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#audioName", "Unique name of sound sample")
+	schema:register(XMLValueType.BOOL, DashboardLive.DBL_XML_KEY .. "#loop", "repeat sound if true")
+	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#volume", "sound volume")
+	
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
 	
 	DashboardLive.vanillaSchema = XMLSchema.new("vanillaIntegration")
@@ -1712,6 +1720,89 @@ function DashboardLive:addDarkModeToDefaultNumberDashboardStateFunc(dashboard, n
 end
 Dashboard.defaultNumberDashboardStateFunc = Utils.prependedFunction(Dashboard.defaultNumberDashboardStateFunc, DashboardLive.addDarkModeToDefaultNumberDashboardStateFunc)
 
+function DashboardLive:loadAudioDashboardFromXML(xmlFile, key, dashboard)
+	dbgprint("Audio: loadAudioDashboardFromXML", 2)
+    dashboard.dblAudioFile = xmlFile:getValue(key .. "#audioFile")
+    if dashboard.dblAudioFile == nil then
+    	Logging.xmlError(self.xmlFile, "Audio Dashboard without soundFile!")
+    	return false
+    end
+    dbgprint("loadAudioDashboardFromXML : audioFile: "..tostring(dashboard.dblAudioFile), 2)
+	dashboard.dblAudioName = xmlFile:getValue(key .. "#audioName")
+    if dashboard.dblAudioName == nil then
+    	Logging.xmlError(self.xmlFile, "Audio Dashboard without unique audio name!")
+    	return false
+    end
+    dbgprint("loadAudioDashboardFromXML : audioName: "..tostring(dashboard.dblAudioFile), 2)
+    local audioFile = Utils.getFilename(dashboard.dblAudioFile, self.baseDirectory)
+    if audioFile == nil then
+    	Logging.xmlWarning(self.xmlFile, "Audio file not found for audio dashboard "..tostring(dashboard.dblAudioName).."!")
+    	return false
+    end
+    dashboard.dblAudioSample = createSample(dashboard.dblAudioName)
+	loadSample(dashboard.dblAudioSample, audioFile, false)
+	dbgprint("loadAudioDashboardFromXML : sample loaded: id="..tostring(dashboard.dblAudioSample), 2)
+    	
+    dashboard.dblAudioLoop = xmlFile:getValue(key .. "#loop", false)
+    dbgprint("loadAudioDashboardFromXML : loop: "..tostring(dashboard.dblAudioLoop), 2)
+    
+    dashboard.dblAudioVolume = xmlFile:getValue(key .. "#volume", 1)
+    dbgprint("loadAudioDashboardFromXML : volume: "..tostring(dashboard.dblAudioVolume), 2)
+    
+    return true
+end
+
+function DashboardLive.defaultAudioStateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
+	dbgprint("defaultAudioStateFunc : newValue = "..tostring(newValue), 2)
+	dbgprint("defaultAudioStateFunc : minValue = "..tostring(minValue), 2)
+	dbgprint("defaultAudioStateFunc : maxValue = "..tostring(maxValue), 2)
+	dbgprint("defaultAudioStateFunc : isActive = "..tostring(isActive), 2)
+	
+	if type(newValue) == "number" then
+        newValue = newValue > 0.5 and true or false
+    end
+	if newValue == nil then
+        newValue = isActive
+    else
+        newValue = newValue and isActive
+    end
+    
+	if newValue and not dashboard.played and not isSamplePlaying(dashboard.dblAudioSample) then
+		if not dashboard.dblAudioLoop then
+			dashboard.played = true
+		end
+		playSample(dashboard.dblAudioSample, dashboard.dblAudioLoop and 99 or 1, dashboard.dblAudioVolume, 0, 0, 0)
+	end
+	
+	if not newValue then
+		stopSample(dashboard.dblAudioSample, 0, 0)
+		dashboard.played = false
+	end
+end
+
+-- Overwritten function loadDashboardFromXML to load displayType="AUDIO"
+function DashboardLive:overWrittenLoadDashboardFromXML(superfunc, xmlFile, key, dashboard, dashboardData)
+	if superfunc(self, xmlFile, key, dashboard, dashboardData) then
+		if dashboard.displayTypeIndex == Dashboard.TYPES.AUDIO then
+			dbgprint("loadDashboardFromXML: displayType AUDIO", 2)
+			if not DashboardLive.loadAudioDashboardFromXML(self, xmlFile, key, dashboard) then
+				return false
+			end
+			dbgprint("loadDashboardFromXML : Audio loaded succesfully", 2)
+			
+			if dashboardData.additionalAttributesFunc ~= nil then
+				if not dashboardData.additionalAttributesFunc(self, xmlFile, key, dashboard) then
+					return false
+				end
+			end
+			dashboard.stateFunc = DashboardLive.defaultAudioStateFunc
+		end
+		return true
+	end
+	return false
+end
+Dashboard.loadDashboardFromXML = Utils.overwrittenFunction(Dashboard.loadDashboardFromXML, DashboardLive.overWrittenLoadDashboardFromXML)
+
 -- GROUPS
 
 function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
@@ -1992,6 +2083,15 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	
 	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", 0) -- trailer partition
 	dbgprint("getDBLAttributesBase : partition: "..tostring(dashboard.dblPartition), 2)
+	
+	dashboard.dblComp = xmlFile:getValue(key .. "#comp") -- compare
+	dbgprint("getDBLAttributesBase : comp: "..tostring(dashboard.dblComp), 2)
+	dashboard.dblCompValue = xmlFile:getValue(key .. "#compValue")
+	dbgprint("getDBLAttributesBase : compValue: "..tostring(dashboard.dblCompValue), 2)
+	if dashboard.dblComp ~= nil and dashboard.dblCompValue == nil then
+		Logging.xmlError(self.xmlFile, "No value given for comparation")
+		return false
+	end
 	
 	if dashboard.dblCommand == "filllevel" and dashboard.dblOption == "percent" then
     	dashboard.dblMin = dashboard.dblMin or 0
@@ -2464,6 +2564,22 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		if dashboard.dblMax ~= nil and type(returnValue) == "number" then
 			returnValue = math.min(returnValue, dashboard.dblMax)
 		end
+		if dashboard.dblComp ~= nil and type(returnValue) == "number" and type(dashboard.dblCompValue) == "number" then
+			local comp = dashboard.dblComp
+			local value = dashboard.dblCompValue
+			if comp == "<" then
+				returnValue = (returnValue < value)
+			elseif comp == "<=" then
+				returnValue = (returnValue <= value)
+			elseif comp == ">" then
+				returnValue = (returnValue > value)
+			elseif comp == ">=" then
+				returnValue = (returnValue >= value)
+			elseif comp == "=" then
+				returnValue = (returnValue == value)
+			end
+		end
+		
 		return returnValue
 	end
 	

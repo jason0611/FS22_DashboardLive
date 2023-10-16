@@ -1594,7 +1594,7 @@ Dashboard.registerDashboardXMLPaths = Utils.appendedFunction(Dashboard.registerD
 function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFile, key, dashboard)
 	local returnValue = superfunc(self, xmlFile, key, dashboard)
 	local spec = self.spec_DashboardLive
-	
+
 	-- Back up light mode values
 	dashboard.baseColorLM = dashboard.baseColor
 	dashboard.emitColorLM = dashboard.emitColor
@@ -1603,12 +1603,11 @@ function DashboardLive:addDarkModeToLoadEmitterDashboardFromXML(superfunc, xmlFi
 	dashboard.baseColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#baseColorDarkMode"))
 	dashboard.emitColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#emitColorDarkMode"))
 	dashboard.intensityDM = xmlFile:getValue(key .. "#intensityDarkMode")
-	
+
 	if dashboard.baseColorDM ~= nil or dashboard.emitColorDM ~= nil or dashboard.intensityDM ~= nil then
 		dbgprint("loadEmitterDashboardFromXML : Setting dark mode for "..self:getName(), 2)
 		spec.darkModeExists = "true"
-	end
-	
+	end	
 	return returnValue
 end
 
@@ -1616,17 +1615,21 @@ end
 function DashboardLive:addDarkModeToLoadTextDashboardFromXML(superfunc, xmlFile, key, dashboard)
 	local returnValue = superfunc(self, xmlFile, key, dashboard)
 	local spec = self.spec_DashboardLive
+
+	-- solve mod conflict with realdashboard mod
+	if string.find(key, "vehicle.realDashboard.dashboards") == nil then
 	
-	-- Back up light mode values
-	dashboard.textColorLM = dashboard.textColor
-	dashboard.hiddenColorDM = dashboard.hiddenColor
-	-- Read dark mode values
-	dashboard.textColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#textColorDarkMode"))
-	dashboard.hiddenColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#hiddenColorDarkMode"))
+		-- Back up light mode values
+		dashboard.textColorLM = dashboard.textColor
+		dashboard.hiddenColorDM = dashboard.hiddenColor
+		-- Read dark mode values
+		dashboard.textColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#textColorDarkMode"))
+		dashboard.hiddenColorDM = self:getDashboardColor(xmlFile, xmlFile:getValue(key .. "#hiddenColorDarkMode"))
 	
-	if dashboard.textColorDM ~= nil or dashboard.hiddenColorDM ~= nil then
-		dbgprint("loadTextDashboardFromXML : Setting dark mode for "..self:getName(), 2)
-		spec.darkModeExists = "true"
+		if dashboard.textColorDM ~= nil or dashboard.hiddenColorDM ~= nil then
+			dbgprint("loadTextDashboardFromXML : Setting dark mode for "..self:getName(), 2)
+			spec.darkModeExists = "true"
+		end
 	end
 	
 	return returnValue

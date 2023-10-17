@@ -86,7 +86,7 @@ function DashboardLive.initSpecialization()
 	
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#audioFile", "Path to audio file")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#audioName", "Unique name of sound sample")
-	schema:register(XMLValueType.BOOL, DashboardLive.DBL_XML_KEY .. "#loop", "repeat sound if true")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#loop", "repeat sound n times")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#volume", "sound volume")
 	
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
@@ -114,7 +114,7 @@ function DashboardLive.initSpecialization()
 	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#intensityDarkMode", "Intensity for dark mode")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#audioFile", "Path to audio file")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#audioName", "Unique name of sound sample")
-	DashboardLive.vanillaSchema:register(XMLValueType.BOOL, DashboardLive.DBL_Vanilla_XML_KEY .. "#loop", "repeat sound if true")
+	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#loop", "repeat sound n times")
 	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#volume", "sound volume")
 	dbgprint("initSpecialization : vanillaSchema element options registered", 2)
 end
@@ -1749,7 +1749,7 @@ function DashboardLive:loadAudioDashboardFromXML(xmlFile, key, dashboard)
 	loadSample(dashboard.dblAudioSample, audioFile, false)
 	dbgprint("loadAudioDashboardFromXML : sample loaded: id="..tostring(dashboard.dblAudioSample), 2)
     	
-    dashboard.dblAudioLoop = xmlFile:getValue(key .. "#loop", false)
+    dashboard.dblAudioLoop = xmlFile:getValue(key .. "#loop", 1)
     dbgprint("loadAudioDashboardFromXML : loop: "..tostring(dashboard.dblAudioLoop), 2)
     
     dashboard.dblAudioVolume = xmlFile:getValue(key .. "#volume", 1)
@@ -1760,8 +1760,6 @@ end
 
 function DashboardLive.defaultAudioStateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
 	dbgprint("defaultAudioStateFunc : newValue = "..tostring(newValue), 2)
-	dbgprint("defaultAudioStateFunc : minValue = "..tostring(minValue), 2)
-	dbgprint("defaultAudioStateFunc : maxValue = "..tostring(maxValue), 2)
 	dbgprint("defaultAudioStateFunc : isActive = "..tostring(isActive), 2)
 	
 	if type(newValue) == "number" then
@@ -1773,14 +1771,12 @@ function DashboardLive.defaultAudioStateFunc(self, dashboard, newValue, minValue
         newValue = newValue and isActive
     end
     
-	if newValue and not dashboard.played and not isSamplePlaying(dashboard.dblAudioSample) then
-		if not dashboard.dblAudioLoop then
-			dashboard.played = true
-		end
-		playSample(dashboard.dblAudioSample, dashboard.dblAudioLoop and 99 or 1, dashboard.dblAudioVolume, 0, 0, 0)
+	if self == g_currentMission.controlledVehicle and newValue and not dashboard.played and not isSamplePlaying(dashboard.dblAudioSample) then
+		dashboard.played = true
+		playSample(dashboard.dblAudioSample, dashboard.dblAudioLoop, dashboard.dblAudioVolume, 0, 0, 0)
 	end
 	
-	if not newValue then
+	if self == g_currentMission.controlledVehicle and not newValue then
 		stopSample(dashboard.dblAudioSample, 0, 0)
 		dashboard.played = false
 	end
@@ -2392,6 +2388,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 	if dashboard.dblCommand ~= nil then
 		local specWM = self.spec_workMode
 		local specRM = self.spec_ridgeMarker
+		local specMO = self.spec_motorized
 		local cmds, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblStateText or dashboard.dblState, dashboard.dblOption
 		local cmd = string.split(cmds, " ")
 		local returnValue = false
@@ -2556,6 +2553,14 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			end
 			returnValue = fieldNum
 			
+		elseif cmds == "motorfan" then
+			if specMO ~= nil then
+				local specFan = specMO.motorFan
+				if specFan ~= nil then
+					returnValue = specFan.enabled
+				end
+			end
+			
 		-- empty command is allowed here to add symbols (EMITTER) in off-state, too
 		elseif cmds == "" then
 			returnValue = true
@@ -2585,7 +2590,6 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = (returnValue == value)
 			end
 		end
-		
 		return returnValue
 	end
 	

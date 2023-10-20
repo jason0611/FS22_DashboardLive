@@ -1512,6 +1512,26 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						end
 					end
 				end
+			elseif mode == "tooltranslation" or mode=="istooltranslation" then
+				local factor = element.dblFactor or 1
+				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
+				local s = element.dblStateText or element.dblState
+				dbgprint(implement.object:getFullName().." : frontLoader - " .. mode .. " - " .. s,3)
+				resultValue = 0
+				if specCyl ~= nil then
+					for toolIndex, tool in ipairs(specCyl.movingTools) do
+						if toolIndex == tonumber(element.dblOption) then
+							local origin = tool.transMax or 0
+							local trans = tool.curTrans[tool.translationAxis] * factor
+							if element.dblCommand == "tooltranslation" then
+								resultValue = trans
+							elseif element.dblCommand == "istooltranslation" then
+								resultValue = trans >= element.dblMin and trans <=element.dblMax
+							end
+						end
+					end
+				end
+	
 			elseif mode=="swathstate" then
 				local specWM =  findSpecialization(implement.object,"spec_workMode",t)
 				local states

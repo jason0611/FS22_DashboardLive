@@ -2193,6 +2193,9 @@ function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
     	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'vca'")
     	return false
     end
+    
+    dashboard.dblComp = xmlFile:getValue(key .. "#comp") -- compare
+	dbgprint("getDBLAttributesBase : comp: "..tostring(dashboard.dblComp), 2)
 
 	return true
 end
@@ -2610,6 +2613,12 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = (returnValue == value)
 			end
 		end
+		if dashboard.dblComp ~= nil and type(returnValue) == "boolean" then
+			if dashboard.dblComp == "not" then
+				valueType = not valueType
+			end
+		end
+			
 		return returnValue
 	end
 	
@@ -2792,47 +2801,51 @@ function DashboardLive.getDashboardLiveVCA(self, dashboard)
 	if dashboard.dblCommand ~= nil then
 		local spec = self.spec_DashboardLive
 		local c = dashboard.dblCommand
+		local returnValue = false
 
 		if c == "park" then
 			if (spec.modVCAFound and self:vcaGetState("handbrake")) or (spec.modEVFound and self.vData.is[13]) then 
-				return true
-			else 
-				return false
+				returnValue = true
 			end
 		elseif c == "diff_front" or c == "diff_front" then
-			return (spec.modVCAFound and self:vcaGetState("diffLockFront")) or (spec.modEVFound and self.vData.is[1])
+			returnValue = (spec.modVCAFound and self:vcaGetState("diffLockFront")) or (spec.modEVFound and self.vData.is[1])
 	
 		elseif c == "diff_back" or c == "diff_back"then
-			return (spec.modVCAFound and self:vcaGetState("diffLockBack")) or (spec.modEVFound and self.vData.is[2])
+			returnValue = (spec.modVCAFound and self:vcaGetState("diffLockBack")) or (spec.modEVFound and self.vData.is[2])
 	
 		elseif c == "diff" or c == "diff" then
-			return (spec.modVCAFound and (self:vcaGetState("diffLockFront") or self:vcaGetState("diffLockBack"))) 
+			returnValue = (spec.modVCAFound and (self:vcaGetState("diffLockFront") or self:vcaGetState("diffLockBack"))) 
 					or (spec.modEVFound and (self.vData.is[1] or self.vData.is[2]))
 	
 		elseif c == "diff_awd" or c == "diff_awd" then
-			return (spec.modVCAFound and self:vcaGetState("diffLockAWD")) or (spec.modEVFound and self.vData.is[3]==1)
+			returnValue = (spec.modVCAFound and self:vcaGetState("diffLockAWD")) or (spec.modEVFound and self.vData.is[3]==1)
 		
 		elseif c == "diff_awdf" then
-			return spec.modVCAFound and self:vcaGetState("diffFrontAdv")
+			returnValue = spec.modVCAFound and self:vcaGetState("diffFrontAdv")
 	
 		elseif c == "ks" then
-			return spec.modVCAFound and self:vcaGetState("ksIsOn")
+			returnValue = spec.modVCAFound and self:vcaGetState("ksIsOn")
 			
 		elseif c == "slip" then
 			local slipVCA = spec.modVCAFound and self.spec_vca.wheelSlip ~= nil and (self.spec_vca.wheelSlip - 1) * 100 or 0
 			local slipREA = self.spec_wheels ~= nil and self.spec_wheels.SlipSmoothed ~= nil and self.spec_wheels.SlipSmoothed or 0
-			return math.max(slipVCA, slipREA)
+			returnValue = math.max(slipVCA, slipREA)
 			
 		elseif c == "speed2" then
-			return spec.modVCAFound and self:vcaGetState("ccSpeed2")
+			returnValue = spec.modVCAFound and self:vcaGetState("ccSpeed2")
 			
 		elseif c == "speed3" then
-			return spec.modVCAFound and self:vcaGetState("ccSpeed3")
-			
+			returnValue = spec.modVCAFound and self:vcaGetState("ccSpeed3")
 		end
 	end
 	
-	return false
+	if dashboard.dblComp ~= nil and type(returnValue) == "boolean" then
+		if dashboard.dblComp == "not" then
+			valueType = not valueType
+		end
+	end
+	
+	return returnValue
 end
 
 function DashboardLive.getDashboardLiveHLM(self, dashboard)

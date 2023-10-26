@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -78,8 +78,8 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#max", "Maximum")
-	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#comp", "compare command")
-	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#compValue", "compare value")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#cond", "condition command")
+	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#condValue", "condition value")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#baseColorDarkMode", "Base color for dark mode")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#emitColorDarkMode", "Emit color for dark mode")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#intensityDarkMode", "Intensity for dark mode")
@@ -107,8 +107,8 @@ function DashboardLive.initSpecialization()
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#partition", "partition number")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#stateText", "stateText")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#scale", "scale")
-	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#comp", "compare command")
-	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#compValue", "compare value")
+	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#cond", "condition command")
+	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#condValue", "condition value")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#baseColorDarkMode", "Base color for dark mode")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#emitColorDarkMode", "Emit color for dark mode")
 	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#intensityDarkMode", "Intensity for dark mode")
@@ -2106,11 +2106,11 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", 0) -- trailer partition
 	dbgprint("getDBLAttributesBase : partition: "..tostring(dashboard.dblPartition), 2)
 	
-	dashboard.dblComp = xmlFile:getValue(key .. "#comp") -- compare
-	dbgprint("getDBLAttributesBase : comp: "..tostring(dashboard.dblComp), 2)
-	dashboard.dblCompValue = xmlFile:getValue(key .. "#compValue")
-	dbgprint("getDBLAttributesBase : compValue: "..tostring(dashboard.dblCompValue), 2)
-	if dashboard.dblComp ~= nil and dashboard.dblCompValue == nil then
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond") -- compare
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
+	dashboard.dblCondValue = xmlFile:getValue(key .. "#condValue")
+	dbgprint("getDBLAttributesBase : condValue: "..tostring(dashboard.dblCondValue), 2)
+	if dashboard.dblCond ~= nil and dashboard.dblCond ~= "not" and dashboard.dblCondValue == nil then
 		Logging.xmlError(self.xmlFile, "No value given for comparation")
 		return false
 	end
@@ -2194,8 +2194,8 @@ function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
     	return false
     end
     
-    dashboard.dblComp = xmlFile:getValue(key .. "#comp") -- compare
-	dbgprint("getDBLAttributesBase : comp: "..tostring(dashboard.dblComp), 2)
+    dashboard.dblCond = xmlFile:getValue(key .. "#cond") -- compare
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
 
 	return true
 end
@@ -2598,9 +2598,9 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		if dashboard.dblMax ~= nil and type(returnValue) == "number" then
 			returnValue = math.min(returnValue, dashboard.dblMax)
 		end
-		if dashboard.dblComp ~= nil and type(returnValue) == "number" and type(dashboard.dblCompValue) == "number" then
-			local comp = dashboard.dblComp
-			local value = dashboard.dblCompValue
+		if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
+			local comp = dashboard.dblCond
+			local value = dashboard.dblCondValue
 			if comp == "<" then
 				returnValue = (returnValue < value)
 			elseif comp == "<=" then
@@ -2613,8 +2613,8 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = (returnValue == value)
 			end
 		end
-		if dashboard.dblComp ~= nil and type(returnValue) == "boolean" then
-			if dashboard.dblComp == "not" then
+		if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+			if dashboard.dblCond == "not" then
 				valueType = not valueType
 			end
 		end
@@ -2798,26 +2798,27 @@ end
 
 function DashboardLive.getDashboardLiveVCA(self, dashboard)
 	dbgprint("getDashboardLiveVCA : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	
+	local returnValue = false
 	if dashboard.dblCommand ~= nil then
 		local spec = self.spec_DashboardLive
 		local c = dashboard.dblCommand
-		local returnValue = false
 
 		if c == "park" then
 			if (spec.modVCAFound and self:vcaGetState("handbrake")) or (spec.modEVFound and self.vData.is[13]) then 
 				returnValue = true
 			end
-		elseif c == "diff_front" or c == "diff_front" then
+		elseif c == "diff_front" then
 			returnValue = (spec.modVCAFound and self:vcaGetState("diffLockFront")) or (spec.modEVFound and self.vData.is[1])
 	
-		elseif c == "diff_back" or c == "diff_back"then
+		elseif c == "diff_back" then
 			returnValue = (spec.modVCAFound and self:vcaGetState("diffLockBack")) or (spec.modEVFound and self.vData.is[2])
 	
-		elseif c == "diff" or c == "diff" then
+		elseif c == "diff" then
 			returnValue = (spec.modVCAFound and (self:vcaGetState("diffLockFront") or self:vcaGetState("diffLockBack"))) 
 					or (spec.modEVFound and (self.vData.is[1] or self.vData.is[2]))
 	
-		elseif c == "diff_awd" or c == "diff_awd" then
+		elseif c == "diff_awd" then
 			returnValue = (spec.modVCAFound and self:vcaGetState("diffLockAWD")) or (spec.modEVFound and self.vData.is[3]==1)
 		
 		elseif c == "diff_awdf" then
@@ -2839,9 +2840,9 @@ function DashboardLive.getDashboardLiveVCA(self, dashboard)
 		end
 	end
 	
-	if dashboard.dblComp ~= nil and type(returnValue) == "boolean" then
-		if dashboard.dblComp == "not" then
-			valueType = not valueType
+	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+		if dashboard.dblCond == "not" then
+			returnValue = not returnValue
 		end
 	end
 	

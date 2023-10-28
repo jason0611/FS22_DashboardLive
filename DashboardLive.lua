@@ -3207,12 +3207,9 @@ function DashboardLive.getDashboardLiveFrontloader(self, dashboard)
 	dbgprint("getDashboardLiveFrontloader : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	local c = dashboard.dblCommand
 	local returnValue = 0
-	if c == "toolrotation" then
-		returnValue = getAttachedStatus(self, dashboard, "toolrotation")
-		dbgprint("getDashboardLiveFrontloader : toolrotation: returnValue: "..tostring(returnValue), 4)
-	elseif c == "istoolrotation" then
-		returnValue = getAttachedStatus(self, dashboard,"istoolrotation")
-		dbgprint("getDashboardLiveFrontloader : istoolrotation: returnValue: "..tostring(returnValue), 4)
+	if c == "toolrotation" or c == "tooltranslation" or c == "istoolrotation" or c == "istooltranslation" then
+		returnValue = getAttachedStatus(self, dashboard, c)
+		dbgprint("getDashboardLiveFrontloader : "..c..": returnValue: "..tostring(returnValue), 4)
 	end
 	return returnValue
 end

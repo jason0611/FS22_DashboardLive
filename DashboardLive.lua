@@ -2615,7 +2615,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		end
 		if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
 			if dashboard.dblCond == "not" then
-				valueType = not valueType
+				returnValue = not returnValue
 			end
 		end
 			

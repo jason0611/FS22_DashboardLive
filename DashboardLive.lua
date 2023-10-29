@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -1779,8 +1779,8 @@ function DashboardLive:loadAudioDashboardFromXML(xmlFile, key, dashboard)
 end
 
 function DashboardLive.defaultAudioStateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
-	dbgprint("defaultAudioStateFunc : newValue = "..tostring(newValue), 2)
-	dbgprint("defaultAudioStateFunc : isActive = "..tostring(isActive), 2)
+	dbgprint("defaultAudioStateFunc : newValue = "..tostring(newValue), 4)
+	dbgprint("defaultAudioStateFunc : isActive = "..tostring(isActive), 4)
 	
 	if type(newValue) == "number" then
         newValue = newValue > 0.5 and true or false

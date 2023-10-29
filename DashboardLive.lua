@@ -78,15 +78,15 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#max", "Maximum")
-	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#comp", "compare command")
-	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#compValue", "compare value")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#cond", "condition command")
+	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#condValue", "condition value")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#baseColorDarkMode", "Base color for dark mode")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#emitColorDarkMode", "Emit color for dark mode")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#intensityDarkMode", "Intensity for dark mode")
 	
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#audioFile", "Path to audio file")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#audioName", "Unique name of sound sample")
-	schema:register(XMLValueType.BOOL, DashboardLive.DBL_XML_KEY .. "#loop", "repeat sound if true")
+	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#loop", "repeat sound n times")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#volume", "sound volume")
 	
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
@@ -107,14 +107,14 @@ function DashboardLive.initSpecialization()
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#partition", "partition number")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#stateText", "stateText")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#scale", "scale")
-	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#comp", "compare command")
-	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#compValue", "compare value")
+	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#cond", "condition command")
+	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#condValue", "condition value")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#baseColorDarkMode", "Base color for dark mode")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#emitColorDarkMode", "Emit color for dark mode")
 	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#intensityDarkMode", "Intensity for dark mode")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#audioFile", "Path to audio file")
 	DashboardLive.vanillaSchema:register(XMLValueType.STRING, DashboardLive.DBL_Vanilla_XML_KEY .. "#audioName", "Unique name of sound sample")
-	DashboardLive.vanillaSchema:register(XMLValueType.BOOL, DashboardLive.DBL_Vanilla_XML_KEY .. "#loop", "repeat sound if true")
+	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#loop", "repeat sound n times")
 	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#volume", "sound volume")
 	dbgprint("initSpecialization : vanillaSchema element options registered", 2)
 end
@@ -1512,6 +1512,26 @@ local function getAttachedStatus(vehicle, element, mode, default)
 						end
 					end
 				end
+			elseif mode == "tooltranslation" or mode=="istooltranslation" then
+				local factor = element.dblFactor or 1
+				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
+				local s = element.dblStateText or element.dblState
+				dbgprint(implement.object:getFullName().." : frontLoader - " .. mode .. " - " .. s,3)
+				resultValue = 0
+				if specCyl ~= nil then
+					for toolIndex, tool in ipairs(specCyl.movingTools) do
+						if toolIndex == tonumber(element.dblOption) then
+							local origin = tool.transMax or 0
+							local trans = tool.curTrans[tool.translationAxis] * factor
+							if element.dblCommand == "tooltranslation" then
+								resultValue = trans
+							elseif element.dblCommand == "istooltranslation" then
+								resultValue = trans >= element.dblMin and trans <=element.dblMax
+							end
+						end
+					end
+				end
+	
 			elseif mode=="swathstate" then
 				local specWM =  findSpecialization(implement.object,"spec_workMode",t)
 				local states
@@ -1749,7 +1769,7 @@ function DashboardLive:loadAudioDashboardFromXML(xmlFile, key, dashboard)
 	loadSample(dashboard.dblAudioSample, audioFile, false)
 	dbgprint("loadAudioDashboardFromXML : sample loaded: id="..tostring(dashboard.dblAudioSample), 2)
     	
-    dashboard.dblAudioLoop = xmlFile:getValue(key .. "#loop", false)
+    dashboard.dblAudioLoop = xmlFile:getValue(key .. "#loop", 1)
     dbgprint("loadAudioDashboardFromXML : loop: "..tostring(dashboard.dblAudioLoop), 2)
     
     dashboard.dblAudioVolume = xmlFile:getValue(key .. "#volume", 1)
@@ -1759,10 +1779,8 @@ function DashboardLive:loadAudioDashboardFromXML(xmlFile, key, dashboard)
 end
 
 function DashboardLive.defaultAudioStateFunc(self, dashboard, newValue, minValue, maxValue, isActive)
-	dbgprint("defaultAudioStateFunc : newValue = "..tostring(newValue), 2)
-	dbgprint("defaultAudioStateFunc : minValue = "..tostring(minValue), 2)
-	dbgprint("defaultAudioStateFunc : maxValue = "..tostring(maxValue), 2)
-	dbgprint("defaultAudioStateFunc : isActive = "..tostring(isActive), 2)
+	dbgprint("defaultAudioStateFunc : newValue = "..tostring(newValue), 4)
+	dbgprint("defaultAudioStateFunc : isActive = "..tostring(isActive), 4)
 	
 	if type(newValue) == "number" then
         newValue = newValue > 0.5 and true or false
@@ -1773,14 +1791,12 @@ function DashboardLive.defaultAudioStateFunc(self, dashboard, newValue, minValue
         newValue = newValue and isActive
     end
     
-	if newValue and not dashboard.played and not isSamplePlaying(dashboard.dblAudioSample) then
-		if not dashboard.dblAudioLoop then
-			dashboard.played = true
-		end
-		playSample(dashboard.dblAudioSample, dashboard.dblAudioLoop and 99 or 1, dashboard.dblAudioVolume, 0, 0, 0)
+	if self == g_currentMission.controlledVehicle and newValue and not dashboard.played and not isSamplePlaying(dashboard.dblAudioSample) then
+		dashboard.played = true
+		playSample(dashboard.dblAudioSample, dashboard.dblAudioLoop, dashboard.dblAudioVolume, 0, 0, 0)
 	end
 	
-	if not newValue then
+	if self == g_currentMission.controlledVehicle and not newValue then
 		stopSample(dashboard.dblAudioSample, 0, 0)
 		dashboard.played = false
 	end
@@ -2090,11 +2106,11 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", 0) -- trailer partition
 	dbgprint("getDBLAttributesBase : partition: "..tostring(dashboard.dblPartition), 2)
 	
-	dashboard.dblComp = xmlFile:getValue(key .. "#comp") -- compare
-	dbgprint("getDBLAttributesBase : comp: "..tostring(dashboard.dblComp), 2)
-	dashboard.dblCompValue = xmlFile:getValue(key .. "#compValue")
-	dbgprint("getDBLAttributesBase : compValue: "..tostring(dashboard.dblCompValue), 2)
-	if dashboard.dblComp ~= nil and dashboard.dblCompValue == nil then
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond") -- compare
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
+	dashboard.dblCondValue = xmlFile:getValue(key .. "#condValue")
+	dbgprint("getDBLAttributesBase : condValue: "..tostring(dashboard.dblCondValue), 2)
+	if dashboard.dblCond ~= nil and dashboard.dblCond ~= "not" and dashboard.dblCondValue == nil then
 		Logging.xmlError(self.xmlFile, "No value given for comparation")
 		return false
 	end
@@ -2177,6 +2193,9 @@ function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
     	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'vca'")
     	return false
     end
+    
+    dashboard.dblCond = xmlFile:getValue(key .. "#cond") -- compare
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
 
 	return true
 end
@@ -2392,6 +2411,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 	if dashboard.dblCommand ~= nil then
 		local specWM = self.spec_workMode
 		local specRM = self.spec_ridgeMarker
+		local specMO = self.spec_motorized
 		local cmds, j, s, o = dashboard.dblCommand, dashboard.dblAttacherJointIndices, dashboard.dblStateText or dashboard.dblState, dashboard.dblOption
 		local cmd = string.split(cmds, " ")
 		local returnValue = false
@@ -2556,6 +2576,14 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			end
 			returnValue = fieldNum
 			
+		elseif cmds == "motorfan" then
+			if specMO ~= nil then
+				local specFan = specMO.motorFan
+				if specFan ~= nil then
+					returnValue = specFan.enabled
+				end
+			end
+			
 		-- empty command is allowed here to add symbols (EMITTER) in off-state, too
 		elseif cmds == "" then
 			returnValue = true
@@ -2570,9 +2598,9 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		if dashboard.dblMax ~= nil and type(returnValue) == "number" then
 			returnValue = math.min(returnValue, dashboard.dblMax)
 		end
-		if dashboard.dblComp ~= nil and type(returnValue) == "number" and type(dashboard.dblCompValue) == "number" then
-			local comp = dashboard.dblComp
-			local value = dashboard.dblCompValue
+		if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
+			local comp = dashboard.dblCond
+			local value = dashboard.dblCondValue
 			if comp == "<" then
 				returnValue = (returnValue < value)
 			elseif comp == "<=" then
@@ -2585,7 +2613,12 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				returnValue = (returnValue == value)
 			end
 		end
-		
+		if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+			if dashboard.dblCond == "not" then
+				returnValue = not returnValue
+			end
+		end
+			
 		return returnValue
 	end
 	
@@ -2765,50 +2798,55 @@ end
 
 function DashboardLive.getDashboardLiveVCA(self, dashboard)
 	dbgprint("getDashboardLiveVCA : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	
+	local returnValue = false
 	if dashboard.dblCommand ~= nil then
 		local spec = self.spec_DashboardLive
 		local c = dashboard.dblCommand
 
 		if c == "park" then
 			if (spec.modVCAFound and self:vcaGetState("handbrake")) or (spec.modEVFound and self.vData.is[13]) then 
-				return true
-			else 
-				return false
+				returnValue = true
 			end
-		elseif c == "diff_front" or c == "diff_front" then
-			return (spec.modVCAFound and self:vcaGetState("diffLockFront")) or (spec.modEVFound and self.vData.is[1])
+		elseif c == "diff_front" then
+			returnValue = (spec.modVCAFound and self:vcaGetState("diffLockFront")) or (spec.modEVFound and self.vData.is[1])
 	
-		elseif c == "diff_back" or c == "diff_back"then
-			return (spec.modVCAFound and self:vcaGetState("diffLockBack")) or (spec.modEVFound and self.vData.is[2])
+		elseif c == "diff_back" then
+			returnValue = (spec.modVCAFound and self:vcaGetState("diffLockBack")) or (spec.modEVFound and self.vData.is[2])
 	
-		elseif c == "diff" or c == "diff" then
-			return (spec.modVCAFound and (self:vcaGetState("diffLockFront") or self:vcaGetState("diffLockBack"))) 
+		elseif c == "diff" then
+			returnValue = (spec.modVCAFound and (self:vcaGetState("diffLockFront") or self:vcaGetState("diffLockBack"))) 
 					or (spec.modEVFound and (self.vData.is[1] or self.vData.is[2]))
 	
-		elseif c == "diff_awd" or c == "diff_awd" then
-			return (spec.modVCAFound and self:vcaGetState("diffLockAWD")) or (spec.modEVFound and self.vData.is[3]==1)
+		elseif c == "diff_awd" then
+			returnValue = (spec.modVCAFound and self:vcaGetState("diffLockAWD")) or (spec.modEVFound and self.vData.is[3]==1)
 		
 		elseif c == "diff_awdf" then
-			return spec.modVCAFound and self:vcaGetState("diffFrontAdv")
+			returnValue = spec.modVCAFound and self:vcaGetState("diffFrontAdv")
 	
 		elseif c == "ks" then
-			return spec.modVCAFound and self:vcaGetState("ksIsOn")
+			returnValue = spec.modVCAFound and self:vcaGetState("ksIsOn")
 			
 		elseif c == "slip" then
 			local slipVCA = spec.modVCAFound and self.spec_vca.wheelSlip ~= nil and (self.spec_vca.wheelSlip - 1) * 100 or 0
 			local slipREA = self.spec_wheels ~= nil and self.spec_wheels.SlipSmoothed ~= nil and self.spec_wheels.SlipSmoothed or 0
-			return math.max(slipVCA, slipREA)
+			returnValue = math.max(slipVCA, slipREA)
 			
 		elseif c == "speed2" then
-			return spec.modVCAFound and self:vcaGetState("ccSpeed2")
+			returnValue = spec.modVCAFound and self:vcaGetState("ccSpeed2")
 			
 		elseif c == "speed3" then
-			return spec.modVCAFound and self:vcaGetState("ccSpeed3")
-			
+			returnValue = spec.modVCAFound and self:vcaGetState("ccSpeed3")
 		end
 	end
 	
-	return false
+	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+		if dashboard.dblCond == "not" then
+			returnValue = not returnValue
+		end
+	end
+	
+	return returnValue
 end
 
 function DashboardLive.getDashboardLiveHLM(self, dashboard)
@@ -3169,12 +3207,9 @@ function DashboardLive.getDashboardLiveFrontloader(self, dashboard)
 	dbgprint("getDashboardLiveFrontloader : dblCommand: "..tostring(dashboard.dblCommand), 4)
 	local c = dashboard.dblCommand
 	local returnValue = 0
-	if c == "toolrotation" then
-		returnValue = getAttachedStatus(self, dashboard, "toolrotation")
-		dbgprint("getDashboardLiveFrontloader : toolrotation: returnValue: "..tostring(returnValue), 4)
-	elseif c == "istoolrotation" then
-		returnValue = getAttachedStatus(self, dashboard,"istoolrotation")
-		dbgprint("getDashboardLiveFrontloader : istoolrotation: returnValue: "..tostring(returnValue), 4)
+	if c == "toolrotation" or c == "tooltranslation" or c == "istoolrotation" or c == "istooltranslation" then
+		returnValue = getAttachedStatus(self, dashboard, c)
+		dbgprint("getDashboardLiveFrontloader : "..c..": returnValue: "..tostring(returnValue), 4)
 	end
 	return returnValue
 end

@@ -32,6 +32,8 @@ DashboardLive.vanillaSchema = nil
 
 DashboardLive.scale = 0.1
 
+DashboardLive.minimapConfig = {}
+
 -- Console
 function DashboardLive:editParameter(scale)
 	local scale = tonumber(scale) or DashboardLive.scale
@@ -117,6 +119,12 @@ function DashboardLive.initSpecialization()
 	DashboardLive.vanillaSchema:register(XMLValueType.INT, DashboardLive.DBL_Vanilla_XML_KEY .. "#loop", "repeat sound n times")
 	DashboardLive.vanillaSchema:register(XMLValueType.FLOAT, DashboardLive.DBL_Vanilla_XML_KEY .. "#volume", "sound volume")
 	dbgprint("initSpecialization : vanillaSchema element options registered", 2)
+
+	DashboardLive.minimapConfigSchema = XMLSchema.new("minimapConfig")
+	DashboardLive.DBL_MinimapConfig_XML_KEY = "dashboardLive.minimapConfig"
+	DashboardLive.minimapConfigSchema:register(XMLValueType.BOOL,   DashboardLive.DBL_MinimapConfig_XML_KEY .. "#useCustomMinimap", "useCustomMinimap")
+	DashboardLive.minimapConfigSchema:register(XMLValueType.STRING, DashboardLive.DBL_MinimapConfig_XML_KEY .. "#filename", "filename")
+	dbgprint("registerXmlSchema : minimapConfig options registered", 2)
 end
 
 function DashboardLive.registerEventListeners(vehicleType)
@@ -150,6 +158,14 @@ function DashboardLive:onPreLoad(savegame)
 
 	DashboardLive.modIntegrationXML = DashboardLive.MODSETTINGSDIR.."modDashboards.xml"
 	DashboardLive.modIntegrationXMLFile = XMLFile.loadIfExists("ModDashboards", DashboardLive.modIntegrationXML, DashboardLive.vanillaSchema)
+
+	DashboardLive.minimapConfigXML = DashboardLive.MODSETTINGSDIR..g_currentMission.missionInfo.map.title.."/minimap_config.xml"
+	DashboardLive.minimapConfigXMLFile = XMLFile.loadIfExists("minimapConfig", DashboardLive.minimapConfigXML, DashboardLive.minimapConfigSchema)
+
+	if DashboardLive.minimapConfigXMLFile then
+		DashboardLive.minimapConfig.useCustomMinimap = DashboardLive.minimapConfigXMLFile:getBool(DashboardLive.DBL_MinimapConfig_XML_KEY .. "#useCustomMinimap")
+		DashboardLive.minimapConfig.filename = 		   DashboardLive.minimapConfigXMLFile:getString(DashboardLive.DBL_MinimapConfig_XML_KEY .. "#filename")
+	end
 end
 
 function DashboardLive:onLoad(savegame)
@@ -166,7 +182,7 @@ function DashboardLive:onLoad(savegame)
 	spec.pageGroups[1].pages[1] = true
 	spec.pageGroups[1].actPage = 1
 	spec.updateTimer = 0
-	
+		
 	-- zoom data
 	spec.zoomed = false
 	spec.zoomPressed = false
@@ -2131,6 +2147,18 @@ function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
 	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / command = "..tostring(dashboard.dblCommand).." / scale = "..tostring(dashboard.scale), 2)
 
 	local mapTexture = g_currentMission.mapImageFilename
+	local mapName = g_currentMission.missionInfo.map.title
+
+	if DashboardLive.minimapConfig ~= nil and DashboardLive.minimapConfig.useCustomMinimap then 
+		local customTexturePath = DashboardLive.MODSETTINGSDIR..mapName.."/"..DashboardLive.minimapConfig.filename
+		if fileExists(customTexturePath) then
+			dbgprint("getDBLAttributesMiniMap: Custom miniMap configuration found. Set Texture to "..customTexturePath, 2)
+			mapTexture = customTexturePath
+		else
+			dbgprint("getDBLAttributesMiniMap: Error: Could not load custom minimap texture. Using default map textures instead. Given path: "..customTexturePath, 2)
+		end
+	end
+
 	if dashboard.node == nil then
 		Logging.xmlWarning(self.xmlFile, "Missing 'node' for dashboard '%s'", key)
 		return false

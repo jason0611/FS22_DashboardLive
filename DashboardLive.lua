@@ -32,6 +32,8 @@ DashboardLive.vanillaSchema = nil
 
 DashboardLive.scale = 0.1
 
+DashboardLive.minimapConfig = {}
+
 -- Console
 function DashboardLive:editParameter(scale)
 	local scale = tonumber(scale) or DashboardLive.scale
@@ -166,7 +168,7 @@ function DashboardLive:onLoad(savegame)
 	spec.pageGroups[1].pages[1] = true
 	spec.pageGroups[1].actPage = 1
 	spec.updateTimer = 0
-	
+		
 	-- zoom data
 	spec.zoomed = false
 	spec.zoomPressed = false
@@ -2131,6 +2133,17 @@ function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
 	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / command = "..tostring(dashboard.dblCommand).." / scale = "..tostring(dashboard.scale), 2)
 
 	local mapTexture = g_currentMission.mapImageFilename
+	local mapName = g_currentMission.missionInfo.map.title
+	local customMap = DashboardLive.MODSETTINGSDIR..mapName
+	local customMapFile = customMap.."/overview.dds"
+	
+	createFolder(customMap)
+	
+	if fileExists(customMapFile) then
+		dbgprint("getDBLAttributesMiniMap: Custom miniMap configuration found. Set Texture to "..customMapFile, 2)
+		mapTexture = customMapFile
+	end
+
 	if dashboard.node == nil then
 		Logging.xmlWarning(self.xmlFile, "Missing 'node' for dashboard '%s'", key)
 		return false

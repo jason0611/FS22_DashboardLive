@@ -2614,15 +2614,15 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
 			local comp = dashboard.dblCond
 			local value = dashboard.dblCondValue
-			if comp == "<" then
+			if comp == "less" then
 				returnValue = (returnValue < value)
-			elseif comp == "<=" then
+			elseif comp == "lessequal" then
 				returnValue = (returnValue <= value)
-			elseif comp == ">" then
+			elseif comp == "more" then
 				returnValue = (returnValue > value)
-			elseif comp == ">=" then
+			elseif comp == "moreequal" then
 				returnValue = (returnValue >= value)
-			elseif comp == "=" then
+			elseif comp == "equal" then
 				returnValue = (returnValue == value)
 			end
 		end

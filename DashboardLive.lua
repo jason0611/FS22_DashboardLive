@@ -2612,17 +2612,17 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			returnValue = math.min(returnValue, dashboard.dblMax)
 		end
 		if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
-			local comp = dashboard.dblCond
+			local cond = dashboard.dblCond
 			local value = dashboard.dblCondValue
-			if comp == "less" then
+			if cond == "less" then
 				returnValue = (returnValue < value)
-			elseif comp == "lessequal" then
+			elseif cond == "lessequal" then
 				returnValue = (returnValue <= value)
-			elseif comp == "more" then
+			elseif cond == "more" then
 				returnValue = (returnValue > value)
-			elseif comp == "moreequal" then
+			elseif cond == "moreequal" then
 				returnValue = (returnValue >= value)
-			elseif comp == "equal" then
+			elseif cond == "equal" then
 				returnValue = (returnValue == value)
 			end
 		end

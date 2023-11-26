@@ -906,7 +906,7 @@ end
 
 local function trim(text, textLength, alignment)
 	dbgprint("trim: text = "..tostring(text).." / alignment = "..tostring(alignment), 2)
-	dbgprint(tostring(string.byte(text, 1)).."+"..tostring(string.byte(text, 2)), 2)
+	text = text or " "
 
 	-- converter
 	local ch_Ae = string.char(195, 132)

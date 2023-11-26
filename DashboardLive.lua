@@ -905,16 +905,24 @@ end
 -- Supporting functions
 
 local function trim(text, textLength, alignment)
-	dbgprint("trim: alignment = "..tostring(alignment), 4)
-	text = text or "xxxx"
+	dbgprint("trim: text = "..tostring(text).." / alignment = "..tostring(alignment), 2)
+	dbgprint(tostring(string.byte(text, 1)).."+"..tostring(string.byte(text, 2)), 2)
 
 	-- converter
-	text = string.gsub(text,"€","Ae")
-	text = string.gsub(text,"…","Oe")
-	text = string.gsub(text,"†","Ue")
-	text = string.gsub(text,"Š","ae")
-	text = string.gsub(text,"š","oe")
-	text = string.gsub(text,"Ÿ","ue")
+	local ch_Ae = string.char(195, 132)
+	local ch_Oe = string.char(195, 150)
+	local ch_Ue = string.char(195, 156)
+	local ch_ae = string.char(195, 164)
+	local ch_oe = string.char(195, 182)
+	local ch_ue = string.char(195, 188)
+	text = string.gsub(text, ch_Ae, "Ae")
+	text = string.gsub(text, ch_Oe, "Oe")
+	text = string.gsub(text, ch_Ue, "Ue")
+	text = string.gsub(text, ch_ae, "ae")
+	text = string.gsub(text, ch_oe, "oe")
+	text = string.gsub(text, ch_ue, "ue")
+	
+	dbgprint("trim: converted text = "..tostring(text), 2)
 	
 	local l = string.len(text)
 	if l == textLength then
@@ -3223,7 +3231,10 @@ end
 function DashboardLive.getDashboardLivePrint(self, dashboard)
 	dbgprint("getDashboardLivePrint : dblOption: "..tostring(dashboard.dblOption), 4)
 	
-	return dashboard.dblOption or ""
+	local len = string.len(dashboard.textMask or "xxxx")
+	local alignment = dashboard.textAlignment or "LEFT"
+	
+	return trim(dashboard.dblOption or "", len, alignment)
 end
 
 function DashboardLive.getDashboardLiveFrontloader(self, dashboard)

@@ -905,8 +905,18 @@ end
 -- Supporting functions
 
 local function trim(text, textLength, alignment)
-	local l = string.len(text or "xxxx")
 	dbgprint("trim: alignment = "..tostring(alignment), 4)
+	text = text or "xxxx"
+
+	-- converter
+	text = string.gsub(text,"€","Ae")
+	text = string.gsub(text,"…","Oe")
+	text = string.gsub(text,"†","Ue")
+	text = string.gsub(text,"Š","ae")
+	text = string.gsub(text,"š","oe")
+	text = string.gsub(text,"Ÿ","ue")
+	
+	local l = string.len(text)
 	if l == textLength then
 		return text
 	elseif l < textLength then
@@ -1566,8 +1576,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					local len = string.len(element.textMask or "xxxx")
 					local alignment = element.textAlignment
 					resultValue = trim(fillType.title, len, alignment)
-					resultValue = string.gsub(resultValue,"Ÿ","u")
-					resultValue = string.gsub(resultValue,"…","O")
+					--resultValue = string.gsub(resultValue,"Ÿ","u")
+					--resultValue = string.gsub(resultValue,"…","O")
 				end
             elseif mode == "connected" then
             	resultValue = true

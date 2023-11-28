@@ -39,18 +39,18 @@ Here you will find the most actual documentation of DBL: https://github.com/jaso
 + hasTypeDesc (boolean): test if vehicle or implement is of wanted type
 + front loader state
 + mini-map integration
-
-== Planned for next ModHub update ==
 + CVT-Addon
 + precisionFarming
 + RDA
++ displayType="AUDIO"
+
+== Planned for next ModHub update ==
 
 == Planned for later ModHub updates ==
 ? camera integration
 ? cutter turn rate
 - ISO-Bus: Use dashboards provided by implements
 - Generic spec access (functions/values)
-- displayType="AUDIO"
 
 -- VanillaIntegration-Backlog:
 + Rigitrac SKE50

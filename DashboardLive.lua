@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -2562,6 +2562,16 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		-- tipSide / tipSideText
 		elseif cmds == "tipside" or cmds == "tipsidetext" then
 			returnValue = getAttachedStatus(self, dashboard, cmds, 0)
+			
+		-- variable workwidth
+		elseif cmds == "workWidth" then 
+			local specVW = findSpecialization(self, "spec_variableWorkWidth", dashboard.dblTrailer)
+			if specVW ~= nil then
+				local isLeft = lower(o) == "left"
+				returnValue = spec:getVariableWorkWidth(isLeft)
+			else
+				returnValue = 1
+			end
 		
 		-- real clock
 		elseif cmds == "realclock" then

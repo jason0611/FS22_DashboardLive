@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -304,6 +304,24 @@ function DashboardLive:onLoad(savegame)
         	dbgprint("onLoad : ModIntegration <vca>", 2)
         	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
         end
+        
+        -- cruiseControl
+        dashboardData = {	
+        					valueTypeToLoad = "cc",
+                        	valueObject = self,
+                        	valueFunc = DashboardLive.getDashboardLiveCC,
+                            additionalAttributesFunc = DashboardLive.getDBLAttributesCC
+                        }
+        self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData)
+        if spec.vanillaIntegration then
+        	dbgprint("onLoad : VanillaIntegration <vca>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+        end
+        if spec.modIntegration then
+        	dbgprint("onLoad : ModIntegration <vca>", 2)
+        	self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+        end
+        
 		-- hlm
         dashboardData = {	
         					valueTypeToLoad = "hlm",
@@ -529,7 +547,7 @@ function DashboardLive:onPostLoad(savegame)
 	spec.modEVFound = FS22_EnhancedVehicle ~= nil and FS22_EnhancedVehicle.FS22_EnhancedVehicle ~= nil and FS22_EnhancedVehicle.FS22_EnhancedVehicle.onActionCall ~= nil
 	
 	-- Check if Mod SpeedControl exists
-	spec.modSpeedControlFound = FS22_SpeedControl ~= nil and FS22_SpeedControl.SpeedControl ~= nil
+	spec.modSpeedControlFound = self.speedControl ~= nil --FS22_SpeedControl ~= nil and FS22_SpeedControl.SpeedControl ~= nil
 	
 	--Check if Mod HeadlandManagement exists
 	spec.modHLMFound = self.spec_HeadlandManagement ~= nil
@@ -1436,7 +1454,30 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					--element.valueFactor = 1
 					resultValue = absValue
 				end
-				
+			
+			elseif mode == "fillType" then
+				local _, vehicle = findSpecialization(self, "spec_fillUnit", t)
+				if device ~= nil then
+					local o = lower(element.dblOption)
+					local p = element.dblPartition or 0 
+					local fillUnit = device:getFillUnitByIndex(p)
+					if fillUnit ~= nil then
+						local fillTypeIndex = fillUnit.fillType
+						if o == "name" then
+							local ftName = g_fillTypeManager:getFillTypeTitleByIndex(fillTypeIndex)
+							return ftName
+						elseif o == "icon" then
+							local ftPath = g_fillTypeManager.fillTypes[fillTypeIndex] ~= nil and g_fillTypeManager.fillTypes[fillTypeIndex].hudOverlayFilename
+							if ftPath == nil then return false end
+							return ftPath
+						end
+					else 
+						return false
+					end
+				else 
+					return false
+				end
+			
 			elseif mode == "balesize" or mode == "isroundbale" then
 				local specBaler = findSpecialization(implement.object,"spec_baler")
 				local options = lower(element.dblOption)
@@ -2231,6 +2272,22 @@ function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
 	return true
 end
 
+-- extendedCruiseControl / speedControl
+function DashboardLive.getDBLAttributesCC(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd"))
+    dbgprint("getDBLAttributesVCA : cmd: "..tostring(dashboard.dblCommand), 2)
+    
+    if dashboard.dblCommand == nil then 
+    	Logging.xmlWarning(self.xmlFile, "No '#cmd' given for valueType 'cc'")
+    	return false
+    end
+    
+    dashboard.dblState = xmlFile:getValue(key .. "#state")
+    dbgprint("getDBLAttributesCC : state: "..tostring(dashboard.dblCond), 2)
+
+	return true
+end
+
 -- hlm
 function DashboardLive.getDBLAttributesHLM(self, xmlFile, key, dashboard)
 	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option"))
@@ -2562,6 +2619,16 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		-- tipSide / tipSideText
 		elseif cmds == "tipside" or cmds == "tipsidetext" then
 			returnValue = getAttachedStatus(self, dashboard, cmds, 0)
+			
+		-- variable workwidth
+		elseif cmds == "workwidth" then 
+			local specVW = findSpecialization(self, "spec_variableWorkWidth", dashboard.dblTrailer)
+			if specVW ~= nil then
+				local isLeft = lower(o) == "left"
+				returnValue = spec:getVariableWorkWidth(isLeft)
+			else
+				returnValue = 1
+			end
 		
 		-- real clock
 		elseif cmds == "realclock" then
@@ -2880,24 +2947,78 @@ function DashboardLive.getDashboardLiveVCA(self, dashboard)
 	return returnValue
 end
 
+function DashboardLive.getDashboardLiveCC(self, dashboard)
+	dbgprint("getDashboardLiveCC : dblState: "..tostring(dashboard.dblState), 4)
+	local spec = self.spec_DashboardLive
+	local specECC = self.spec_extendedCruiseControl
+	local state = tonumber(dashboard.dblState)
+	local mode = 0
+	
+	if specECC ~= nil then 
+		mode = 1
+	elseif spec.modSpeedControlFound then
+	 	mode = 2
+	 elseif self.spec_drivable ~= nil then
+	 	mode = 3
+	end
+	
+	if dashboard.dblCommand == "active" then
+		if mode == 1 then
+			if state ~= nil then
+				return specECC.activeSpeedGroup == state
+			else 
+				return specECC.activeSpeedGroup
+			end		
+		elseif mode == 2 then
+			local specCC = self.speedControl
+			if state ~= nil then
+				return specCC.currentKey == state
+			else
+				return specCC.currentKey
+			end
+		elseif mode == 3 then
+			local specCC = self.spec_drivable.cruiseControl
+			if state ~= nil then 
+				return specCC.state and state == 3
+			else
+				return specCC.state and 3
+			end
+		end
+	end	
+	
+	if dashboard.dblCommand == "speed" and state ~= nil then
+		if mode == 1 then
+			return specECC.cruiseSpeedGroups[state].forward
+		elseif mode == 2 then
+			local specCC = self.speedControl
+			return specCC.keys[state].speed
+		elseif mode == 3 then
+			local specCC = self.spec_drivable.cruiseControl
+			return state == 3 and specCC.speed
+		end
+	end
+	
+	return false
+end
+
 function DashboardLive.getDashboardLiveHLM(self, dashboard)
 	dbgprint("getDashboardLiveHLM : dblOption: "..tostring(dashboard.dblOption), 4)
-		local spec = self.spec_DashboardLive
-		local specHLM = self.spec_HeadlandManagement
-		
-		local o = dashboard.dblOption
+	local spec = self.spec_DashboardLive
+	local specHLM = self.spec_HeadlandManagement
+	
+	local o = dashboard.dblOption
 
-		if specHLM ~= nil and specHLM.exists then
-			if o == "field" then
-				return specHLM.isOn and not specHLM.isActive and (specHLM.contour == 0 or specHLM.contour == nil)
-			elseif o == "headland" then
-				return specHLM.isOn and specHLM.isActive
-			elseif o == "contour" then
-				return specHLM.isOn and not specHLM.isActive and (specHLM.contour ~= 0 and specHLM.contour ~= nil)
-			else
-				return specHLM.isOn
-			end
-		end	
+	if specHLM ~= nil and specHLM.exists then
+		if o == "field" then
+			return specHLM.isOn and not specHLM.isActive and (specHLM.contour == 0 or specHLM.contour == nil)
+		elseif o == "headland" then
+			return specHLM.isOn and specHLM.isActive
+		elseif o == "contour" then
+			return specHLM.isOn and not specHLM.isActive and (specHLM.contour ~= 0 and specHLM.contour ~= nil)
+		else
+			return specHLM.isOn
+		end
+	end	
 	return false
 end
 

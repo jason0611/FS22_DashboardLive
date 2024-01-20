@@ -1454,30 +1454,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					--element.valueFactor = 1
 					resultValue = absValue
 				end
-			
-			elseif mode == "fillType" then
-				local _, vehicle = findSpecialization(self, "spec_fillUnit", t)
-				if device ~= nil then
-					local o = lower(element.dblOption)
-					local p = element.dblPartition or 0 
-					local fillUnit = device:getFillUnitByIndex(p)
-					if fillUnit ~= nil then
-						local fillTypeIndex = fillUnit.fillType
-						if o == "name" then
-							local ftName = g_fillTypeManager:getFillTypeTitleByIndex(fillTypeIndex)
-							return ftName
-						elseif o == "icon" then
-							local ftPath = g_fillTypeManager.fillTypes[fillTypeIndex] ~= nil and g_fillTypeManager.fillTypes[fillTypeIndex].hudOverlayFilename
-							if ftPath == nil then return false end
-							return ftPath
-						end
-					else 
-						return false
-					end
-				else 
-					return false
-				end
-			
+				
 			elseif mode == "balesize" or mode == "isroundbale" then
 				local specBaler = findSpecialization(implement.object,"spec_baler")
 				local options = lower(element.dblOption)
@@ -2574,13 +2551,50 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		if cmds == "filllevel" then
 			returnValue = getAttachedStatus(self, dashboard, "filllevel", 0)
 			
+		-- fillType (text or icon)
+		elseif cmds == "filltype" then
+			dbgprint("fillType: option = "..tostring(dashboard.dblOption), 2)
+			returnValue = false
+			local t = dashboard.dblTrailer
+			local _, device = findSpecialization(self, "spec_fillUnit", t)
+			if device ~= nil then
+				local o = lower(dashboard.dblOption)
+				local p = dashboard.dblPartition or 1
+				local fillUnit = device:getFillUnitByIndex(p)
+				if fillUnit ~= nil then
+					local fillTypeIndex = fillUnit.fillType
+					
+					if o == "name" then
+						local ftName = g_fillTypeManager:getFillTypeTitleByIndex(fillTypeIndex)
+						dbgprint("fillType: Name set to "..ftName, 2)
+						returnValue = ftName
+						
+					elseif o == "icon" then
+						local ftPath = g_fillTypeManager.fillTypes[fillTypeIndex] ~= nil and g_fillTypeManager.fillTypes[fillTypeIndex].hudOverlayFilename
+						dbgprint("fillType: Path is "..tostring(ftPath), 2)
+						if ftPath ~= nil and ftPath ~= "" then
+							if ftPath ~= dashboard.ftPath then
+								local materialId = getMaterial(dashboard.node, 0)
+								materialId = setMaterialDiffuseMapFromFile(materialId, ftPath, true, true, false)
+								setMaterial(dashboard.node, materialId, 0)
+								--local scale = dashboard.dblScale
+								--setScale(dashboard.node, scale, scale, scale)
+								dashboard.ftPath = ftPath
+								dbgprint("fillType: Icon texture set to "..ftPath, 2)
+							end
+							returnValue = true
+						end
+					end
+				end
+			end
+			
 		-- hasSpec	
 		elseif cmds == "hasspec" then
-			returnValue = getAttachedStatus(self,dashboard,"hasspec",false)
+			returnValue = getAttachedStatus(self, dashboard, "hasspec", false)
 			
 		-- hasTypeDesc
 		elseif cmds == "hastypedesc" then
-			returnValue = getAttachedStatus(self,dashboard,"hastypedesc",false)
+			returnValue = getAttachedStatus(self, dashboard, "hastypedesc", false)
 			
 		-- tippingState
 		elseif cmds == "tippingstate" then

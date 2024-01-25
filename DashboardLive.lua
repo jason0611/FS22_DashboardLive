@@ -1602,8 +1602,8 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					local len = string.len(element.textMask or "xxxx")
 					local alignment = element.textAlignment
 					resultValue = trim(fillType.title, len, alignment)
-					--resultValue = string.gsub(resultValue,"�","u")
-					--resultValue = string.gsub(resultValue,"�","O")
+					--resultValue = string.gsub(resultValue,"","u")
+					--resultValue = string.gsub(resultValue,"","O")
 				end
             elseif mode == "connected" then
             	resultValue = true
@@ -2639,7 +2639,7 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			local specVW = findSpecialization(self, "spec_variableWorkWidth", dashboard.dblTrailer)
 			if specVW ~= nil then
 				local isLeft = lower(o) == "left"
-				returnValue = spec:getVariableWorkWidth(isLeft)
+				returnValue = specVW:getVariableWorkWidth(isLeft)
 			else
 				returnValue = 1
 			end
@@ -3520,7 +3520,7 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 				returnValueFormat = "%d l/ha"
 				applicationRate = litersPerHectar
 			elseif specExtendedSprayer.isSlurryTanker then
-				returnValueFormat = "%.1f m³/ha"
+				returnValueFormat = "%.1f mÂ³/ha"
 				applicationRate = litersPerHectar / 1000
 			elseif specExtendedSprayer.isManureSpreader then
 				returnValueFormat = "%.1f t/ha"

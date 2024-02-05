@@ -90,6 +90,8 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#audioName", "Unique name of sound sample")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#loop", "repeat sound n times")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#volume", "sound volume")
+	schema:register(XMLValueType.BOOL, DashboardLive.DBL_XML_KEY .. "#outside", "hearable from outside?")
+	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#distance", "hearable distance")
 	
 	dbgprint("initSpecialization : DashboardLive element options registered", 2)
 	
@@ -1803,6 +1805,10 @@ function DashboardLive:loadAudioDashboardFromXML(xmlFile, key, dashboard)
     	Logging.xmlWarning(self.xmlFile, "Audio file not found for audio dashboard "..tostring(dashboard.dblAudioName).."!")
     	return false
     end
+    
+    dashboard.dblAudioOutside = xmlFile:getValue(key .. "#outside") or false
+    dashboard.dblAudioDistance = xmlFile:getValue(key .. "#distance") or 2.0
+    
     dashboard.dblAudioSample = createSample(dashboard.dblAudioName)
 	loadSample(dashboard.dblAudioSample, audioFile, false)
 	dbgprint("loadAudioDashboardFromXML : sample loaded: id="..tostring(dashboard.dblAudioSample), 2)
@@ -1829,14 +1835,31 @@ function DashboardLive.defaultAudioStateFunc(self, dashboard, newValue, minValue
         newValue = newValue and isActive
     end
     
-	if self == g_currentMission.controlledVehicle and newValue and not dashboard.played and not isSamplePlaying(dashboard.dblAudioSample) then
-		dashboard.played = true
-		playSample(dashboard.dblAudioSample, dashboard.dblAudioLoop, dashboard.dblAudioVolume, 0, 0, 0)
-	end
-	
-	if self == g_currentMission.controlledVehicle and not newValue then
-		stopSample(dashboard.dblAudioSample, 0, 0)
-		dashboard.played = false
+    if self == g_currentMission.controlledVehicle then
+		if newValue and not dashboard.played and not isSamplePlaying(dashboard.dblAudioSample) then
+			dashboard.played = true
+			playSample(dashboard.dblAudioSample, dashboard.dblAudioLoop, dashboard.dblAudioVolume, 0, 0, 0)
+		end
+		if not newValue then
+			stopSample(dashboard.dblAudioSample, 0, 0)
+			dashboard.played = false
+		end
+	elseif dashboard.dblAudioOutside then
+		if newValue and not dashboard.played and not isSamplePlaying(dashboard.dblAudioSample) then
+			local playerX = g_currentMission.player.baseInformation.lastPositionX
+			local playerZ = g_currentMission.player.baseInformation.lastPositionZ
+			local vehicleX, _, vehicleZ = localToWorld(self.rootNode, 0, 0, 0)
+			local distance = math.sqrt((playerX-vehicleX)^2 + (playerZ-vehicleZ)^2)
+			if distance < dashboard.dblAudioDistance then
+				local volume = dashboard.dblAudioVolume * (1 - distance / dashboard.dblAudioDistance)
+				dashboard.played = true
+				playSample(dashboard.dblAudioSample, dashboard.dblAudioLoop, volume, 0, 0, 0)
+			end
+		end
+		if not newValue then
+			stopSample(dashboard.dblAudioSample, 0, 0)
+			dashboard.played = false
+		end
 	end
 end
 

@@ -1807,7 +1807,7 @@ function DashboardLive:loadAudioDashboardFromXML(xmlFile, key, dashboard)
     end
     
     dashboard.dblAudioOutside = xmlFile:getValue(key .. "#outside") or false
-    dashboard.dblAudioDistance = xmlFile:getValue(key .. "#distance") or 2.0
+    dashboard.dblAudioDistance = xmlFile:getValue(key .. "#distance") or 5.0
     
     dashboard.dblAudioSample = createSample(dashboard.dblAudioName)
 	loadSample(dashboard.dblAudioSample, audioFile, false)

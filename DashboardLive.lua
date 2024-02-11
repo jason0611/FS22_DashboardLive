@@ -516,6 +516,22 @@ function DashboardLive:onLoad(savegame)
 			dbgprint("onLoad : ModIntegration <CVTaddon>", 2)
 			self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
 		end
+		-- Realistic Damage System (RDS)
+		dashboardData = {
+			valueTypeToLoad = "rds",
+			valueObject = self,
+			valueFunc = DashboardLive.getDashboardLiveRDS,
+			additionalAttributesFunc = DashboardLive.getDBLAttributesRDS
+		}
+		self:loadDashboardsFromXML(self.xmlFile, "vehicle.dashboard.dashboardLive", dashboardData) 
+		if spec.vanillaIntegration then
+			dbgprint("onLoad : VanillaIntegration <RDS>", 2)
+			self:loadDashboardsFromXML(DashboardLive.vanillaIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.vanillaIntegration), dashboardData)
+		end
+		if spec.modIntegration then
+			dbgprint("onLoad : ModIntegration <RDS>", 2)
+			self:loadDashboardsFromXML(DashboardLive.modIntegrationXMLFile, string.format("vanillaDashboards.vanillaDashboard(%d).dashboardLive", spec.modIntegration), dashboardData)
+		end
         -- print
         dashboardData = {	
         					valueTypeToLoad = "print",
@@ -2476,6 +2492,16 @@ function DashboardLive.getDBLAttributesCVT(self, xmlFile, key, dashboard)
 	return true
 end
 
+function DashboardLive.getDBLAttributesRDS(self, xmlFile, key, dashboard)
+	dashboard.dblCommand = lower(xmlFile:getValue(key .. "#cmd", ""))
+    dbgprint("getDBLAttributesCVT : command: "..tostring(dashboard.dblCommand), 2)
+    
+    dashboard.dblState = xmlFile:getValue(key .. "#state")
+	dbgprint("getDBLAttributesCVT : state: "..tostring(dashboard.dblState), 2)
+	
+	return true
+end
+
 -- get states
 function DashboardLive.getDashboardLivePage(self, dashboard)
 	dbgprint("getDashboardLivePage : dblPage: "..tostring(dashboard.dblPage)..", dblPageGroup: "..tostring(dashboard.dblPageGroup), 4)
@@ -3605,6 +3631,36 @@ function DashboardLive.getDashboardLiveCVT(self, dashboard)
 		end
 	end
 	dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 4)
+	return returnValue
+end
+
+function DashboardLive.getDashboardLiveRDS(self, dashboard)
+	dbgprint("getDashboardLiveRDS : dblCommand: "..tostring(dashboard.dblCommand), 4)
+	dbgprint("getDashboardLiveRDS : dblState: "..tostring(dashboard.dblState), 4)
+	local c = dashboard.dblCommand
+	local s = dashboard.dblState
+	local returnValue = false
+	
+	local spec = self.spec_RealisticDamageSystem
+	if spec ~= nil and type(c)=="string" then
+		local rdsValueFunc = "forDBL_"..c
+		local rdsValue = spec[cvtValueFunc]
+		if s ~= nil then
+			if tonumber(s) ~= nil then
+				returnValue = tostring(rdsValue) == tostring(s)
+			else
+				local states = string.split(tostring(s), " ")
+				if states ~= nil and type(states) == "table" then
+					for _, state in pairs(states) do
+						returnValue = returnValue or (tostring(rdsValue) == tostring(state))
+					end
+				end
+			end
+		else 
+			returnValue = rdsValue or false
+		end
+	end
+	dbgprint("getDashboardLiveRDS : returnValue: "..tostring(returnValue), 4)
 	return returnValue
 end
 	

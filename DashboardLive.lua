@@ -2267,7 +2267,10 @@ function DashboardLive.getDBLAttributesRDA(self, xmlFile, key, dashboard)
     end
     
     dashboard.dblOption = lower(xmlFile:getValue(key .. "#option"))
-    dbgprint("getDBLAttributesRDA : option: "..tostring(dashboard.dblCommand), 2)
+    dbgprint("getDBLAttributesRDA : option: "..tostring(dashboard.dblOption), 2)
+    
+    dashboard.dblFactor = xmlFile:getValue(key .. "#factor") or 1
+    dbgprint("getDBLAttributesRDA : factor: "..tostring(dashboard.dblFactor), 2)
 
 	return true
 end
@@ -2937,18 +2940,20 @@ function DashboardLive.getDashboardLiveRDA(self, dashboard)
 	if specRDA ~= nil and dashboard.dblCommand ~= nil then
 		local c = dashboard.dblCommand
 		local o = dashboard.dblOption
+		local factor = dashboard.dblFactor
+		
 		if c == "inflating" then
 			return specRDA.isInflating
 			
 		elseif c == "pressure" then
 			if o == "target" then
-				return specRDA.inflationPressureTarget
+				return specRDA.inflationPressureTarget * factor
 			elseif o == "min" then
-				return specRDA.pressureMin
+				return specRDA.pressureMin * factor
 			elseif o == "max" then
-				return specRDA.pressureMax
+				return specRDA.pressureMax * factor
 			else
-				return specRDA.inflationPressure
+				return specRDA.inflationPressure * factor
 			end
 			
 		elseif c == "maxSpeed" then

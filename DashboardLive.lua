@@ -2599,6 +2599,14 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			end
 		end
 		
+		-- player name
+		if cmds == "playername" then
+			local len = string.len(dashboard.textMask or "xxxx")
+			local alignment = dashboard.textAlignment or "LEFT"
+	
+			returnValue = trim(g_currentMission.playerNickname, len, alignment)
+		end
+		
 		-- fillLevel	
 		if cmds == "filllevel" then
 			returnValue = getAttachedStatus(self, dashboard, "filllevel", 0)

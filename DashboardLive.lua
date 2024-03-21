@@ -1266,6 +1266,13 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	--dbgprint_r(implement, 4, 1)
     	
     	if implement ~= nil then
+    		-- detect and skip dolly
+    		if t ~= nil then
+				if implement.object ~= nil and implement.object.typeName == "dolly" then
+					t = t + 1
+				end
+			end
+			    		
     		if mode == "hasspec" then
 				resultValue = false
 				local options = element.dblOption

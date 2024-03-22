@@ -3133,7 +3133,7 @@ function DashboardLive.getDashboardLiveHLM(self, dashboard)
 		end
 	end
 
-	return resultValue
+	return returnValue
 end
 
 function DashboardLive.getDashboardLiveGPS(self, dashboard)

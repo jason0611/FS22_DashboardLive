@@ -1266,7 +1266,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	--dbgprint_r(implement, 4, 1)
     	
     	if implement ~= nil then
-    		-- detect and skip dolly
+    		-- detect and skip dolly or hookLiftTrailer
     		if t ~= nil then
 				if implement.object ~= nil and
 					(
@@ -2195,7 +2195,7 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", 0) -- trailer partition
 	dbgprint("getDBLAttributesBase : partition: "..tostring(dashboard.dblPartition), 2)
 	
-	dashboard.dblCond = xmlFile:getValue(key .. "#cond") -- compare
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond")
 	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
 	dashboard.dblCondValue = xmlFile:getValue(key .. "#condValue")
 	dbgprint("getDBLAttributesBase : condValue: "..tostring(dashboard.dblCondValue), 2)
@@ -2297,7 +2297,7 @@ function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
     	return false
     end
     
-    dashboard.dblCond = xmlFile:getValue(key .. "#cond") -- compare
+    dashboard.dblCond = xmlFile:getValue(key .. "#cond")
 	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
 
 	return true
@@ -2323,8 +2323,11 @@ end
 function DashboardLive.getDBLAttributesHLM(self, xmlFile, key, dashboard)
 	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option"))
     dbgprint("getDBLAttributesHLM : option: "..tostring(dashboard.dblOption), 2)
-
-    return true
+    
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond")
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
+    
+	return true
 end
 
 -- gps
@@ -2339,6 +2342,9 @@ function DashboardLive.getDBLAttributesGPS(self, xmlFile, key, dashboard)
     
 	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option", "on")) -- 'on' or 'active'
     dbgprint("getDBLAttributesGPS : option: "..tostring(dashboard.dblOption), 2)
+	
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond")
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
 
 	return true
 end
@@ -2504,6 +2510,9 @@ function DashboardLive.getDBLAttributesCVT(self, xmlFile, key, dashboard)
     dashboard.dblState = xmlFile:getValue(key .. "#state")
 	dbgprint("getDBLAttributesCVT : state: "..tostring(dashboard.dblState), 2)
 	
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond")
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
+	
 	return true
 end
 
@@ -2513,6 +2522,15 @@ function DashboardLive.getDBLAttributesRDS(self, xmlFile, key, dashboard)
     
     dashboard.dblState = xmlFile:getValue(key .. "#state")
 	dbgprint("getDBLAttributesCVT : state: "..tostring(dashboard.dblState), 2)
+	
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond")
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
+	dashboard.dblCondValue = xmlFile:getValue(key .. "#condValue")
+	dbgprint("getDBLAttributesBase : condValue: "..tostring(dashboard.dblCondValue), 2)
+	if dashboard.dblCond ~= nil and dashboard.dblCond ~= "not" and dashboard.dblCondValue == nil then
+		Logging.xmlError(self.xmlFile, "No value given for comparation")
+		return false
+	end
 	
 	return true
 end
@@ -3095,19 +3113,27 @@ function DashboardLive.getDashboardLiveHLM(self, dashboard)
 	local specHLM = self.spec_HeadlandManagement
 	
 	local o = dashboard.dblOption
+	local returnValue = false
 
 	if specHLM ~= nil and specHLM.exists then
 		if o == "field" then
-			return specHLM.isOn and not specHLM.isActive and (specHLM.contour == 0 or specHLM.contour == nil)
+			returnValue = specHLM.isOn and not specHLM.isActive and (specHLM.contour == 0 or specHLM.contour == nil)
 		elseif o == "headland" then
-			return specHLM.isOn and specHLM.isActive
+			returnValue = specHLM.isOn and specHLM.isActive
 		elseif o == "contour" then
-			return specHLM.isOn and not specHLM.isActive and (specHLM.contour ~= 0 and specHLM.contour ~= nil)
+			returnValue = specHLM.isOn and not specHLM.isActive and (specHLM.contour ~= 0 and specHLM.contour ~= nil)
 		else
-			return specHLM.isOn
+			returnValue = specHLM.isOn
 		end
 	end	
-	return false
+
+	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+		if dashboard.dblCond == "not" then
+			returnValue = not returnValue
+		end
+	end
+
+	return resultValue
 end
 
 function DashboardLive.getDashboardLiveGPS(self, dashboard)
@@ -3117,34 +3143,38 @@ function DashboardLive.getDashboardLiveGPS(self, dashboard)
 	local specHLM = self.spec_HeadlandManagement
 	local o = dashboard.dblOption
 	
+	local returnValue = false
+	
 	if spec.modGuidanceSteeringFound or spec.modVCAFound or spec.modEVFound then
 		if o == "on" then
-			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
 			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and specHLM.contour ~= 0)
-			return returnValue
 		
 		elseif o == "active" then
-			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
+			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapIsOn")) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
 			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0 and not specHLM.contourSetActive)
-			return returnValue
 	
 		elseif o == "lane+" then
-			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane >= 0	
-			return returnValue
 
 		elseif o == "lane-" then
-			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane < 0
-			return returnValue
 		end	
 	end
 	
-	return false
+	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+		if dashboard.dblCond == "not" then
+			returnValue = not returnValue
+		end
+	end
+
+	return returnValue
 end
 
 function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
@@ -3655,6 +3685,28 @@ function DashboardLive.getDashboardLiveCVT(self, dashboard)
 			returnValue = cvtValue or false
 		end
 	end
+
+	if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
+		local cond = dashboard.dblCond
+		local value = dashboard.dblCondValue
+		if cond == "less" then
+			returnValue = (returnValue < value)
+		elseif cond == "lessequal" then
+			returnValue = (returnValue <= value)
+		elseif cond == "more" then
+			returnValue = (returnValue > value)
+		elseif cond == "moreequal" then
+			returnValue = (returnValue >= value)
+		elseif cond == "equal" then
+			returnValue = (returnValue == value)
+		end
+	end
+	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+		if dashboard.dblCond == "not" then
+			returnValue = not returnValue
+		end
+	end
+
 	dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 4)
 	return returnValue
 end
@@ -3685,6 +3737,28 @@ function DashboardLive.getDashboardLiveRDS(self, dashboard)
 			returnValue = rdsValue or false
 		end
 	end
+	
+	if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
+		local cond = dashboard.dblCond
+		local value = dashboard.dblCondValue
+		if cond == "less" then
+			returnValue = (returnValue < value)
+		elseif cond == "lessequal" then
+			returnValue = (returnValue <= value)
+		elseif cond == "more" then
+			returnValue = (returnValue > value)
+		elseif cond == "moreequal" then
+			returnValue = (returnValue >= value)
+		elseif cond == "equal" then
+			returnValue = (returnValue == value)
+		end
+	end
+	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+		if dashboard.dblCond == "not" then
+			returnValue = not returnValue
+		end
+	end
+
 	dbgprint("getDashboardLiveRDS : returnValue: "..tostring(returnValue), 4)
 	return returnValue
 end

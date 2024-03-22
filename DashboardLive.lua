@@ -1268,7 +1268,12 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	if implement ~= nil then
     		-- detect and skip dolly
     		if t ~= nil then
-				if implement.object ~= nil and implement.object.typeName == "dolly" then
+				if implement.object ~= nil and
+					(
+						implement.object.typeName == "dolly"
+					or	implement.object.typeName == "hookLiftTrailer"
+					) 
+				then
 					t = t + 1
 				end
 			end

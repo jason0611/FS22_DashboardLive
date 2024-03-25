@@ -996,7 +996,7 @@ local function findSpecialization(device, specName, iteration, iterationStep)
 	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
 		return device[specName], device
 		
-	elseif (iteration == nil or iterationStep < iteration) and device.getAttachedImplements ~= nil then
+	elseif (iteration == nil or iterationStep < iteration) and device ~= nil and device.getAttachedImplements ~= nil then
 		local implements = device:getAttachedImplements()
 		for _,implement in pairs(implements) do
 			local spec, device = findSpecialization(implement.object, specName, iteration, iterationStep + 1)
@@ -1005,8 +1005,21 @@ local function findSpecialization(device, specName, iteration, iterationStep)
 			end
 		end
 	else 
-		return nil
+		return nil, nil
 	end
+end
+
+local function findLastSpecialization(device, specName, lastDeviceSpec, lastDevice)
+	if device ~= nil and device[specName] ~= nil then
+		lastDeviceSpec, lastDevice = device[spec], device
+	end
+	if device ~= nil and device.getAttachedImplements ~= nil then
+		local implements = device:getAttachedImplements()
+		for _,implement in pairs(implements) do
+			lastDeviceSpec, lastDevice = findLastSpecialization(implement.object, specName, lastDeviceSpec, lastDevice)
+		end
+	end
+	return lastDeviceSpec, lastDevice
 end
 
 local function findPTOStatus(device)
@@ -3498,7 +3511,13 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 	
 	local returnValue = ""
 	
-	local specCropSensor = findSpecialization(self, "spec_cropSensor", t or 1)
+	local specCropSensor
+	if tonumber(t) ~= nil then 
+		specCropSensor = findSpecialization(self, "spec_cropSensor", t or 1)
+	else
+		specCropSensor = findLastSpecialization(self, "spec_cropSensor")
+	end
+	
 	if c == "cropsensor" then
 		if specCropSensor ~= nil then
 			dbgprint("cropSensor: returnValue: "..tostring(specCropSensor.isActive), 4)
@@ -3509,7 +3528,12 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 		end
 	end
 	
-	local specExtendedSprayer, pfVehicle = findSpecialization(self, "spec_extendedSprayer", t)
+	local specExtendedSprayer, pfVehicle
+	if tonumber(t) ~= nil then
+		specExtendedSprayer, pfVehicle = findSpecialization(self, "spec_extendedSprayer", t)
+	else
+		specExtendedSprayer, pfVehicle = findLastSpecialization(self, "spec_extendedSprayer")
+	end
 	if specExtendedSprayer ~= nil then
 		dbgprint("found spec spec_extendedSprayer in "..tostring(pfVehicle:getName()), 4)
 

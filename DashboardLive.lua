@@ -3137,14 +3137,13 @@ function DashboardLive.getDashboardLiveHLM(self, dashboard)
 			returnValue = specHLM.isOn and not specHLM.isActive and (specHLM.contour ~= 0 and specHLM.contour ~= nil)
 		else
 			returnValue = specHLM.isOn
+			if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+				if dashboard.dblCond == "not" then
+					returnValue = not returnValue
+				end
+			end
 		end
 	end	
-
-	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
-		if dashboard.dblCond == "not" then
-			returnValue = not returnValue
-		end
-	end
 
 	return returnValue
 end
@@ -3163,13 +3162,25 @@ function DashboardLive.getDashboardLiveGPS(self, dashboard)
 			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
-			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and specHLM.contour ~= 0)
+			--returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and specHLM.contour ~= 0)
+			
+			if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+				if dashboard.dblCond == "not" then
+					returnValue = not returnValue
+				end
+			end
 		
 		elseif o == "active" then
 			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapIsOn")) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
-			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0 and not specHLM.contourSetActive)
+			--returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0 and not specHLM.contourSetActive)
+			
+			if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+				if dashboard.dblCond == "not" then
+					returnValue = not returnValue
+				end
+			end
 	
 		elseif o == "lane+" then
 			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
@@ -3181,12 +3192,6 @@ function DashboardLive.getDashboardLiveGPS(self, dashboard)
 		end	
 	end
 	
-	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
-		if dashboard.dblCond == "not" then
-			returnValue = not returnValue
-		end
-	end
-
 	return returnValue
 end
 
@@ -3708,29 +3713,29 @@ function DashboardLive.getDashboardLiveCVT(self, dashboard)
 		else 
 			returnValue = cvtValue or false
 		end
-	end
-
-	if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
-		local cond = dashboard.dblCond
-		local value = dashboard.dblCondValue
-		if cond == "less" then
-			returnValue = (returnValue < value)
-		elseif cond == "lessequal" then
-			returnValue = (returnValue <= value)
-		elseif cond == "more" then
-			returnValue = (returnValue > value)
-		elseif cond == "moreequal" then
-			returnValue = (returnValue >= value)
-		elseif cond == "equal" then
-			returnValue = (returnValue == value)
+		
+		if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
+			local cond = dashboard.dblCond
+			local value = dashboard.dblCondValue
+			if cond == "less" then
+				returnValue = (returnValue < value)
+			elseif cond == "lessequal" then
+				returnValue = (returnValue <= value)
+			elseif cond == "more" then
+				returnValue = (returnValue > value)
+			elseif cond == "moreequal" then
+				returnValue = (returnValue >= value)
+			elseif cond == "equal" then
+				returnValue = (returnValue == value)
+			end
+		end
+		if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+			if dashboard.dblCond == "not" then
+				returnValue = not returnValue
+			end
 		end
 	end
-	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
-		if dashboard.dblCond == "not" then
-			returnValue = not returnValue
-		end
-	end
-
+	
 	dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 4)
 	return returnValue
 end
@@ -3760,29 +3765,29 @@ function DashboardLive.getDashboardLiveRDS(self, dashboard)
 		else 
 			returnValue = rdsValue or false
 		end
+		
+		if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
+			local cond = dashboard.dblCond
+			local value = dashboard.dblCondValue
+			if cond == "less" then
+				returnValue = (returnValue < value)
+			elseif cond == "lessequal" then
+				returnValue = (returnValue <= value)
+			elseif cond == "more" then
+				returnValue = (returnValue > value)
+			elseif cond == "moreequal" then
+				returnValue = (returnValue >= value)
+			elseif cond == "equal" then
+				returnValue = (returnValue == value)
+			end
+		end
+		if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+			if dashboard.dblCond == "not" then
+				returnValue = not returnValue
+			end
+		end
 	end
 	
-	if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
-		local cond = dashboard.dblCond
-		local value = dashboard.dblCondValue
-		if cond == "less" then
-			returnValue = (returnValue < value)
-		elseif cond == "lessequal" then
-			returnValue = (returnValue <= value)
-		elseif cond == "more" then
-			returnValue = (returnValue > value)
-		elseif cond == "moreequal" then
-			returnValue = (returnValue >= value)
-		elseif cond == "equal" then
-			returnValue = (returnValue == value)
-		end
-	end
-	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
-		if dashboard.dblCond == "not" then
-			returnValue = not returnValue
-		end
-	end
-
 	dbgprint("getDashboardLiveRDS : returnValue: "..tostring(returnValue), 4)
 	return returnValue
 end

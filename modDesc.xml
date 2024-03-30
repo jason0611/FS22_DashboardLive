@@ -416,7 +416,7 @@ Mais ideias ou solicitações são bem-vindas em <a href="https://github.com/jas
         </text>
         <text name="input_DBL_PAGEGRPDN">
             <en>Terminal group down up</en>
-            <cz>Skupina terminálů dolů</cz>
+            <cz>Skupina terminálů dolu</cz>
             <de>Terminalgruppe zurück</de>
             <br>Grupo de terminais para baixo</br>
             <ru>Предыдущий монитор</ru>

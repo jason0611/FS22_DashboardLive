@@ -1736,6 +1736,12 @@ function DashboardLive:addDarkModeToLoadTextDashboardFromXML(superfunc, xmlFile,
 		if dashboard.textColorDM ~= nil or dashboard.hiddenColorDM ~= nil then
 			dbgprint("loadTextDashboardFromXML : Setting dark mode for "..self:getName(), 2)
 			spec.darkModeExists = "true"
+			
+			dbgprint("loadTextDashboardFromXML : textColorDM:", 2)
+			dbgprint_r(dashboard.textColorDM, 2, 3)
+			dbgprint("loadTextDashboardFromXML : hiddenColorDM:", 2)
+			dbgprint_r(dashboard.hiddenColorDM, 2, 3)
+
 		end
 	end
 	
@@ -1766,20 +1772,21 @@ function DashboardLive:addDarkModeToDefaultEmitterDashboardStateFunc(dashboard, 
 	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
 		if spec.darkMode then
 			dbgprint("switching to dark mode: "..tostring(self:getName()), 2)
-			dashboard.baseColor = dashboard.baseColorDM
-			dashboard.emitColor = dashboard.emitColorDM
-			dashboard.intensity = dashboard.intensityDM
+			if dashboard.baseColorDM ~= nil then dashboard.baseColor = dashboard.baseColorDM end
+			if dashboard.emitColorDM ~= nil then dashboard.emitColor = dashboard.emitColorDM end
+			if dashboard.intensityDM ~= nil then dashboard.intensity = dashboard.intensityDM end
 		else	
 			dbgprint("switching to light mode: "..tostring(self:getName()), 2)
-			dashboard.baseColor = dashboard.baseColorLM
-			dashboard.emitColor = dashboard.emitColorLM
-			dashboard.intensity = dashboard.intensityLM
+			if dashboard.baseColorLM ~= nil then dashboard.baseColor = dashboard.baseColorLM end
+			if dashboard.emitColorLM ~= nil then dashboard.emitColor = dashboard.emitColorLM end
+			if dashboard.intensityLM ~= nil then dashboard.intensity = dashboard.intensityLM end
 		end
+		local intensity = dashboard.intensity or 1
 		if dashboard.baseColor ~= nil then 
-			setShaderParameter(dashboard.node, "baseColor", dashboard.baseColor[1], dashboard.baseColor[2], dashboard.baseColor[3], 1, false)
+			setShaderParameter(dashboard.node, "baseColor", dashboard.baseColor[1], dashboard.baseColor[2], dashboard.baseColor[3], intensity, false)
 		end
 		if dashboard.emitColor ~= nil then
-			setShaderParameter(dashboard.node, "emitColor", dashboard.emitColor[1], dashboard.emitColor[2], dashboard.emitColor[3], 1, false)
+			setShaderParameter(dashboard.node, "emitColor", dashboard.emitColor[1], dashboard.emitColor[2], dashboard.emitColor[3], intensity, false)
 		end
 	end
 end
@@ -1791,16 +1798,16 @@ function DashboardLive:addDarkModeToDefaultTextDashboardStateFunc(dashboard, new
 	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
 		if spec.darkMode then
 			dbgprint("switching to dark mode: "..tostring(self:getName()), 2)
-			dashboard.textColor = dashboard.textColorDM
-			dashboard.hiddenColor = dashboard.hiddenColorDM
+			if dashboard.textColorDM ~= nil then dashboard.textColor = dashboard.textColorDM end
+			if dashboard.hiddenColorDM ~= nil then dashboard.hiddenColor = dashboard.hiddenColorDM end
 		else	
 			dbgprint("switching to light mode: "..tostring(self:getName()), 2)
-			dashboard.textColor = dashboard.textColorLM
-			dashboard.hiddenColor = dashboard.hiddenColorLM
+			if dashboard.textColorLM ~= nil then dashboard.textColor = dashboard.textColorLM end
+			if dashboard.hiddenColorLM ~= nil then dashboard.hiddenColor = dashboard.hiddenColorLM end
 		end
 		if dashboard.textColor ~= nil then
 			for _, char in pairs(dashboard.characterLine.characters) do
-				dashboard.fontMaterial:setFontCharacterColor(char, dashboard.textColor[1], dashboard.textColor[2], dashboard.textColor[3], 1, dashboard.characterLine.textEmissiveScale)
+				dashboard.fontMaterial:setFontCharacterColor(char, dashboard.textColor[1], dashboard.textColor[2], dashboard.textColor[3], dashboard.textColor[4], dashboard.characterLine.textEmissiveScale)
 			end
 		end
 	end
@@ -1813,10 +1820,10 @@ function DashboardLive:addDarkModeToDefaultNumberDashboardStateFunc(dashboard, n
 	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
 		if spec.darkMode then
 			dbgprint("defaultNumberDashboardStateFunc : switching to dark mode: "..tostring(self:getName()), 2)
-			dashboard.numberColor = dashboard.numberColorDM
+			if dashboard.numberColorDM ~= nil then dashboard.numberColor = dashboard.numberColorDM end
 		else	
 			dbgprint("defaultNumberDashboardStateFunc : switching to light mode: "..tostring(self:getName()), 2)
-			dashboard.numberColor = dashboard.numberColorLM
+			if dashboard.numberColorLM ~= nil then dashboard.numberColor = dashboard.numberColorLM end
 		end
 		if dashboard.numberColor ~= nil then
 			for _, numberNode in pairs(dashboard.numberNodes) do

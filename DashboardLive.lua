@@ -941,7 +941,7 @@ end
 -- Supporting functions
 
 local function trim(text, textLength, alignment)
-	dbgprint("trim: text = "..tostring(text).." / alignment = "..tostring(alignment), 2)
+	dbgprint("trim: text = "..tostring(text).." / alignment = "..tostring(alignment), 4)
 	text = text or " "
 
 	-- converter
@@ -958,7 +958,7 @@ local function trim(text, textLength, alignment)
 	text = string.gsub(text, ch_oe, "oe")
 	text = string.gsub(text, ch_ue, "ue")
 	
-	dbgprint("trim: converted text = "..tostring(text), 2)
+	dbgprint("trim: converted text = "..tostring(text), 4)
 	
 	local l = string.len(text)
 	if l == textLength then
@@ -1011,7 +1011,7 @@ end
 
 local function findLastSpecialization(device, specName, lastDeviceSpec, lastDevice)
 	if device ~= nil and device[specName] ~= nil then
-		lastDeviceSpec, lastDevice = device[spec], device
+		lastDeviceSpec, lastDevice = device[specName], device
 	end
 	if device ~= nil and device.getAttachedImplements ~= nil then
 		local implements = device:getAttachedImplements()
@@ -3547,7 +3547,7 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 		specExtendedSprayer, pfVehicle = findLastSpecialization(self, "spec_extendedSprayer")
 	end
 	if specExtendedSprayer ~= nil then
-		dbgprint("found spec spec_extendedSprayer in "..tostring(pfVehicle:getName()), 4)
+		dbgprint("found spec spec_extendedSprayer in "..tostring(pfVehicle:getName()), 2)
 
 		local sourceVehicle, fillUnitIndex = FS22_precisionFarming.ExtendedSprayer.getFillTypeSourceVehicle(pfVehicle)
 		local hasLimeLoaded, hasFertilizerLoaded = FS22_precisionFarming.ExtendedSprayer.getCurrentSprayerMode(pfVehicle)

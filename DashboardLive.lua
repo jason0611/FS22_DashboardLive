@@ -941,7 +941,7 @@ end
 -- Supporting functions
 
 local function trim(text, textLength, alignment)
-	dbgprint("trim: text = "..tostring(text).." / alignment = "..tostring(alignment), 2)
+	dbgprint("trim: text = "..tostring(text).." / alignment = "..tostring(alignment), 4)
 	text = text or " "
 
 	-- converter
@@ -958,7 +958,7 @@ local function trim(text, textLength, alignment)
 	text = string.gsub(text, ch_oe, "oe")
 	text = string.gsub(text, ch_ue, "ue")
 	
-	dbgprint("trim: converted text = "..tostring(text), 2)
+	dbgprint("trim: converted text = "..tostring(text), 4)
 	
 	local l = string.len(text)
 	if l == textLength then
@@ -996,7 +996,7 @@ local function findSpecialization(device, specName, iteration, iterationStep)
 	if (iteration == nil or iteration == iterationStep) and device ~= nil and device[specName] ~= nil then
 		return device[specName], device
 		
-	elseif (iteration == nil or iterationStep < iteration) and device.getAttachedImplements ~= nil then
+	elseif (iteration == nil or iterationStep < iteration) and device ~= nil and device.getAttachedImplements ~= nil then
 		local implements = device:getAttachedImplements()
 		for _,implement in pairs(implements) do
 			local spec, device = findSpecialization(implement.object, specName, iteration, iterationStep + 1)
@@ -1005,8 +1005,21 @@ local function findSpecialization(device, specName, iteration, iterationStep)
 			end
 		end
 	else 
-		return nil
+		return nil, nil
 	end
+end
+
+local function findLastSpecialization(device, specName, lastDeviceSpec, lastDevice)
+	if device ~= nil and device[specName] ~= nil then
+		lastDeviceSpec, lastDevice = device[specName], device
+	end
+	if device ~= nil and device.getAttachedImplements ~= nil then
+		local implements = device:getAttachedImplements()
+		for _,implement in pairs(implements) do
+			lastDeviceSpec, lastDevice = findLastSpecialization(implement.object, specName, lastDeviceSpec, lastDevice)
+		end
+	end
+	return lastDeviceSpec, lastDevice
 end
 
 local function findPTOStatus(device)
@@ -1266,6 +1279,18 @@ local function getAttachedStatus(vehicle, element, mode, default)
     	--dbgprint_r(implement, 4, 1)
     	
     	if implement ~= nil then
+    		-- detect and skip dolly or hookLiftTrailer
+    		if t ~= nil then
+				if implement.object ~= nil and
+					(
+						implement.object.typeName == "dolly"
+					or	implement.object.typeName == "hookLiftTrailer"
+					) 
+				then
+					t = t + 1
+				end
+			end
+			    		
     		if mode == "hasspec" then
 				resultValue = false
 				local options = element.dblOption
@@ -1711,6 +1736,12 @@ function DashboardLive:addDarkModeToLoadTextDashboardFromXML(superfunc, xmlFile,
 		if dashboard.textColorDM ~= nil or dashboard.hiddenColorDM ~= nil then
 			dbgprint("loadTextDashboardFromXML : Setting dark mode for "..self:getName(), 2)
 			spec.darkModeExists = "true"
+			
+			dbgprint("loadTextDashboardFromXML : textColorDM:", 2)
+			dbgprint_r(dashboard.textColorDM, 2, 3)
+			dbgprint("loadTextDashboardFromXML : hiddenColorDM:", 2)
+			dbgprint_r(dashboard.hiddenColorDM, 2, 3)
+
 		end
 	end
 	
@@ -1741,20 +1772,21 @@ function DashboardLive:addDarkModeToDefaultEmitterDashboardStateFunc(dashboard, 
 	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
 		if spec.darkMode then
 			dbgprint("switching to dark mode: "..tostring(self:getName()), 2)
-			dashboard.baseColor = dashboard.baseColorDM
-			dashboard.emitColor = dashboard.emitColorDM
-			dashboard.intensity = dashboard.intensityDM
+			if dashboard.baseColorDM ~= nil then dashboard.baseColor = dashboard.baseColorDM end
+			if dashboard.emitColorDM ~= nil then dashboard.emitColor = dashboard.emitColorDM end
+			if dashboard.intensityDM ~= nil then dashboard.intensity = dashboard.intensityDM end
 		else	
 			dbgprint("switching to light mode: "..tostring(self:getName()), 2)
-			dashboard.baseColor = dashboard.baseColorLM
-			dashboard.emitColor = dashboard.emitColorLM
-			dashboard.intensity = dashboard.intensityLM
+			if dashboard.baseColorLM ~= nil then dashboard.baseColor = dashboard.baseColorLM end
+			if dashboard.emitColorLM ~= nil then dashboard.emitColor = dashboard.emitColorLM end
+			if dashboard.intensityLM ~= nil then dashboard.intensity = dashboard.intensityLM end
 		end
+		local intensity = dashboard.intensity or 1
 		if dashboard.baseColor ~= nil then 
-			setShaderParameter(dashboard.node, "baseColor", dashboard.baseColor[1], dashboard.baseColor[2], dashboard.baseColor[3], 1, false)
+			setShaderParameter(dashboard.node, "baseColor", dashboard.baseColor[1], dashboard.baseColor[2], dashboard.baseColor[3], intensity, false)
 		end
 		if dashboard.emitColor ~= nil then
-			setShaderParameter(dashboard.node, "emitColor", dashboard.emitColor[1], dashboard.emitColor[2], dashboard.emitColor[3], 1, false)
+			setShaderParameter(dashboard.node, "emitColor", dashboard.emitColor[1], dashboard.emitColor[2], dashboard.emitColor[3], intensity, false)
 		end
 	end
 end
@@ -1766,16 +1798,16 @@ function DashboardLive:addDarkModeToDefaultTextDashboardStateFunc(dashboard, new
 	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
 		if spec.darkMode then
 			dbgprint("switching to dark mode: "..tostring(self:getName()), 2)
-			dashboard.textColor = dashboard.textColorDM
-			dashboard.hiddenColor = dashboard.hiddenColorDM
+			if dashboard.textColorDM ~= nil then dashboard.textColor = dashboard.textColorDM end
+			if dashboard.hiddenColorDM ~= nil then dashboard.hiddenColor = dashboard.hiddenColorDM end
 		else	
 			dbgprint("switching to light mode: "..tostring(self:getName()), 2)
-			dashboard.textColor = dashboard.textColorLM
-			dashboard.hiddenColor = dashboard.hiddenColorLM
+			if dashboard.textColorLM ~= nil then dashboard.textColor = dashboard.textColorLM end
+			if dashboard.hiddenColorLM ~= nil then dashboard.hiddenColor = dashboard.hiddenColorLM end
 		end
 		if dashboard.textColor ~= nil then
 			for _, char in pairs(dashboard.characterLine.characters) do
-				dashboard.fontMaterial:setFontCharacterColor(char, dashboard.textColor[1], dashboard.textColor[2], dashboard.textColor[3], 1, dashboard.characterLine.textEmissiveScale)
+				dashboard.fontMaterial:setFontCharacterColor(char, dashboard.textColor[1], dashboard.textColor[2], dashboard.textColor[3], dashboard.textColor[4], dashboard.characterLine.textEmissiveScale)
 			end
 		end
 	end
@@ -1788,10 +1820,10 @@ function DashboardLive:addDarkModeToDefaultNumberDashboardStateFunc(dashboard, n
 	if spec ~= nil and spec.darkMode ~= spec.darkModeLast then
 		if spec.darkMode then
 			dbgprint("defaultNumberDashboardStateFunc : switching to dark mode: "..tostring(self:getName()), 2)
-			dashboard.numberColor = dashboard.numberColorDM
+			if dashboard.numberColorDM ~= nil then dashboard.numberColor = dashboard.numberColorDM end
 		else	
 			dbgprint("defaultNumberDashboardStateFunc : switching to light mode: "..tostring(self:getName()), 2)
-			dashboard.numberColor = dashboard.numberColorLM
+			if dashboard.numberColorLM ~= nil then dashboard.numberColor = dashboard.numberColorLM end
 		end
 		if dashboard.numberColor ~= nil then
 			for _, numberNode in pairs(dashboard.numberNodes) do
@@ -2183,7 +2215,7 @@ function DashboardLive.getDBLAttributesBase(self, xmlFile, key, dashboard)
 	dashboard.dblPartition = xmlFile:getValue(key .. "#partition", 0) -- trailer partition
 	dbgprint("getDBLAttributesBase : partition: "..tostring(dashboard.dblPartition), 2)
 	
-	dashboard.dblCond = xmlFile:getValue(key .. "#cond") -- compare
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond")
 	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
 	dashboard.dblCondValue = xmlFile:getValue(key .. "#condValue")
 	dbgprint("getDBLAttributesBase : condValue: "..tostring(dashboard.dblCondValue), 2)
@@ -2285,7 +2317,7 @@ function DashboardLive.getDBLAttributesVCA(self, xmlFile, key, dashboard)
     	return false
     end
     
-    dashboard.dblCond = xmlFile:getValue(key .. "#cond") -- compare
+    dashboard.dblCond = xmlFile:getValue(key .. "#cond")
 	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
 
 	return true
@@ -2311,8 +2343,11 @@ end
 function DashboardLive.getDBLAttributesHLM(self, xmlFile, key, dashboard)
 	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option"))
     dbgprint("getDBLAttributesHLM : option: "..tostring(dashboard.dblOption), 2)
-
-    return true
+    
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond")
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
+    
+	return true
 end
 
 -- gps
@@ -2327,6 +2362,9 @@ function DashboardLive.getDBLAttributesGPS(self, xmlFile, key, dashboard)
     
 	dashboard.dblOption = lower(xmlFile:getValue(key .. "#option", "on")) -- 'on' or 'active'
     dbgprint("getDBLAttributesGPS : option: "..tostring(dashboard.dblOption), 2)
+	
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond")
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
 
 	return true
 end
@@ -2492,6 +2530,9 @@ function DashboardLive.getDBLAttributesCVT(self, xmlFile, key, dashboard)
     dashboard.dblState = xmlFile:getValue(key .. "#state")
 	dbgprint("getDBLAttributesCVT : state: "..tostring(dashboard.dblState), 2)
 	
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond")
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
+	
 	return true
 end
 
@@ -2501,6 +2542,15 @@ function DashboardLive.getDBLAttributesRDS(self, xmlFile, key, dashboard)
     
     dashboard.dblState = xmlFile:getValue(key .. "#state")
 	dbgprint("getDBLAttributesCVT : state: "..tostring(dashboard.dblState), 2)
+	
+	dashboard.dblCond = xmlFile:getValue(key .. "#cond")
+	dbgprint("getDBLAttributesBase : cond: "..tostring(dashboard.dblCond), 2)
+	dashboard.dblCondValue = xmlFile:getValue(key .. "#condValue")
+	dbgprint("getDBLAttributesBase : condValue: "..tostring(dashboard.dblCondValue), 2)
+	if dashboard.dblCond ~= nil and dashboard.dblCond ~= "not" and dashboard.dblCondValue == nil then
+		Logging.xmlError(self.xmlFile, "No value given for comparation")
+		return false
+	end
 	
 	return true
 end
@@ -3083,19 +3133,26 @@ function DashboardLive.getDashboardLiveHLM(self, dashboard)
 	local specHLM = self.spec_HeadlandManagement
 	
 	local o = dashboard.dblOption
+	local returnValue = false
 
 	if specHLM ~= nil and specHLM.exists then
 		if o == "field" then
-			return specHLM.isOn and not specHLM.isActive and (specHLM.contour == 0 or specHLM.contour == nil)
+			returnValue = specHLM.isOn and not specHLM.isActive and (specHLM.contour == 0 or specHLM.contour == nil)
 		elseif o == "headland" then
-			return specHLM.isOn and specHLM.isActive
+			returnValue = specHLM.isOn and specHLM.isActive
 		elseif o == "contour" then
-			return specHLM.isOn and not specHLM.isActive and (specHLM.contour ~= 0 and specHLM.contour ~= nil)
+			returnValue = specHLM.isOn and not specHLM.isActive and (specHLM.contour ~= 0 and specHLM.contour ~= nil)
 		else
-			return specHLM.isOn
+			returnValue = specHLM.isOn
+			if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+				if dashboard.dblCond == "not" then
+					returnValue = not returnValue
+				end
+			end
 		end
 	end	
-	return false
+
+	return returnValue
 end
 
 function DashboardLive.getDashboardLiveGPS(self, dashboard)
@@ -3105,34 +3162,44 @@ function DashboardLive.getDashboardLiveGPS(self, dashboard)
 	local specHLM = self.spec_HeadlandManagement
 	local o = dashboard.dblOption
 	
+	local returnValue = false
+	
 	if spec.modGuidanceSteeringFound or spec.modVCAFound or spec.modEVFound then
 		if o == "on" then
-			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapDirection") ~= 0) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
-			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and specHLM.contour ~= 0)
-			return returnValue
+			--returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and specHLM.contour ~= 0)
+			
+			if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+				if dashboard.dblCond == "not" then
+					returnValue = not returnValue
+				end
+			end
 		
 		elseif o == "active" then
-			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
+			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceSteeringIsActive
 			returnValue = returnValue or (spec.modVCAFound and self:vcaGetState("snapIsOn")) 
 			returnValue = returnValue or (spec.modEVFound and self.vData.is[5])
-			returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0 and not specHLM.contourSetActive)
-			return returnValue
+			--returnValue = returnValue or (specHLM ~= nil and specHLM.exists and specHLM.isOn and not specHLM.isActive and specHLM.contour ~= 0 and not specHLM.contourSetActive)
+			
+			if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+				if dashboard.dblCond == "not" then
+					returnValue = not returnValue
+				end
+			end
 	
 		elseif o == "lane+" then
-			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane >= 0	
-			return returnValue
 
 		elseif o == "lane-" then
-			local returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
+			returnValue = specGS ~= nil and specGS.lastInputValues ~= nil and specGS.lastInputValues.guidanceIsActive
 			returnValue = returnValue and specGS.guidanceData ~= nil and specGS.guidanceData.currentLane ~= nil and specGS.guidanceData.currentLane < 0
-			return returnValue
 		end	
 	end
 	
-	return false
+	return returnValue
 end
 
 function DashboardLive.getDashboardLiveGPSLane(self, dashboard)
@@ -3456,7 +3523,13 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 	
 	local returnValue = ""
 	
-	local specCropSensor = findSpecialization(self, "spec_cropSensor", t or 1)
+	local specCropSensor
+	if tonumber(t) ~= nil then 
+		specCropSensor = findSpecialization(self, "spec_cropSensor", t or 1)
+	else
+		specCropSensor = findLastSpecialization(self, "spec_cropSensor")
+	end
+	
 	if c == "cropsensor" then
 		if specCropSensor ~= nil then
 			dbgprint("cropSensor: returnValue: "..tostring(specCropSensor.isActive), 4)
@@ -3467,9 +3540,14 @@ function DashboardLive.getDashboardLivePrecisionFarming(self, dashboard)
 		end
 	end
 	
-	local specExtendedSprayer, pfVehicle = findSpecialization(self, "spec_extendedSprayer", t)
+	local specExtendedSprayer, pfVehicle
+	if tonumber(t) ~= nil then
+		specExtendedSprayer, pfVehicle = findSpecialization(self, "spec_extendedSprayer", t)
+	else
+		specExtendedSprayer, pfVehicle = findLastSpecialization(self, "spec_extendedSprayer")
+	end
 	if specExtendedSprayer ~= nil then
-		dbgprint("found spec spec_extendedSprayer in "..tostring(pfVehicle:getName()), 4)
+		dbgprint("found spec spec_extendedSprayer in "..tostring(pfVehicle:getName()), 2)
 
 		local sourceVehicle, fillUnitIndex = FS22_precisionFarming.ExtendedSprayer.getFillTypeSourceVehicle(pfVehicle)
 		local hasLimeLoaded, hasFertilizerLoaded = FS22_precisionFarming.ExtendedSprayer.getCurrentSprayerMode(pfVehicle)
@@ -3642,7 +3720,29 @@ function DashboardLive.getDashboardLiveCVT(self, dashboard)
 		else 
 			returnValue = cvtValue or false
 		end
+		
+		if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
+			local cond = dashboard.dblCond
+			local value = dashboard.dblCondValue
+			if cond == "less" then
+				returnValue = (returnValue < value)
+			elseif cond == "lessequal" then
+				returnValue = (returnValue <= value)
+			elseif cond == "more" then
+				returnValue = (returnValue > value)
+			elseif cond == "moreequal" then
+				returnValue = (returnValue >= value)
+			elseif cond == "equal" then
+				returnValue = (returnValue == value)
+			end
+		end
+		if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+			if dashboard.dblCond == "not" then
+				returnValue = not returnValue
+			end
+		end
 	end
+	
 	dbgprint("getDashboardLiveCVT : returnValue: "..tostring(returnValue), 4)
 	return returnValue
 end
@@ -3672,7 +3772,29 @@ function DashboardLive.getDashboardLiveRDS(self, dashboard)
 		else 
 			returnValue = rdsValue or false
 		end
+		
+		if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
+			local cond = dashboard.dblCond
+			local value = dashboard.dblCondValue
+			if cond == "less" then
+				returnValue = (returnValue < value)
+			elseif cond == "lessequal" then
+				returnValue = (returnValue <= value)
+			elseif cond == "more" then
+				returnValue = (returnValue > value)
+			elseif cond == "moreequal" then
+				returnValue = (returnValue >= value)
+			elseif cond == "equal" then
+				returnValue = (returnValue == value)
+			end
+		end
+		if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
+			if dashboard.dblCond == "not" then
+				returnValue = not returnValue
+			end
+		end
 	end
+	
 	dbgprint("getDashboardLiveRDS : returnValue: "..tostring(returnValue), 4)
 	return returnValue
 end

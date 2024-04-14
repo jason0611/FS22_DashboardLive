@@ -3052,7 +3052,7 @@ function DashboardLive.getDashboardLiveVCA(self, dashboard)
 			returnValue = spec.modVCAFound and self:vcaGetState("ksIsOn")
 			
 		elseif c == "ksvalue" then
-			returnValue = spec.modVCAFound and self:vcaGetState("ksIsOn") and math.ground(self.spec_vca.keepSpeed * 10) / 10 or 0
+			returnValue = spec.modVCAFound and self:vcaGetState("ksIsOn") and math.floor(self:vcaGetState("keepSpeed") * 10) / 10 or 0
 			
 		elseif c == "slip" then
 			local slipVCA = spec.modVCAFound and self.spec_vca.wheelSlip ~= nil and (self.spec_vca.wheelSlip - 1) * 100 or 0

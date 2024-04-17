@@ -1456,7 +1456,6 @@ local function getAttachedStatus(vehicle, element, mode, default)
             
             elseif mode == "filllevel" then
             	local o, p = lower(element.dblOption), element.dblPartition
-
 				local maxValue, pctValue, absValue, maxKGValue,absKGValue, pctKGValue
 				local fillLevel = getFillLevelTable(implement.object, t, p)
 				dbgprint_r(fillLevel, 4, 2)

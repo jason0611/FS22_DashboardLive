@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="79">
 	<author>Glowins Modschmiede</author>
-	<version>1.3.5.4</version>
+	<version>1.3.6.0</version>
 	<contributors>AgrarPlay und LUWZ, Farming Duds, Myiamoto86, HiPhi77, NickiJF15</contributors>
 	<title>
 		<en>Dashboard Live</en>
@@ -219,6 +219,7 @@ Changelog V1.4.0.0:
 - Unterstützung für FS22_ExtendedCruiseControl und FS22_SpeedControl
 - Unterstützung für FS22_RealisticDamageSysteme
 - Anzeige der eingestellten Geschwindigkeit bei VCA KeepSpeed
+- Anzeige für Coveröffnung
 - Füllgut-Anzeige (Name / Icon)
 - Faktor-Auswertung bei RDA ergänzt
 - Anzeige des aktuellen Spielernamens ergänzt 
@@ -226,9 +227,8 @@ Changelog V1.4.0.0:
 - Vergleichsoperatoren und Negation für base, vca, gps und hlm ergänzt
 - PrecisionFarming-Auswertung bei Schleppschäuchen etc. korrigiert
 - Bug im Dark Mode korrigiert, wodurch mehr dunkel geschaltet wurde, als geplant
+- Bug bei fillTypes behoben, wodurch die Angabe von "trailer" zwingend erforderlich war
 - displayType="AUDIO" ist nun auch außerhalb des Fahrzeugs hörbar
-
-
 
 Wichtig: Fahrzeuge müssen vorab für DashboardLive vorbereitet werden, um die Funktionen und Anzeigen nutzen zu können.
 Eine Einbauhilfe und Dokumentation sind enthalten, außerdem sind Video-Tutorials verfügbar.

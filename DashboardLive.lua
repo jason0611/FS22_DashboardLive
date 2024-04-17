@@ -1456,7 +1456,6 @@ local function getAttachedStatus(vehicle, element, mode, default)
             
             elseif mode == "filllevel" then
             	local o, p = lower(element.dblOption), element.dblPartition
-				if t == nil then t = 0 end
 
 				local maxValue, pctValue, absValue, maxKGValue,absKGValue, pctKGValue
 				local fillLevel = getFillLevelTable(implement.object, t, p)
@@ -1472,14 +1471,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				else
 					pctKGValue, maxKGValue = fillLevel.pctKg, fillLevel.maxKg
 				end
-
-				dbgrender("maxValue: "..tostring(maxValue), 1 + t * 7, 3)
-				dbgrender("absValue: "..tostring(absValue), 2 + t * 7, 3)
-				dbgrender("pctValue: "..tostring(pctValue), 3 + t * 7, 3)
-				dbgrender("absKGValue: "..tostring(fillLevel.absKg), 4 + t * 7, 3)
-				dbgrender("pctKGValue: "..tostring(fillLevel.pctKg), 5 + t * 7, 3)
-				dbgrender("maxKGValue: "..tostring(fillLevel.maxKg), 6 + t * 7, 3)
-
+				
 				if o == "percent" then
 					element.valueFactor = 100
 					resultValue = pctValue
@@ -1574,7 +1566,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 			-- frontloader
 			elseif mode == "toolrotation" or mode=="istoolrotation" then
 				local factor = element.dblFactor or 1
-				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
+				local specCyl = findSpecialization(implement.object, "spec_cylindered",t)
 				local s = element.dblStateText or element.dblState
 				dbgprint(implement.object:getFullName().." : frontLoader - " .. mode .. " - " .. s,3)
 				resultValue = 0
@@ -1595,7 +1587,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				end
 			elseif mode == "tooltranslation" or mode=="istooltranslation" then
 				local factor = element.dblFactor or 1
-				local specCyl = findSpecialization(implement.object,"spec_cylindered",t)
+				local specCyl = findSpecialization(implement.object, "spec_cylindered",t)
 				local s = element.dblStateText or element.dblState
 				dbgprint(implement.object:getFullName().." : frontLoader - " .. mode .. " - " .. s,3)
 				resultValue = 0
@@ -1614,7 +1606,7 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				end
 	
 			elseif mode=="swathstate" then
-				local specWM =  findSpecialization(implement.object,"spec_workMode",t)
+				local specWM =  findSpecialization(implement.object, "spec_workMode",t)
 				local states
 				local s = element.dblStateText or element.dblState
 				if type(s) == "number" then
@@ -1633,13 +1625,13 @@ local function getAttachedStatus(vehicle, element, mode, default)
 				end
 			elseif mode=="mpconditioner" then
 				resultValue = false
-				local specMPConverter = findSpecialization(implement.object,"spec_mower",t)
+				local specMPConverter = findSpecialization(implement.object, "spec_mower",t)
 				if specMPConverter ~= nil and specMPConverter.currentConverter ~= nil then
 					resultValue = specMPConverter.currentConverter == "MOWERCONDITIONER"
 				end
 			elseif mode=="seedtype" then
 				resultValue = ""
-				local specS = findSpecialization(implement.object,"spec_sowingMachine")
+				local specS = findSpecialization(implement.object, "spec_sowingMachine")
 				if specS ~= nil then
 					local fillType = g_fruitTypeManager:getFillTypeByFruitTypeIndex(specS.seeds[specS.currentSeed])
 					local len = string.len(element.textMask or "xxxx")
@@ -1648,6 +1640,11 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					--resultValue = string.gsub(resultValue,"","u")
 					--resultValue = string.gsub(resultValue,"","O")
 				end
+				
+			elseif mode == "coveropen" then
+				local coverSpec = findSpecialization(implement.object, "spec_cover", t)
+				resultValue = coverSpec ~= nil and coverSpec.state > 0 or false
+			
             elseif mode == "connected" then
             	resultValue = true
             	
@@ -2639,6 +2636,9 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 				
 			elseif c == "seedtype" then
 				returnValue = returnValue or getAttachedStatus(self, dashboard, "seedtype", o == "default")
+				
+			elseif c == "coveropen" then
+				returnValue = returnValue or getAttachedStatus(self, dashboard, "coveropen")
 
 			-- elseif specWM ~= nil and c == "swath" then
 			-- 	if s == "" or tonumber(s) == nil then

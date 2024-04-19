@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -77,6 +77,7 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#group", "choosen page group")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#option", "Option")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#scale", "Minimap minimum scale factor")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#cam", "IndoorCam camera node")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#max", "Maximum")
@@ -181,6 +182,10 @@ function DashboardLive:onLoad(savegame)
 	spec.orientations = {"rotate", "north", "overview"}
 	spec.orientation = "rotate"
 	
+-- TEST AREA STARTS HERE --
+	spec.cam = {}
+-- TEST AREA ENDS HERE --
+
 	-- selector data
 	spec.selectorActive = 0
 	
@@ -569,6 +574,9 @@ function DashboardLive:onPostLoad(savegame)
 	
 	--Check if Mod HeadlandManagement exists
 	spec.modHLMFound = self.spec_HeadlandManagement ~= nil
+	
+	--Check if Mod WorkCamera exists
+	spec.modWorkCameraFound = g_currentMission.workCamera ~= nil
 	
     local dashboard = self.spec_dashboard
     for _, group in pairs(dashboard.groups) do
@@ -2234,7 +2242,9 @@ function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
 	dashboard.scale = xmlFile:getValue(key .. "#scale") or DashboardLive.scale
 	dashboard.node = xmlFile:getValue(key .. "#node", nil, self.components, self.i3dMappings)
 	dbgprint("getDBLAttributesMiniMap: node = "..tostring(dashboard.node).." / command = "..tostring(dashboard.dblCommand).." / scale = "..tostring(dashboard.scale), 2)
-
+	
+	
+	-- miniMap
 	local mapTexture = g_currentMission.mapImageFilename
 	local mapName = g_currentMission.missionInfo.map.title
 	local customMap = DashboardLive.MODSETTINGSDIR..mapName
@@ -2255,6 +2265,14 @@ function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
 		materialId = setMaterialDiffuseMapFromFile(materialId, mapTexture, true, true, false)
 		setMaterial(dashboard.node, materialId, 0)
 		dbgprint("getDBLAttributesMiniMap: MiniMap Material set to "..tostring(materialId).." / texture set to "..mapTexture, 2)
+		
+	-- indoorCam
+	elseif dashboard.dblCommand == "indoorcam" then
+		local spec = self.spec_DashboardLive
+		local camSpec = g_currentMission.workCamera
+		spec.camElement = camSpec.cameraElement
+		spec.camElement.frameOverlay = nil
+		
 	end
 
 	return true
@@ -2917,6 +2935,32 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 			dbgprint("getDashboardLiveMiniMap : Finished with heading "..tostring(heading), 4)
 		end
 		return true
+		
+-- TEST AREA STARTS HERE --	
+	elseif cmd == "indoorcam" then		
+		if spec.modWorkCameraFound and spec.camElement ~= nil and self:getActiveCamera() ~= nil then
+			dbgprint("getDashboardLiveMiniMap : Start calculating indoorCam", 2)
+
+			local node = dashboard.node
+			local playerNode = self:getActiveCamera().cameraNode
+
+			local wX, wY, wZ = getWorldTranslation(node);
+			local pX, pY, pZ = getWorldTranslation(playerNode);
+			local x, y, z = project(wX, wY, wZ)
+			local dist = MathUtil.vector3Length(wX-pX, wY-pY, wZ-pZ); 
+			local size = 1 / dist;
+			
+			spec.camElement.midPosX = x
+			spec.camElement.midPosY = y
+			
+		elseif self:getActiveCamera() == nil then
+			dbgprint("getDashboardLiveMiniMap : Outside, skipping...", 2)
+		else
+			dbgprint("getDashboardLiveMiniMap : No indoorCam set", 2)
+		end
+		--]]		
+-- TEST AREA ENDS HERE --
+	
 	end
 	return false
 end
@@ -3864,6 +3908,16 @@ function DashboardLive:onUpdate(dt)
 end
 
 function DashboardLive:onDraw()
+	dbgprint("onDraw", 2)
+-- Camera
+	local spec = self.spec_DashboardLive
+	if spec ~= nil and spec.cam.overlay ~= nil then
+		dbgprint("onDraw : rendering camera", 2)
+		renderOverlay(spec.cam.overlay, 0.5, 0.5, 1, 1)
+		--renderOverlay(spec.cam.overlay, spec.cam.x, spec.cam.y, 0.166*spec.cam.size, 0.166*spec.cam.size)
+	end
+
+-- Debug
 	if self.spec_combine ~= nil then
 		dbgrender("chopper: "..tostring(self.spec_combine.chopperPSenabled), 23, 3)
 		dbgrender("swath: "..tostring(self.spec_combine.strawPSenabled), 24, 3)

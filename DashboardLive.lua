@@ -32,6 +32,10 @@ DashboardLive.vanillaSchema = nil
 
 DashboardLive.scale = 0.1
 
+DashboardLive.rotNum = 0
+DashboardLive.xNum = 0
+DashboardLive.yNum = 0
+
 DashboardLive.minimapConfig = {}
 
 -- Console
@@ -41,6 +45,16 @@ function DashboardLive:editParameter(scale)
 	DashboardLive.scale = scale
 end
 addConsoleCommand("dblParameter", "DBL: Change scale parameter", "editParameter", DashboardLive)
+
+function DashboardLive:editCamParameter(rot, x, y)
+	DashboardLive.rotNum = tonumber(rot) or DashboardLive.rotNum
+	DashboardLive.xNum = tonumber(x) or DashboardLive.xNum
+	DashboardLive.yNum = tonumber(y) or DashboardLive.yNum
+	
+	print("DBL Cam-Parameter: "..tostring(rotNum).." "..tostring(xNum).." "..tostring(yNum))
+	DashboardLive.scale = scale
+end
+addConsoleCommand("dblCam", "DBL: Change cam parameter", "editCamParameter", DashboardLive)
 
 -- Standards / Basics
 
@@ -77,7 +91,9 @@ function DashboardLive.initSpecialization()
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#group", "choosen page group")
 	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#option", "Option")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#scale", "Minimap minimum scale factor")
-	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#cam", "IndoorCam camera node")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#rot", "IndoorCam camera overlay rotation")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#width", "IndoorCam camera overlay width")
+	schema:register(XMLValueType.STRING, DashboardLive.DBL_XML_KEY .. "#height", "IndoorCam camera overlay height")
 	schema:register(XMLValueType.FLOAT, DashboardLive.DBL_XML_KEY .. "#factor", "Factor")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#min", "Minimum")
 	schema:register(XMLValueType.INT, DashboardLive.DBL_XML_KEY .. "#max", "Maximum")
@@ -2268,10 +2284,14 @@ function DashboardLive.getDBLAttributesMiniMap(self, xmlFile, key, dashboard)
 		
 	-- indoorCam
 	elseif dashboard.dblCommand == "indoorcam" then
-		local spec = self.spec_DashboardLive
 		local camSpec = g_currentMission.workCamera
-		spec.camElement = camSpec.cameraElement
-		spec.camElement.frameOverlay = nil
+		dashboard.camElement = camSpec.cameraElement
+		dashboard.camElement.camRot = xmlFile:getValue(key .. "#rot") or 0
+		dashboard.camElement.camWidth = xmlFile:getValue(key .. "#width") or camSpec.cameraElement.width
+		dashboard.camElement.camHeight = xmlFile:getValue(key .. "#height") or camSpec.cameraElement.height
+
+		dashboard.camElement.frameOverlay = nil
+		dashboard.camElement.overlayScaleBackup = dashboard.camElement.overlayScale
 		
 	end
 
@@ -2936,10 +2956,9 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 		end
 		return true
 		
--- TEST AREA STARTS HERE --	
 	elseif cmd == "indoorcam" then		
-		if spec.modWorkCameraFound and spec.camElement ~= nil and self:getActiveCamera() ~= nil then
-			dbgprint("getDashboardLiveMiniMap : Start calculating indoorCam", 2)
+		if spec.modWorkCameraFound and dashboard.camElement ~= nil and dashboard.camElement.renderOverlay ~= nil and self:getActiveCamera() ~= nil then
+			dbgprint("getDashboardLiveMiniMap : Start calculating indoorCam", 4)
 
 			local node = dashboard.node
 			local playerNode = self:getActiveCamera().cameraNode
@@ -2948,19 +2967,32 @@ function DashboardLive.getDashboardLiveMiniMap(self, dashboard)
 			local pX, pY, pZ = getWorldTranslation(playerNode);
 			local x, y, z = project(wX, wY, wZ)
 			local dist = MathUtil.vector3Length(wX-pX, wY-pY, wZ-pZ); 
-			local size = 1 / dist;
 			
-			spec.camElement.midPosX = x
-			spec.camElement.midPosY = y
+			local size = dashboard.camElement.overlayScaleBackup / dist;
+			
+			
+			dashboard.camElement.midPosX = x
+			dashboard.camElement.midPosY = y
+			dashboard.camElement.overlayScale = size
+			
+			local cx = dashboard.camElement.width * dashboard.camElement.overlayScale
+    		local cy = dashboard.camElement.height * dashboard.camElement.overlayScale
+			local wrx, wry, wrz = getWorldRotation(node);
+			local prx, pry, prz = getWorldRotation(playerNode);
+			local rx, ry, rz = wrx - prx, wry - pry, wrz - prz
+			setOverlayRotation(dashboard.camElement.renderOverlay, dashboard.camElement.camRot - 0.5 * (ry + rx), cx/2, cy/2)
+			
+			--local dist = MathUtil.vector3Length(wX-pX, wY-pY, wZ-pZ); 
+			--local size = dashboard.camElement.overlayScaleBackup / dist;
+			
+
 			
 		elseif self:getActiveCamera() == nil then
-			dbgprint("getDashboardLiveMiniMap : Outside, skipping...", 2)
+			dbgprint("getDashboardLiveMiniMap : Outside, skipping...", 4)
 		else
-			dbgprint("getDashboardLiveMiniMap : No indoorCam set", 2)
+			dbgprint("getDashboardLiveMiniMap : No indoorCam set", 4)
 		end
-		--]]		
--- TEST AREA ENDS HERE --
-	
+		return true				
 	end
 	return false
 end

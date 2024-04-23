@@ -13,7 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
-GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 2)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -653,54 +653,55 @@ function DashboardLive:onRegisterActionEvents(isActiveForInput)
 			local sp = spec.maxPage > 1
 			local sg = spec.maxPageGroup > 1
 			if sg then
-				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEGRPUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				-- self:addActionEvent(actionEventsTable, inputAction, target, newCallback, triggerUp, triggerDown, triggerAlways, startActive, callbackState, customIconName, ignoreCollisions, reportAnyDeviceCollision)
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEGRPUP', self, DashboardLive.CHANGEPAGE, false, true, false, true)
 				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
 				g_inputBinding:setActionEventTextVisibility(actionEventId, sg)
-				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEGRPDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEGRPDN', self, DashboardLive.CHANGEPAGE, false, true, false, true)
 				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
 				g_inputBinding:setActionEventTextVisibility(actionEventId, sg)
 			end
 			if sp then
-				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEUP', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEUP', self, DashboardLive.CHANGEPAGE, false, true, false, true)
 				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
 				g_inputBinding:setActionEventTextVisibility(actionEventId, sp)
-				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEDN', self, DashboardLive.CHANGEPAGE, false, true, false, true, nil)
+				_, actionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PAGEDN', self, DashboardLive.CHANGEPAGE, false, true, false, true)
 				g_inputBinding:setActionEventTextPriority(actionEventId, GS_PRIO_NORMAL)
 				g_inputBinding:setActionEventTextVisibility(actionEventId, sp)
 			end
 		end	
-		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM', self, DashboardLive.ZOOM, false, true, true, true, nil)	
-		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true, nil)
+		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM', self, DashboardLive.ZOOM, false, true, true, true)	
+		_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZOOM_PERM', self, DashboardLive.ZOOM, false, true, false, true)
 		
-		_, mapOrientationActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_MAPORIENTATION', self, DashboardLive.MAPORIENTATION, false, true, false, true, nil)	
+		_, mapOrientationActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_MAPORIENTATION', self, DashboardLive.MAPORIENTATION, false, true, false, true)	
 		
 		if spec.darkModeExists then
-			_, darkModeActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_DARKMODE', self, DashboardLive.DARKMODE, false, true, false, true, nil)		
+			_, darkModeActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_DARKMODE', self, DashboardLive.DARKMODE, false, true, false, true)		
 		end
 		
 		if g_server ~= nil then 
 			if DashboardLive.editMode and DashboardLive.editSymbol ~= nil and self:getIsActiveForInput(true) and spec ~= nil then 
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XUP', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XDN', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YUP', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YDN', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZUP', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZDN', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XR', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XL', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YR', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YL', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZR', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZL', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_SI', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_SO', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XSI', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XSO', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YSI', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YSO', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZSI', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)	
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZSO', self, DashboardLive.MOVESYMBOL, false, true, true, true, nil)
-				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PRINTOUT', self, DashboardLive.PRINTSYMBOL, false, true, false, true, nil)				
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XUP', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XDN', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YUP', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YDN', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZUP', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZDN', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XR', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XL', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YR', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YL', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZR', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZL', self, DashboardLive.MOVESYMBOL, false, true, true, true)	
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_SI', self, DashboardLive.MOVESYMBOL, false, true, true, true)	
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_SO', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XSI', self, DashboardLive.MOVESYMBOL, false, true, true, true)	
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_XSO', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YSI', self, DashboardLive.MOVESYMBOL, false, true, true, true)	
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_YSO', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZSI', self, DashboardLive.MOVESYMBOL, false, true, true, true)	
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_ZSO', self, DashboardLive.MOVESYMBOL, false, true, true, true)
+				_, zoomActionEventId = self:addActionEvent(DashboardLive.actionEvents, 'DBL_PRINTOUT', self, DashboardLive.PRINTSYMBOL, false, true, false, true)				
 			end	
 		end
 	end
@@ -745,6 +746,7 @@ function DashboardLive:CHANGEPAGE(actionName, keyStatus, arg3, arg4, arg5)
 		spec.pageGroups[spec.actPageGroup].actPage = pageNum
 		dbgprint("CHANGEPAGE : NewPage = "..tostring(spec.pageGroups[spec.actPageGroup].actPage), 2)
 	end
+	spec.isDirty = true
 end
 
 function DashboardLive:MAPORIENTATION(actionName, keyStatus, arg3, arg4, arg5)
@@ -1943,9 +1945,9 @@ function DashboardLive:loadDashboardGroupFromXML(superFunc, xmlFile, key, group)
     dbgprint("loadDashboardGroupFromXML : dblCommand: "..tostring(group.dblCommand), 2)
 	
 	if group.dblCommand == "page" then
-		group.dblPage = xmlFile:getValue(key .. "#page") or 0
+		group.dblPage = xmlFile:getValue(key .. "#page")
 		group.dblPageGroup = xmlFile:getValue(key .. "#group") or 1
-		dbgprint("loadDashboardGroupFromXML : page: "..tostring(group.dblPage), 2)
+		dbgprint("loadDashboardGroupFromXML : group: "..tostring(group.dblPageGroup).." / page: "..tostring(group.dblPage), 2)
 	end
 	
 	if group.dblCommand == "darkmode" then
@@ -1994,7 +1996,7 @@ function DashboardLive:getIsDashboardGroupActive(superFunc, group)
 
 	-- page
 	elseif group.dblCommand == "page" and group.dblPage ~= nil and group.dblPageGroup ~= nil then 
-		if group.dblPage > 0 then 
+		if group.dblPage and group.dblPage > 0 then 
 			returnValue = group.dblPage == spec.pageGroups[group.dblPageGroup].actPage
 		else
 			returnValue = group.dblPageGroup == spec.actPageGroup
@@ -2562,7 +2564,7 @@ function DashboardLive.getDashboardLivePage(self, dashboard)
 	if groupNum ~= nil and pageNum == nil then
 		returnValue = groupNum == spec.actPageGroup
 	elseif pageNum ~= nil then
-		groupNum = groupNum or 1 -- it makes no sense without given group, but maybe there are no groups so let set it to 1 in his case
+		groupNum = groupNum or 1 -- it makes no sense without given group, but maybe there aren't any groups so let set it to 1 in his case
 		returnValue = pageNum == spec.pageGroups[groupNum].actPage
 	end
 	

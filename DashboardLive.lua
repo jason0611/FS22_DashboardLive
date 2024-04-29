@@ -2658,13 +2658,23 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 			returnValue = trim(g_currentMission.playerNickname, len, alignment)
 		end
 		
+		-- cultivator state
+		if cmds == "cultivator" then 
+			local spec = findSpecialization(self, "spec_cultivator") 
+			if s == "deepmode" then
+				returnValue = spec.isSubsoiler
+			elseif s == "normalmode" then
+				returnValue = not spec.isSubsoiler
+			end
+		end
+		
 		-- fillLevel	
 		if cmds == "filllevel" then
 			returnValue = getAttachedStatus(self, dashboard, "filllevel", 0)
 			
 		-- fillType (text or icon)
 		elseif cmds == "filltype" then
-			dbgprint("fillType: option = "..tostring(dashboard.dblOption), 2)
+			dbgprint("fillType: option = "..tostring(dashboard.dblOption), 4)
 			returnValue = false
 			local t = dashboard.dblTrailer
 			local _, device = findSpecialization(self, "spec_fillUnit", t)
@@ -2677,21 +2687,19 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 					
 					if o == "name" then
 						local ftName = g_fillTypeManager:getFillTypeTitleByIndex(fillTypeIndex)
-						dbgprint("fillType: Name set to "..ftName, 2)
+						dbgprint("fillType: Name set to "..ftName, 4)
 						returnValue = ftName
 						
 					elseif o == "icon" then
 						local ftPath = g_fillTypeManager.fillTypes[fillTypeIndex] ~= nil and g_fillTypeManager.fillTypes[fillTypeIndex].hudOverlayFilename
-						dbgprint("fillType: Path is "..tostring(ftPath), 2)
+						dbgprint("fillType: Path is "..tostring(ftPath), 4)
 						if ftPath ~= nil and ftPath ~= "" then
 							if ftPath ~= dashboard.ftPath then
 								local materialId = getMaterial(dashboard.node, 0)
 								materialId = setMaterialDiffuseMapFromFile(materialId, ftPath, true, true, false)
 								setMaterial(dashboard.node, materialId, 0)
-								--local scale = dashboard.dblScale
-								--setScale(dashboard.node, scale, scale, scale)
 								dashboard.ftPath = ftPath
-								dbgprint("fillType: Icon texture set to "..ftPath, 2)
+								dbgprint("fillType: Icon texture set to "..ftPath, 4)
 							end
 							returnValue = true
 						end

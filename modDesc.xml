@@ -114,6 +114,7 @@ Changelog V1.4.0.0:
 - Support for FS22_RealisticDamageSystem
 - Display of the set speed for VCA KeepSpeed
 - Display for cover opening
+- Display of cultivator type ("normal" cultivator or deep cultivator / subsoiler)
 - Filling material display (name / icon)
 - Factor evaluation for RDA added
 - Display of the current player name added 
@@ -237,6 +238,7 @@ Changelog V1.4.0.0:
 - Unterstützung für FS22_RealisticDamageSystem
 - Anzeige der eingestellten Geschwindigkeit bei VCA KeepSpeed
 - Anzeige für Coveröffnung
+- Anzeige des Grubbertyps ("normaler" Grubber oder Tiefengrubber / Tiefenlockerer)
 - Füllgut-Anzeige (Name / Icon)
 - Faktor-Auswertung bei RDA ergänzt
 - Anzeige des aktuellen Spielernamens ergänzt 
@@ -361,6 +363,7 @@ Mudanças V1.4.0.0:
 - Suporte para FS22_RealisticDamageSystems
 - Exibição da velocidade definida para VCA KeepSpeed
 - Exibição da abertura da tampa
+- Exibição do tipo de cultivador (cultivador "normal" ou cultivador profundo/subsolador)
 - Exibição do material de enchimento (nome/ícone)
 - Adicionada avaliação de fator para RDA
 - Exibição do nome do jogador atual adicionada 

@@ -3076,6 +3076,22 @@ function DashboardLive.getDashboardLiveVCA(self, dashboard)
 		end
 	end
 	
+	if dashboard.dblCond ~= nil and type(returnValue) == "number" and type(dashboard.dblCondValue) == "number" then
+		local cond = dashboard.dblCond
+		local value = dashboard.dblCondValue
+		if cond == "less" then
+			returnValue = (returnValue < value)
+		elseif cond == "lessequal" then
+			returnValue = (returnValue <= value)
+		elseif cond == "more" then
+			returnValue = (returnValue > value)
+		elseif cond == "moreequal" then
+			returnValue = (returnValue >= value)
+		elseif cond == "equal" then
+			returnValue = (returnValue == value)
+		end
+	end
+		
 	if dashboard.dblCond ~= nil and type(returnValue) == "boolean" then
 		if dashboard.dblCond == "not" then
 			returnValue = not returnValue
@@ -3769,7 +3785,7 @@ function DashboardLive.getDashboardLiveRDS(self, dashboard)
 	local spec = self.spec_RealisticDamageSystem
 	if spec ~= nil and type(c)=="string" then
 		local rdsValueFunc = "forDBL_"..c
-		local rdsValue = spec[cvtValueFunc]
+		local rdsValue = spec[rdsValueFunc]
 		if s ~= nil then
 			if tonumber(s) ~= nil then
 				returnValue = tostring(rdsValue) == tostring(s)

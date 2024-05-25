@@ -13,6 +13,7 @@ if DashboardLive.MOD_NAME == nil then
 end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
+
 GMSDebug:init(DashboardLive.MOD_NAME)
 GMSDebug:enableConsoleCommands("dblDebug")
 

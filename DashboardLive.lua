@@ -14,7 +14,7 @@ end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
 
-GMSDebug:init(DashboardLive.MOD_NAME)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")
@@ -2662,10 +2662,14 @@ function DashboardLive.getDashboardLiveBase(self, dashboard)
 		-- cultivator state
 		if cmds == "cultivator" then 
 			local spec = findSpecialization(self, "spec_cultivator") 
-			if s == "deepmode" then
-				returnValue = spec.isSubsoiler
-			elseif s == "normalmode" then
-				returnValue = not spec.isSubsoiler
+			if spec ~= nil then
+				if s == "deepmode" then
+					returnValue = spec.isSubsoiler and spec.useDeepMode
+				elseif s == "normalmode" then
+					returnValue = not spec.isSubsoiler and spec.useDeepMode
+				elseif s == "shallowmode" then
+					returnValue = not spec.isSubsoiler and not spec.useDeepMode
+				end
 			end
 		end
 		

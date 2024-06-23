@@ -1582,7 +1582,12 @@ local function getAttachedStatus(vehicle, element, mode, default)
 							if element.dblCommand == "toolrotation" then
 								resultValue = rot
 							elseif element.dblCommand == "istoolrotation" then
-								resultValue = rot >= element.dblMin and rot <=element.dblMax
+								if element.dblMin ~= nil and element.dblMax ~= nil then
+									resultValue = rot >= element.dblMin and rot <=element.dblMax
+								else
+									print("Warning: valueType=\"base\" cmd=\"isToolRotation\": Missing value for min or max")
+									resultValue = false
+								end
 							end
 						end
 					end
@@ -1601,7 +1606,12 @@ local function getAttachedStatus(vehicle, element, mode, default)
 							if element.dblCommand == "tooltranslation" then
 								resultValue = trans
 							elseif element.dblCommand == "istooltranslation" then
-								resultValue = trans >= element.dblMin and trans <=element.dblMax
+								if element.dblMin ~= nil and element.dblMax ~= nil then
+									resultValue = trans >= element.dblMin and trans <=element.dblMax
+								else
+									print("Warning: valueType=\"base\" cmd=\"istooltranslation\": Missing value for min or max")
+									resultValue = false
+								end
 							end
 						end
 					end
@@ -1639,8 +1649,6 @@ local function getAttachedStatus(vehicle, element, mode, default)
 					local len = string.len(element.textMask or "xxxx")
 					local alignment = element.textAlignment
 					resultValue = trim(fillType.title, len, alignment)
-					--resultValue = string.gsub(resultValue,"","u")
-					--resultValue = string.gsub(resultValue,"","O")
 				end
 				
 			elseif mode == "coveropen" then

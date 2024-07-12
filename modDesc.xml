@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <modDesc descVersion="80">
 	<author>Glowins Modschmiede</author>
-	<version>1.4.0.0</version>
+	<version>1.4.1.0</version>
 	<contributors>AgrarPlay und LUWZ, Farming Duds, Myiamoto86, HiPhi77, NickiJF15</contributors>
 	<title>
 		<en>Dashboard Live</en>
@@ -126,6 +126,10 @@ Changelog V1.4.0.0:
 - Bug in page switching fixed, whereby an empty terminal could be activated
 - displayType="AUDIO" is now also audible outside the vehicle
 
+Changelog V1.4.1.0:
+- Nil condition fixed with cultivator state, after attachment is disconnected
+- Nil conditions fixed with "isToolRotation" and "isToolTranslation", if min and/or max values are missing
+
 Important: Vehicles must be prepared for DashboardLive in advance to use the features and displays.
 Installation guide and documentation are included, video tutorials are also available.
 
@@ -249,6 +253,10 @@ Changelog V1.4.0.0:
 - Bug bei fillTypes behoben, wodurch die Angabe von "trailer" zwingend erforderlich war
 - Bug bei der Seitenschaltung behoben, wodurch ein leeres Terminal aktiviert werden konnte
 - displayType="AUDIO" ist nun auch außerhalb des Fahrzeugs hörbar
+
+Changelog V1.4.1.0:
+- Nil-Bedingung bei Grubber-Status behoben, nachdem das Gerät abgekoppelt wurde
+- Nil-Bedingungen bei "isToolRotation" und "isToolTranslation" behoben, wenn min und/oder max Werte fehlen
 
 Wichtig: Fahrzeuge müssen vorab für DashboardLive vorbereitet werden, um die Funktionen und Anzeigen nutzen zu können.
 Eine Einbauhilfe und Dokumentation sind enthalten, außerdem sind Video-Tutorials verfügbar.

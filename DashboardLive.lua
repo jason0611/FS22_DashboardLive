@@ -14,7 +14,7 @@ end
 
 source(DashboardLive.MOD_PATH.."tools/gmsDebug.lua")
 
-GMSDebug:init(DashboardLive.MOD_NAME, false)
+GMSDebug:init(DashboardLive.MOD_NAME, true, 1)
 GMSDebug:enableConsoleCommands("dblDebug")
 
 source(DashboardLive.MOD_PATH.."utils/DashboardUtils.lua")

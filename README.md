@@ -1,4 +1,5 @@
-# FS22_DashboardLive (Migration to FS25 is already work in progress)
+# FS22_DashboardLive 
+(Migration to FS25 is already work in progress)
 
 Dashboard Live (short: DBL) has to be placed into your mod folder. It's functions have to be built into your vehicles dashboards (xml and i3d, if applicable) and then allows you to display all kinds of information in your board computers and/or dashboards. It's usable in all kinds of vehicle, no matter what brand or type. 
 
